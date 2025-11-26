@@ -79,7 +79,39 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-// ===== DATABASE CONNECTION =====
+// ===== FIX DATABASE INDEXES ON STARTUP =====
+async function fixDatabaseIndexes() {
+  try {
+    const db = mongoose.connection.db;
+    const respondentsCollection = db.collection('respondents');
+    
+    console.log('🔧 Checking database indexes...');
+    
+    // Get current indexes
+    const indexes = await respondentsCollection.indexes();
+    
+    // Check if old unique index exists
+    const hasOldUniqueIndex = indexes.some(idx => 
+      idx.name === 'householdId_1' && idx.unique === true
+    );
+    
+    if (hasOldUniqueIndex) {
+      console.log('⚠️  Found old unique index on householdId');
+      console.log('🗑️  Dropping old index...');
+      
+      await respondentsCollection.dropIndex('householdId_1');
+      
+      console.log('✅ Old unique index dropped successfully!');
+      console.log('✅ Multiple respondents per household now allowed');
+    } else {
+      console.log('✅ Database indexes are correct');
+    }
+  } catch (error) {
+    console.error('⚠️  Error checking indexes:', error.message);
+    // Don't crash the server if index check fails
+  }
+}
+
 // ===== DATABASE CONNECTION =====
 const connectDB = async () => {
   try {
@@ -90,14 +122,16 @@ const connectDB = async () => {
     });
     console.log('✅ MongoDB Atlas connected successfully');
     console.log('📍 Database:', mongoose.connection.name);
+    
+    // Fix indexes after successful connection
+    await fixDatabaseIndexes();
+    
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
     console.log('⏳ Retrying connection in 10 seconds...');
     setTimeout(connectDB, 10000);
   }
 };
-
-
 
 // MongoDB event listeners
 mongoose.connection.on('error', (err) => {

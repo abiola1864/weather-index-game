@@ -1,5 +1,5 @@
 // ===============================================
-// TUTORIAL CONTENT - UPDATED VERSION (5-6 CARDS)
+// TUTORIAL CONTENT - UPDATED WITH CLEAR EXPLANATIONS
 // WITH AUTO-ADVANCE TIMERS - MINIMUM 55 SECONDS
 // Weather Index Insurance Game
 // ===============================================
@@ -28,7 +28,7 @@ const TUTORIAL_CARDS = {
     {
       id: 3,
       title: "The Weather Challenge",
-      content: "Weather is unpredictable! Good weather (☀️) = great harvest. Bad weather (⛈️) = crop failure. You cannot control the weather.",
+      content: "Weather is unpredictable! Good weather (☀️) = 50% MORE harvest (1.5x). Bad weather (⛈️) = 30-70% LESS harvest. You cannot control the weather.",
       icon: "🌤️",
       highlight: true,
       autoAdvanceSeconds: 55
@@ -46,12 +46,11 @@ const TUTORIAL_CARDS = {
       content: "You'll play 4 farming rounds. Your decisions will show how you balance risk and reward. Good luck!",
       icon: "🚀",
       highlight: true
-      // No auto-advance on last card
     }
   ],
 
   // ==========================================
-  // FERTILIZER BUNDLE (6 cards)
+  // FERTILIZER BUNDLE (7 cards with examples)
   // ==========================================
   fertilizer_bundle: [
     {
@@ -71,42 +70,58 @@ const TUTORIAL_CARDS = {
     },
     {
       id: 3,
-      title: "Weather Protection Available!",
-      content: "NEW OPPORTUNITY: Weather Index Insurance protects you when bad weather is measured in your area. If drought or floods occur, you get money automatically!",
+      title: "How Weather Affects Harvest",
+      content: "☀️ Good weather = 50% MORE harvest (1.5x your investment). ⛈️ Bad weather = 30-70% LESS harvest. Weather is unpredictable each round!",
+      icon: "🌤️",
+      highlight: true,
+      autoAdvanceSeconds: 60
+    },
+    {
+      id: 4,
+      title: "Weather Index Insurance Explained",
+      content: "Insurance protects you from weather disasters! If bad weather is MEASURED in your area, you receive money - even if your exact farm wasn't affected.",
       icon: "🛡️",
       special: true,
       highlight: true,
       autoAdvanceSeconds: 65
     },
     {
-      id: 4,
+      id: 5,
+      title: "How Insurance Payouts Work 💰",
+      content: "PAY: 100 GHS for insurance. RECEIVE if bad weather: Mild drought = 150 GHS (1.5x), Severe drought = 300 GHS (3x), Floods = 240 GHS (2.4x). If good weather = 0 GHS.",
+      icon: "📊",
+      special: true,
+      highlight: true,
+      autoAdvanceSeconds: 70
+    },
+    {
+      id: 6,
       title: "SPECIAL BUNDLE OFFER! 🎁",
-      content: "Insurance + 2 Bags of NPK Fertilizer for 100 GHS! Get protection AND better yields in one package. If disaster strikes, receive up to 300 GHS back!",
+      content: "Get BOTH insurance protection AND 2 bags of NPK fertilizer for 100 GHS! The fertilizer boosts your harvest by 50% MORE. Double benefit in one package!",
       icon: "📦",
       special: true,
       highlight: true,
       autoAdvanceSeconds: 70
     },
     {
-      id: 5,
-      title: "Important Warning ⚠️",
-      content: "Payouts are based ONLY on weather measurements, not your actual harvest. If weather is normal but your farm fails (pests, disease), you get NO payout. This is called basis risk.",
+      id: 7,
+      title: "Important: Basis Risk ⚠️",
+      content: "Payouts depend on AREA weather measurements, not your specific farm. If the weather station shows normal rainfall but YOUR farm fails (pests, disease, theft), you get ZERO payout.",
       icon: "⚠️",
       critical: true,
       autoAdvanceSeconds: 70
     },
     {
-      id: 6,
+      id: 8,
       title: "Make Your Choice!",
       content: "Each round, decide: Buy the bundle (100 GHS) or spend differently? You'll see how insurance and fertilizer work together over 4 rounds. Good luck!",
       icon: "🎯",
       highlight: true
-      // No auto-advance on last card
     }
   ],
 
   // ==========================================
-  // SEEDLING BUNDLE (6 cards)
+  // SEEDLING BUNDLE (7 cards with examples)
   // ==========================================
   seedling_bundle: [
     {
@@ -126,37 +141,53 @@ const TUTORIAL_CARDS = {
     },
     {
       id: 3,
-      title: "Weather Protection Available!",
-      content: "NEW OPPORTUNITY: Weather Index Insurance protects you when bad weather is measured in your area. If drought or floods occur, you get money automatically!",
+      title: "How Weather Affects Harvest",
+      content: "☀️ Good weather = 50% MORE harvest (1.5x your investment). ⛈️ Bad weather = 30-70% LESS harvest. Weather is unpredictable each round!",
+      icon: "🌤️",
+      highlight: true,
+      autoAdvanceSeconds: 60
+    },
+    {
+      id: 4,
+      title: "Weather Index Insurance Explained",
+      content: "Insurance protects you from weather disasters! If bad weather is MEASURED in your area, you receive money - even if your exact farm wasn't affected.",
       icon: "🛡️",
       special: true,
       highlight: true,
       autoAdvanceSeconds: 65
     },
     {
-      id: 4,
+      id: 5,
+      title: "How Insurance Payouts Work 💰",
+      content: "PAY: 100 GHS for insurance. RECEIVE if bad weather: Mild drought = 150 GHS (1.5x), Severe drought = 300 GHS (3x), Floods = 240 GHS (2.4x). If good weather = 0 GHS.",
+      icon: "📊",
+      special: true,
+      highlight: true,
+      autoAdvanceSeconds: 70
+    },
+    {
+      id: 6,
       title: "SPECIAL BUNDLE OFFER! 🎁",
-      content: "Insurance + Hybrid Maize Seeds for 100 GHS! Get protection AND drought-resistant seeds in one package. If disaster strikes, receive up to 300 GHS back!",
+      content: "Get BOTH insurance protection AND hybrid maize seeds for 100 GHS! The improved seeds are drought-resistant and boost yields by 50% MORE. Double benefit in one package!",
       icon: "📦",
       special: true,
       highlight: true,
       autoAdvanceSeconds: 70
     },
     {
-      id: 5,
-      title: "Important Warning ⚠️",
-      content: "Payouts are based ONLY on weather measurements, not your actual harvest. If weather is normal but your farm fails (pests, disease), you get NO payout. This is called basis risk.",
+      id: 7,
+      title: "Important: Basis Risk ⚠️",
+      content: "Payouts depend on AREA weather measurements, not your specific farm. If the weather station shows normal rainfall but YOUR farm fails (pests, disease, theft), you get ZERO payout.",
       icon: "⚠️",
       critical: true,
       autoAdvanceSeconds: 70
     },
     {
-      id: 6,
+      id: 8,
       title: "Make Your Choice!",
       content: "Each round, decide: Buy the bundle (100 GHS) or spend differently? You'll see how insurance and improved seeds work together over 4 rounds. Good luck!",
       icon: "🎯",
       highlight: true
-      // No auto-advance on last card
     }
   ]
 };
