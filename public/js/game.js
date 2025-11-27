@@ -1,7 +1,7 @@
 // ===============================================
 // WEATHER INDEX INSURANCE GAME - COMPLETE GAME.JS
 // Ghana Edition - WITH COUPLE PLAY FLOW - 4 ROUNDS
-// FIXED: State preservation, couple navigation, localStorage backup
+// FINAL VERSION: All fixes integrated
 // ===============================================
 
 // ===== GAME STATE =====
@@ -113,8 +113,8 @@ const WEATHER_TYPES = {
 // ===== BUNDLE DESCRIPTIONS =====
 const BUNDLE_INFO = {
     control: {
-        title: "Farm Budget Allocation",
-        description: "Allocate your budget wisely across farming needs",
+        title: "Weather Insurance",
+        description: "Protection against bad weather",
         hasBundle: false
     },
     fertilizer_bundle: {
@@ -131,6 +131,57 @@ const BUNDLE_INFO = {
         hasBundle: true,
         icon: "🌱"
     }
+};
+
+// ===== ROUND INTENSITY =====
+const ROUND_INTENSITY = {
+    1: { 
+        level: 'low', 
+        storyText: 'The planting season begins with cautious optimism.', 
+        showWarning: false 
+    },
+    2: { 
+        level: 'medium', 
+        storyText: 'Weather patterns are becoming more uncertain.', 
+        showWarning: false 
+    },
+    3: { 
+        level: 'medium', 
+        storyText: 'Concerns are growing about the harvest season.', 
+        showWarning: false 
+    },
+    4: { 
+        level: 'high', 
+        storyText: '⚠️ FINAL ROUND! Your most important decision!', 
+        showWarning: true 
+    }
+};
+
+// ===== TUTORIAL CARDS =====
+const TUTORIAL_CARDS = {
+    control: [
+        { icon: '👨‍🌾', title: 'Welcome Farmer!', content: 'You will manage your farm budget over 4 seasons.', autoAdvanceSeconds: 5 },
+        { icon: '💰', title: 'Your Budget', content: 'Each round you get money to spend on farming, education, and household needs.', autoAdvanceSeconds: 5 },
+        { icon: '🌾', title: 'Make Decisions', content: 'Allocate your budget wisely. Weather will affect your harvest!', autoAdvanceSeconds: 5 },
+        { icon: '⚠️', title: 'Weather Risk', content: 'Droughts and floods can damage crops. Plan carefully!', autoAdvanceSeconds: 5 },
+        { icon: '✅', title: 'Ready?', content: 'Let\'s begin the farming season!', special: true }
+    ],
+    fertilizer_bundle: [
+        { icon: '👨‍🌾', title: 'Welcome Farmer!', content: 'You will manage your farm budget over 4 seasons.', autoAdvanceSeconds: 5 },
+        { icon: '🛡️', title: 'Weather Insurance', content: 'You can buy insurance that pays when weather is bad!', autoAdvanceSeconds: 6, highlight: true },
+        { icon: '🌾', title: 'Special Bundle!', content: 'Insurance + 2 Bags of Fertilizer for 100 GHS. This protects you AND boosts harvest!', autoAdvanceSeconds: 7, critical: true },
+        { icon: '💰', title: 'How It Works', content: 'If drought or floods occur, insurance pays you money to cover losses.', autoAdvanceSeconds: 6 },
+        { icon: '📊', title: 'Your Choice', content: 'Each round, decide: buy the bundle or spend on other needs?', autoAdvanceSeconds: 5 },
+        { icon: '✅', title: 'Ready?', content: 'Let\'s begin! Remember: the bundle protects AND improves your farm.', special: true }
+    ],
+    seedling_bundle: [
+        { icon: '👨‍🌾', title: 'Welcome Farmer!', content: 'You will manage your farm budget over 4 seasons.', autoAdvanceSeconds: 5 },
+        { icon: '🛡️', title: 'Weather Insurance', content: 'You can buy insurance that pays when weather is bad!', autoAdvanceSeconds: 6, highlight: true },
+        { icon: '🌱', title: 'Special Bundle!', content: 'Insurance + Hybrid Maize Seeds for 100 GHS. Better seeds + weather protection!', autoAdvanceSeconds: 7, critical: true },
+        { icon: '💰', title: 'How It Works', content: 'If drought or floods occur, insurance pays you money to cover losses.', autoAdvanceSeconds: 6 },
+        { icon: '📊', title: 'Your Choice', content: 'Each round, decide: buy the bundle or spend on other needs?', autoAdvanceSeconds: 5 },
+        { icon: '✅', title: 'Ready?', content: 'Let\'s begin! Remember: the bundle protects AND gives you better seeds.', special: true }
+    ]
 };
 
 // ===== API HELPER - AUTO-DETECT URL =====
@@ -439,8 +490,6 @@ function startGame() {
     loadRound(1);
 }
 
-
-
 // ===== LOAD ROUND =====
 function loadRound(roundNumber) {
     const roundInfo = ROUND_STORIES[roundNumber - 1];
@@ -525,10 +574,10 @@ function setupInsuranceUI() {
     } else {
         insuranceContainer.innerHTML = `
             <div class="item-header">
-                <i class="fas fa-tractor"></i>
+                <i class="fas fa-shield-alt"></i>
                 <div class="item-info">
-                    <h4>Additional Farm Inputs</h4>
-                    <p>Extra seeds, tools, or other supplies</p>
+                    <h4>${bundleInfo.title}</h4>
+                    <p>${bundleInfo.description}</p>
                 </div>
             </div>
             <div class="item-input">
@@ -780,7 +829,6 @@ function showSecondPartnerPrompt() {
 function startSecondPartner() {
     console.log('🔄 Starting second partner...');
     
-    // CRITICAL: Save ALL household and first partner data BEFORE resetting
     const savedState = {
         householdId: gameState.householdId,
         treatmentGroup: gameState.treatmentGroup,
@@ -792,7 +840,6 @@ function startSecondPartner() {
     
     console.log('💾 Saving first partner state:', savedState);
     
-    // Store in gameState permanently
     if (!gameState.firstRespondentId) {
         gameState.firstRespondentId = savedState.firstRespondentId;
         gameState.firstRespondentData = {
@@ -804,7 +851,6 @@ function startSecondPartner() {
         console.log('✅ First respondent data stored:', gameState.firstRespondentId);
     }
     
-    // ALSO store in localStorage as backup
     try {
         localStorage.setItem('weather_game_household', JSON.stringify(savedState));
         console.log('💾 Saved to localStorage as backup');
@@ -812,7 +858,6 @@ function startSecondPartner() {
         console.warn('⚠️ Could not save to localStorage:', e);
     }
     
-    // Reset for second partner
     gameState.respondentId = null;
     gameState.sessionId = null;
     gameState.demographics = {};
@@ -823,7 +868,6 @@ function startSecondPartner() {
     gameState.role = null;
     gameState.sessionType = null;
     
-    // CRITICAL: Restore household-level data
     gameState.householdId = savedState.householdId;
     gameState.treatmentGroup = savedState.treatmentGroup;
     
@@ -903,7 +947,6 @@ async function showResults() {
         insights += '</ul>';
         document.getElementById('insightsContent').innerHTML = insights;
         
-        // ENHANCED: Check localStorage backup if firstRespondentId is missing
         if (!gameState.firstRespondentId) {
             try {
                 const saved = localStorage.getItem('weather_game_household');
@@ -917,7 +960,6 @@ async function showResults() {
             }
         }
         
-        // FIXED: Detailed flow detection
         console.log('🔍 Detailed game flow check:', {
             sessionType: gameState.sessionType,
             firstRespondentId: gameState.firstRespondentId,
@@ -928,7 +970,6 @@ async function showResults() {
             coupleInfoChildren: gameState.coupleInfo.numberOfChildren
         });
         
-        // Check 1: FIRST partner (husband) completing
         if (gameState.sessionType === 'individual_husband' && !gameState.secondRespondentId) {
             console.log('✅ FIRST PARTNER (husband) completed → Show second partner prompt');
             showScreen('resultsScreen');
@@ -938,7 +979,6 @@ async function showResults() {
             return;
         }
         
-        // Check 2: SECOND partner completing (by sessionType)
         if (gameState.sessionType === 'individual_wife' && gameState.firstRespondentId) {
             if (!gameState.secondRespondentId) {
                 gameState.secondRespondentId = gameState.respondentId;
@@ -955,7 +995,6 @@ async function showResults() {
             }
         }
         
-        // Check 3: SECOND partner completing (by role - fallback)
         if (gameState.role === 'wife' && gameState.firstRespondentId && !gameState.coupleInfo.marriageDuration) {
             console.log('✅ SECOND PARTNER (wife/role) completed → Show couple prompt');
             if (!gameState.secondRespondentId) {
@@ -968,7 +1007,6 @@ async function showResults() {
             return;
         }
         
-        // Final results screen
         console.log('✅ Showing final results screen (couple completed or end)');
         showScreen('resultsScreen');
         
@@ -989,36 +1027,42 @@ function restartGame() {
     }
 }
 
-
 // ===== EVENT LISTENERS =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Weather Index Insurance Game Loaded - Ghana Edition - 4 Rounds - FIXED');
+    console.log('Weather Index Insurance Game Loaded - Ghana Edition - 4 Rounds - FINAL VERSION');
 
-    // Welcome
     const startBtn = document.getElementById('startBtn');
     if (startBtn) startBtn.addEventListener('click', startDemographics);
 
-    // Tutorial touch swipe
+    const tutorialPrevBtn = document.getElementById('tutorialPrevBtn');
+    if (tutorialPrevBtn) tutorialPrevBtn.addEventListener('click', previousTutorialCard);
+    
+    const tutorialNextBtn = document.getElementById('tutorialNextBtn');
+    if (tutorialNextBtn) tutorialNextBtn.addEventListener('click', nextTutorialCard);
+    
+    const tutorialSkipBtn = document.getElementById('tutorialSkipBtn');
+    if (tutorialSkipBtn) tutorialSkipBtn.addEventListener('click', skipTutorial);
+    
+    const tutorialFinishBtn = document.getElementById('tutorialFinishBtn');
+    if (tutorialFinishBtn) tutorialFinishBtn.addEventListener('click', startGameAfterTutorial);
+
     const cardStack = document.getElementById('tutorialCardStack');
     if (cardStack) {
         cardStack.addEventListener('touchstart', handleTouchStart, false);
         cardStack.addEventListener('touchend', handleTouchEnd, false);
     }
 
-    // Navigation
     const nextRoundBtn = document.getElementById('nextRoundBtn');
     if (nextRoundBtn) nextRoundBtn.addEventListener('click', nextRound);
 
     const restartBtn = document.getElementById('restartBtn');
     if (restartBtn) restartBtn.addEventListener('click', restartGame);
 
-    // Allocation inputs
-    ['inputSpend', 'educationSpend', 'consumptionSpend'].forEach(inputId => {
+    ['insuranceSpend', 'inputSpend', 'educationSpend', 'consumptionSpend'].forEach(inputId => {
         const input = document.getElementById(inputId);
         if (input) input.addEventListener('input', updateAllocation);
     });
 
-    // Demographics Form
     const demoForm = document.getElementById('demographicsForm');
     if (demoForm) {
         demoForm.addEventListener('submit', async (e) => {
@@ -1051,12 +1095,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 showScreen('riskScreen');
             } catch (error) {
                 showLoading(false);
+                console.error('Demographics form error:', error);
                 alert('Error: ' + error.message);
             }
         });
     }
 
-    // Risk Form
     const riskForm = document.getElementById('riskForm');
     if (riskForm) {
         riskForm.addEventListener('submit', async (e) => {
@@ -1073,12 +1117,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 showScreen('empowermentScreen');
             } catch (error) {
                 showLoading(false);
+                console.error('Risk form error:', error);
                 alert('Error: ' + error.message);
             }
         });
     }
 
-    // Empowerment Form - WITH ENHANCED LOGGING
     const empForm = document.getElementById('empowermentForm');
     if (empForm) {
         empForm.addEventListener('submit', async (e) => {
@@ -1103,7 +1147,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const respondent = await apiCall('/respondent/create', 'POST', respondentData);
                 gameState.respondentId = respondent._id;
                 
-                // Verify treatment group matches household
                 if (gameState.treatmentGroup && respondent.treatmentGroup !== gameState.treatmentGroup) {
                     console.error('⚠️ WARNING: Treatment group mismatch!', {
                         expected: gameState.treatmentGroup,
@@ -1114,7 +1157,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 console.log(`✅ Respondent created: ${respondent._id}, Treatment: ${respondent.treatmentGroup}`);
                 
-                // ENHANCED: Track which respondent this is with DETAILED logging
                 console.log('📋 Current state before role assignment:', {
                     role: gameState.role,
                     firstRespondentId: gameState.firstRespondentId,
@@ -1156,12 +1198,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 initializeTutorial();
             } catch (error) {
                 showLoading(false);
+                console.error('Empowerment form error:', error);
                 alert('Error: ' + error.message);
             }
         });
     }
 
-    // Couple Pre-Questions Form
     const couplePreForm = document.getElementById('couplePreQuestionsForm');
     if (couplePreForm) {
         couplePreForm.addEventListener('submit', async (e) => {
@@ -1179,12 +1221,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 startCoupleSession();
             } catch (error) {
                 showLoading(false);
+                console.error('Couple pre-questions error:', error);
                 alert('Error: ' + error.message);
             }
         });
     }
 
-    // Allocation Form
     const allocForm = document.getElementById('allocationForm');
     if (allocForm) {
         allocForm.addEventListener('submit', async (e) => {
@@ -1239,12 +1281,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 showWeatherOutcome(roundData, weather);
             } catch (error) {
                 showLoading(false);
+                console.error('Allocation form error:', error);
                 alert('Error: ' + error.message);
             }
         });
     }
 
-    // Knowledge Form - PREVENT DOUBLE SUBMISSION
     const knowledgeForm = document.getElementById('knowledgeForm');
     if (knowledgeForm) {
         knowledgeForm.addEventListener('submit', async (e) => {
@@ -1271,19 +1313,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 
                 await apiCall('/knowledge/submit', 'POST', testData);
-                await apiCall(`/session/${gameState.sessionId}/complete', 'PUT');
+                await apiCall(`/session/${gameState.sessionId}/complete`, 'PUT');
                 
                 showLoading(false);
                 showResults();
             } catch (error) {
                 showLoading(false);
                 isSubmittingKnowledge = false;
+                console.error('Knowledge form error:', error);
                 alert('Error: ' + error.message);
             }
         });
     }
 
-    // Language toggle
     const langBtn = document.getElementById('languageBtn');
     if (langBtn) {
         langBtn.addEventListener('click', () => {
@@ -1293,11 +1335,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Second Partner Button
     const startSecondBtn = document.getElementById('startSecondPartnerBtn');
     if (startSecondBtn) startSecondBtn.addEventListener('click', startSecondPartner);
     
-    // Couple Prompt Button
     const startCouplePromptBtn = document.getElementById('startCouplePromptBtn');
     if (startCouplePromptBtn) startCouplePromptBtn.addEventListener('click', startCouplePreQuestions);
 });
