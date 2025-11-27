@@ -359,11 +359,69 @@ function updateTutorialCardPositions() {
 }
 
 function nextTutorialCard() {
+    // Clear any existing timer first to prevent double-advance
+    if (tutorialTimerInterval) {
+        clearInterval(tutorialTimerInterval);
+        tutorialTimerInterval = null;
+    }
+    
     if (currentTutorialIndex < tutorialCards.length - 1) {
         currentTutorialIndex++;
         updateTutorialCardPositions();
         updateTutorialProgress();
-        startTutorialTimer();
+        startTutorialTimer(); // Start new timer for next card
+    }
+}
+
+function previousTutorialCard() {
+    // Clear any existing timer first
+    if (tutorialTimerInterval) {
+        clearInterval(tutorialTimerInterval);
+        tutorialTimerInterval = null;
+    }
+    
+    if (currentTutorialIndex > 0) {
+        currentTutorialIndex--;
+        updateTutorialCardPositions();
+        updateTutorialProgress();
+        startTutorialTimer(); // Start new timer for previous card
+    }
+}
+
+function startTutorialTimer() {
+    // Always clear existing timer first
+    if (tutorialTimerInterval) {
+        clearInterval(tutorialTimerInterval);
+        tutorialTimerInterval = null;
+    }
+    
+    const currentCard = tutorialCards[currentTutorialIndex];
+    
+    if (currentCard && currentCard.autoAdvanceSeconds) {
+        currentTimerSeconds = currentCard.autoAdvanceSeconds;
+        
+        const timerEl = document.getElementById(`timer-${currentTutorialIndex}`);
+        if (timerEl) {
+            timerEl.textContent = `⏱️ ${currentTimerSeconds}s`;
+        }
+        
+        tutorialTimerInterval = setInterval(() => {
+            currentTimerSeconds--;
+            
+            if (timerEl) {
+                timerEl.textContent = `⏱️ ${currentTimerSeconds}s`;
+            }
+            
+            if (currentTimerSeconds <= 0) {
+                clearInterval(tutorialTimerInterval);
+                tutorialTimerInterval = null;
+                
+                // Only auto-advance if not on last card
+                if (currentTutorialIndex < tutorialCards.length - 1) {
+                    nextTutorialCard();
+                }
+            }
+        }, 1000);
     }
 }
 
