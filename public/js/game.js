@@ -133,56 +133,7 @@ const BUNDLE_INFO = {
     }
 };
 
-// ===== ROUND INTENSITY =====
-const ROUND_INTENSITY = {
-    1: { 
-        level: 'low', 
-        storyText: 'The planting season begins with cautious optimism.', 
-        showWarning: false 
-    },
-    2: { 
-        level: 'medium', 
-        storyText: 'Weather patterns are becoming more uncertain.', 
-        showWarning: false 
-    },
-    3: { 
-        level: 'medium', 
-        storyText: 'Concerns are growing about the harvest season.', 
-        showWarning: false 
-    },
-    4: { 
-        level: 'high', 
-        storyText: '⚠️ FINAL ROUND! Your most important decision!', 
-        showWarning: true 
-    }
-};
 
-// ===== TUTORIAL CARDS =====
-const TUTORIAL_CARDS = {
-    control: [
-        { icon: '👨‍🌾', title: 'Welcome Farmer!', content: 'You will manage your farm budget over 4 seasons.', autoAdvanceSeconds: 5 },
-        { icon: '💰', title: 'Your Budget', content: 'Each round you get money to spend on farming, education, and household needs.', autoAdvanceSeconds: 5 },
-        { icon: '🌾', title: 'Make Decisions', content: 'Allocate your budget wisely. Weather will affect your harvest!', autoAdvanceSeconds: 5 },
-        { icon: '⚠️', title: 'Weather Risk', content: 'Droughts and floods can damage crops. Plan carefully!', autoAdvanceSeconds: 5 },
-        { icon: '✅', title: 'Ready?', content: 'Let\'s begin the farming season!', special: true }
-    ],
-    fertilizer_bundle: [
-        { icon: '👨‍🌾', title: 'Welcome Farmer!', content: 'You will manage your farm budget over 4 seasons.', autoAdvanceSeconds: 5 },
-        { icon: '🛡️', title: 'Weather Insurance', content: 'You can buy insurance that pays when weather is bad!', autoAdvanceSeconds: 6, highlight: true },
-        { icon: '🌾', title: 'Special Bundle!', content: 'Insurance + 2 Bags of Fertilizer for 100 GHS. This protects you AND boosts harvest!', autoAdvanceSeconds: 7, critical: true },
-        { icon: '💰', title: 'How It Works', content: 'If drought or floods occur, insurance pays you money to cover losses.', autoAdvanceSeconds: 6 },
-        { icon: '📊', title: 'Your Choice', content: 'Each round, decide: buy the bundle or spend on other needs?', autoAdvanceSeconds: 5 },
-        { icon: '✅', title: 'Ready?', content: 'Let\'s begin! Remember: the bundle protects AND improves your farm.', special: true }
-    ],
-    seedling_bundle: [
-        { icon: '👨‍🌾', title: 'Welcome Farmer!', content: 'You will manage your farm budget over 4 seasons.', autoAdvanceSeconds: 5 },
-        { icon: '🛡️', title: 'Weather Insurance', content: 'You can buy insurance that pays when weather is bad!', autoAdvanceSeconds: 6, highlight: true },
-        { icon: '🌱', title: 'Special Bundle!', content: 'Insurance + Hybrid Maize Seeds for 100 GHS. Better seeds + weather protection!', autoAdvanceSeconds: 7, critical: true },
-        { icon: '💰', title: 'How It Works', content: 'If drought or floods occur, insurance pays you money to cover losses.', autoAdvanceSeconds: 6 },
-        { icon: '📊', title: 'Your Choice', content: 'Each round, decide: buy the bundle or spend on other needs?', autoAdvanceSeconds: 5 },
-        { icon: '✅', title: 'Ready?', content: 'Let\'s begin! Remember: the bundle protects AND gives you better seeds.', special: true }
-    ]
-};
 
 // ===== API HELPER - AUTO-DETECT URL =====
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
