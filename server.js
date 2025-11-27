@@ -16,14 +16,13 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrcAttr: ["'unsafe-inline'"], // Allows onclick, onchange, oninput
       imgSrc: ["'self'", "data:", "https:"],
-      // FIXED: Allow connections to Render domain
       connectSrc: [
         "'self'",
         "http://localhost:3000",
         "http://localhost:5500",
         "http://localhost:5501",
-        "http://127.0.0.1:3000",
         "https://weather-index-game.onrender.com",
         "https://*.onrender.com"
       ],
@@ -31,7 +30,6 @@ app.use(helmet({
     },
   },
 }));
-
 // ===== RATE LIMITING =====
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
