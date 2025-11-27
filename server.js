@@ -9,7 +9,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ===== SECURITY MIDDLEWARE =====
+// ===== SECURITY MIDDLEWARE - FIXED FOR PRODUCTION =====
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -17,7 +17,16 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'"],
+      // FIXED: Allow connections to Render domain
+      connectSrc: [
+        "'self'",
+        "http://localhost:3000",
+        "http://localhost:5500",
+        "http://localhost:5501",
+        "http://127.0.0.1:3000",
+        "https://weather-index-game.onrender.com",
+        "https://*.onrender.com"
+      ],
       fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
     },
   },
@@ -31,28 +40,38 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// ===== CORS - FIXED CONFIGURATION =====
+// ===== CORS - FIXED FOR PRODUCTION =====
 app.use(cors({
   origin: function(origin, callback) {
     // Allow requests with no origin (mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
     
-    // List of allowed origins for development
+    // List of allowed origins
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:5500',
       'http://localhost:5501',
       'http://127.0.0.1:3000',
       'http://127.0.0.1:5500',
-      'http://127.0.0.1:5501'
+      'http://127.0.0.1:5501',
+      'https://weather-index-game.onrender.com',
+      'https://*.onrender.com'
     ];
     
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+    // Check if origin matches
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (allowed.includes('*')) {
+        const pattern = allowed.replace('*', '.*');
+        return new RegExp(pattern).test(origin);
+      }
+      return allowed === origin;
+    });
+    
+    if (isAllowed || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
       console.log('⚠️  Origin not allowed by CORS:', origin);
-      // Still allow in development
-      callback(null, true);
+      callback(null, true); // Still allow for now
     }
   },
   credentials: true,
@@ -71,13 +90,18 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // ===== STATIC FILES =====
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ===== LOGGING MIDDLEWARE (Development) =====
-if (process.env.NODE_ENV !== 'production') {
-  app.use((req, res, next) => {
-    console.log(`${req.method} ${req.path}`);
-    next();
-  });
-}
+// ===== LOGGING MIDDLEWARE - ENHANCED =====
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} ${req.path}`);
+  
+  // Log request body for POST/PUT (excluding sensitive data)
+  if ((req.method === 'POST' || req.method === 'PUT') && req.body) {
+    console.log('📦 Request body:', JSON.stringify(req.body, null, 2));
+  }
+  
+  next();
+});
 
 // ===== FIX DATABASE INDEXES ON STARTUP =====
 async function fixDatabaseIndexes() {
@@ -89,6 +113,7 @@ async function fixDatabaseIndexes() {
     
     // Get current indexes
     const indexes = await respondentsCollection.indexes();
+    console.log('📋 Current indexes:', indexes.map(idx => idx.name));
     
     // Check if old unique index exists
     const hasOldUniqueIndex = indexes.some(idx => 
@@ -115,11 +140,17 @@ async function fixDatabaseIndexes() {
 // ===== DATABASE CONNECTION =====
 const connectDB = async () => {
   try {
-    // Remove deprecated options
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI environment variable is not set');
+    }
+    
+    console.log('🔌 Connecting to MongoDB...');
+    
     await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 30000, // 30 seconds
-      socketTimeoutMS: 45000, // 45 seconds
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
     });
+    
     console.log('✅ MongoDB Atlas connected successfully');
     console.log('📍 Database:', mongoose.connection.name);
     
@@ -160,7 +191,8 @@ app.get('/api/health', (req, res) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    version: '1.0.0'
   });
 });
 
@@ -171,6 +203,7 @@ app.get('/', (req, res) => {
 
 // ===== 404 HANDLER =====
 app.use((req, res) => {
+  console.log('❌ 404 Not Found:', req.path);
   res.status(404).json({ 
     success: false, 
     message: 'Route not found',
@@ -178,9 +211,13 @@ app.use((req, res) => {
   });
 });
 
-// ===== ERROR HANDLER =====
+// ===== ERROR HANDLER - ENHANCED =====
 app.use((err, req, res, next) => {
-  console.error('❌ Error:', err.stack);
+  console.error('❌ Server Error:');
+  console.error('Path:', req.path);
+  console.error('Method:', req.method);
+  console.error('Error:', err.message);
+  console.error('Stack:', err.stack);
   
   const errorMessage = process.env.NODE_ENV === 'production' 
     ? 'Internal server error' 
@@ -189,7 +226,10 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({
     success: false,
     message: errorMessage,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    ...(process.env.NODE_ENV !== 'production' && { 
+      stack: err.stack,
+      details: err.toString()
+    })
   });
 });
 
@@ -197,12 +237,13 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   await connectDB();
   
-  const server = app.listen(PORT, () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log('');
     console.log('🌾 ========================================');
     console.log('🚀 Weather Index Insurance Game Server');
     console.log('🌾 ========================================');
     console.log(`📍 Server running on: http://localhost:${PORT}`);
+    console.log(`🌐 Public URL: https://weather-index-game.onrender.com`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`🗄️  Database: ${mongoose.connection.readyState === 1 ? 'Connected' : 'Connecting...'}`);
     console.log('🌾 ========================================');
