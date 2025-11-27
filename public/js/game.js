@@ -133,8 +133,16 @@ const BUNDLE_INFO = {
     }
 };
 
-// ===== API HELPER =====
-const API_BASE = 'http://localhost:3000';
+
+
+
+// ===== API HELPER - AUTO-DETECT URL =====
+// FIXED: Use current domain in production, localhost in development
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : window.location.origin;  // Use same domain in production
+
+console.log('🌐 API Base URL:', API_BASE);
 
 async function apiCall(endpoint, method = 'GET', data = null) {
     try {
@@ -172,11 +180,12 @@ async function apiCall(endpoint, method = 'GET', data = null) {
     } catch (error) {
         console.error('💥 API Error:', error.message);
         if (error.message.includes('Failed to fetch')) {
-            throw new Error('Cannot connect to server. Make sure backend is running on http://localhost:3000');
+            throw new Error('Cannot connect to server. Please check your connection.');
         }
         throw error;
     }
 }
+
 
 // ===== SCREEN MANAGEMENT =====
 function showScreen(screenId) {
