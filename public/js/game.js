@@ -293,6 +293,7 @@ function startTutorialTimer() {
         tutorialTimerInterval = null;
     }
     
+    
     const currentCard = tutorialCards[currentTutorialIndex];
     
     if (currentCard && currentCard.autoAdvanceSeconds) {
@@ -358,81 +359,61 @@ function updateTutorialCardPositions() {
     }
 }
 
+
+
 function nextTutorialCard() {
-    // Clear any existing timer first to prevent double-advance
+    // STOP EVERYTHING - Clear timer immediately
     if (tutorialTimerInterval) {
         clearInterval(tutorialTimerInterval);
         tutorialTimerInterval = null;
     }
+    
+    // Prevent multiple rapid clicks
+    if (window.tutorialAnimating) return;
+    window.tutorialAnimating = true;
     
     if (currentTutorialIndex < tutorialCards.length - 1) {
         currentTutorialIndex++;
         updateTutorialCardPositions();
         updateTutorialProgress();
-        startTutorialTimer(); // Start new timer for next card
+        
+        // Wait for animation to complete before starting new timer
+        setTimeout(() => {
+            startTutorialTimer();
+            window.tutorialAnimating = false;
+        }, 600); // Match this to your CSS transition time
+    } else {
+        window.tutorialAnimating = false;
     }
 }
 
 function previousTutorialCard() {
-    // Clear any existing timer first
+    // STOP EVERYTHING - Clear timer immediately
     if (tutorialTimerInterval) {
         clearInterval(tutorialTimerInterval);
         tutorialTimerInterval = null;
     }
     
+    // Prevent multiple rapid clicks
+    if (window.tutorialAnimating) return;
+    window.tutorialAnimating = true;
+    
     if (currentTutorialIndex > 0) {
         currentTutorialIndex--;
         updateTutorialCardPositions();
         updateTutorialProgress();
-        startTutorialTimer(); // Start new timer for previous card
+        
+        // Wait for animation to complete before starting new timer
+        setTimeout(() => {
+            startTutorialTimer();
+            window.tutorialAnimating = false;
+        }, 600); // Match this to your CSS transition time
+    } else {
+        window.tutorialAnimating = false;
     }
 }
 
-function startTutorialTimer() {
-    // Always clear existing timer first
-    if (tutorialTimerInterval) {
-        clearInterval(tutorialTimerInterval);
-        tutorialTimerInterval = null;
-    }
-    
-    const currentCard = tutorialCards[currentTutorialIndex];
-    
-    if (currentCard && currentCard.autoAdvanceSeconds) {
-        currentTimerSeconds = currentCard.autoAdvanceSeconds;
-        
-        const timerEl = document.getElementById(`timer-${currentTutorialIndex}`);
-        if (timerEl) {
-            timerEl.textContent = `⏱️ ${currentTimerSeconds}s`;
-        }
-        
-        tutorialTimerInterval = setInterval(() => {
-            currentTimerSeconds--;
-            
-            if (timerEl) {
-                timerEl.textContent = `⏱️ ${currentTimerSeconds}s`;
-            }
-            
-            if (currentTimerSeconds <= 0) {
-                clearInterval(tutorialTimerInterval);
-                tutorialTimerInterval = null;
-                
-                // Only auto-advance if not on last card
-                if (currentTutorialIndex < tutorialCards.length - 1) {
-                    nextTutorialCard();
-                }
-            }
-        }, 1000);
-    }
-}
 
-function previousTutorialCard() {
-    if (currentTutorialIndex > 0) {
-        currentTutorialIndex--;
-        updateTutorialCardPositions();
-        updateTutorialProgress();
-        startTutorialTimer();
-    }
-}
 
 function updateTutorialProgress() {
     const progressText = document.getElementById('tutorialProgress');
