@@ -1,7 +1,7 @@
 // ===============================================
 // WEATHER INDEX INSURANCE GAME - COMPLETE GAME.JS
 // Ghana Edition - WITH COUPLE PLAY FLOW - 4 ROUNDS
-// FIXED: Double submit, insurance display, couple navigation, clear explanations
+// FIXED: State preservation, couple navigation, localStorage backup
 // ===============================================
 
 // ===== GAME STATE =====
@@ -39,7 +39,7 @@ let currentTimerSeconds = null;
 let touchStartX = 0;
 let touchEndX = 0;
 
-// FIXED: Form submission flags
+// Form submission flags
 let isSubmittingKnowledge = false;
 
 // ===== ROUND STORIES - 4 ROUNDS =====
@@ -113,8 +113,8 @@ const WEATHER_TYPES = {
 // ===== BUNDLE DESCRIPTIONS =====
 const BUNDLE_INFO = {
     control: {
-        title: "Weather Insurance",
-        description: "Protection against bad weather",
+        title: "Farm Budget Allocation",
+        description: "Allocate your budget wisely across farming needs",
         hasBundle: false
     },
     fertilizer_bundle: {
@@ -133,14 +133,10 @@ const BUNDLE_INFO = {
     }
 };
 
-
-
-
 // ===== API HELPER - AUTO-DETECT URL =====
-// FIXED: Use current domain in production, localhost in development
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3000'
-    : window.location.origin;  // Use same domain in production
+    : window.location.origin;
 
 console.log('🌐 API Base URL:', API_BASE);
 
@@ -185,7 +181,6 @@ async function apiCall(endpoint, method = 'GET', data = null) {
         throw error;
     }
 }
-
 
 // ===== SCREEN MANAGEMENT =====
 function showScreen(screenId) {
@@ -236,12 +231,12 @@ function initializeTutorial() {
     const treatment = gameState.treatmentGroup || 'control';
     tutorialCards = TUTORIAL_CARDS[treatment];
     
-    console.log(`Loading ${tutorialCards.length} tutorial cards`);
+    console.log(`Loading ${tutorialCards.length} tutorial cards for ${treatment} group`);
     
     const badge = document.getElementById('treatmentBadge');
     if (badge) {
         if (treatment === 'control') {
-            badge.textContent = '📋 Standard Farming';
+            badge.textContent = '📋 Standard Farming (No Insurance)';
             badge.style.background = 'linear-gradient(135deg, #006B3F, #00A651)';
         } else if (treatment === 'fertilizer_bundle') {
             badge.textContent = '🌾 Insurance + Fertilizer Bundle';
@@ -445,6 +440,7 @@ function startGame() {
 }
 
 
+
 // ===== LOAD ROUND =====
 function loadRound(roundNumber) {
     const roundInfo = ROUND_STORIES[roundNumber - 1];
@@ -503,7 +499,7 @@ function showFinalRoundWarning() {
     roundHeader.parentNode.insertBefore(warningDiv, roundHeader);
 }
 
-// ===== SETUP INSURANCE UI =====
+// ===== SETUP INSURANCE UI - DIFFERENT FOR CONTROL VS TREATMENT =====
 function setupInsuranceUI() {
     const insuranceContainer = document.getElementById('insuranceAllocationItem');
     const bundleInfo = BUNDLE_INFO[gameState.treatmentGroup] || BUNDLE_INFO.control;
@@ -529,10 +525,10 @@ function setupInsuranceUI() {
     } else {
         insuranceContainer.innerHTML = `
             <div class="item-header">
-                <i class="fas fa-shield-alt"></i>
+                <i class="fas fa-tractor"></i>
                 <div class="item-info">
-                    <h4>${bundleInfo.title}</h4>
-                    <p>${bundleInfo.description}</p>
+                    <h4>Additional Farm Inputs</h4>
+                    <p>Extra seeds, tools, or other supplies</p>
                 </div>
             </div>
             <div class="item-input">
@@ -610,7 +606,7 @@ function calculateOutcomes(roundData, weather) {
     const inputBoost = roundData.inputSpend * 1.5;
     roundData.harvestOutcome = Math.round((baseHarvest + inputBoost) * weather.harvestMultiplier);
     
-    if (roundData.insuranceSpend > 0 && weather.type !== 'normal') {
+    if (roundData.insuranceSpend > 0 && weather.type !== 'normal' && gameState.treatmentGroup !== 'control') {
         roundData.payoutReceived = Math.round(roundData.insuranceSpend * 3 * weather.payoutMultiplier);
     } else {
         roundData.payoutReceived = 0;
@@ -619,12 +615,10 @@ function calculateOutcomes(roundData, weather) {
     roundData.endTime = new Date();
 }
 
-// ===== FIXED WEATHER OUTCOME - ALWAYS SHOWS =====
 function showWeatherOutcome(roundData, weather) {
     const roundNumber = roundData.roundNumber;
     const isGoodWeather = weather.type === 'normal';
     
-    // FIXED: Always display weather result first, then add confetti for round 4 good weather
     if (roundNumber === 4 && isGoodWeather) {
         displayWeatherResult(roundData, weather);
         setTimeout(() => {
@@ -639,7 +633,6 @@ function showWeatherOutcome(roundData, weather) {
     }
 }
 
-// ===== FIXED DISPLAY WITH CLEAR CALCULATIONS =====
 function displayWeatherResult(roundData, weather) {
     const animation = document.getElementById('weatherAnimation');
     animation.innerHTML = getWeatherVisual(weather);
@@ -647,10 +640,8 @@ function displayWeatherResult(roundData, weather) {
     
     document.getElementById('weatherTitle').textContent = weather.title;
     
-    // ENHANCED: Show weather impact with multiplier
     let weatherDesc = weather.desc;
     
-    // Show harvest multiplier info
     if (weather.type === 'normal') {
         weatherDesc += ` Your harvest was boosted by 50% (1.5x).`;
     } else if (weather.harvestMultiplier === 0.7) {
@@ -661,12 +652,13 @@ function displayWeatherResult(roundData, weather) {
         weatherDesc += ` Your harvest was reduced to 50% of normal.`;
     }
     
-    // Show insurance info
-    if (roundData.payoutReceived > 0) {
-        const multiplier = roundData.payoutReceived / roundData.insuranceSpend;
-        weatherDesc += ` Your insurance paid out ${multiplier}x what you paid (${roundData.insuranceSpend} GHS → ${roundData.payoutReceived} GHS)!`;
-    } else if (roundData.insuranceSpend > 0 && weather.type === 'normal') {
-        weatherDesc += ` No insurance payout needed - weather was good.`;
+    if (gameState.treatmentGroup !== 'control') {
+        if (roundData.payoutReceived > 0) {
+            const multiplier = roundData.payoutReceived / roundData.insuranceSpend;
+            weatherDesc += ` Your insurance paid out ${multiplier}x what you paid (${roundData.insuranceSpend} GHS → ${roundData.payoutReceived} GHS)!`;
+        } else if (roundData.insuranceSpend > 0 && weather.type === 'normal') {
+            weatherDesc += ` No insurance payout needed - weather was good.`;
+        }
     }
     
     document.getElementById('weatherDescription').textContent = weatherDesc;
@@ -674,17 +666,14 @@ function displayWeatherResult(roundData, weather) {
     document.getElementById('harvestValue').textContent = roundData.harvestOutcome + ' GHS';
     document.getElementById('payoutValue').textContent = roundData.payoutReceived + ' GHS';
     
-    // Show total earnings with breakdown
     const totalEarnings = roundData.harvestOutcome + roundData.payoutReceived;
     const finalIncomeEl = document.getElementById('finalIncomeValue');
     finalIncomeEl.textContent = totalEarnings + ' GHS';
     
-    // FIXED: Always remove old insurance note before creating new one
     const existingNote = document.getElementById('insuranceContributionNote');
     if (existingNote) existingNote.remove();
     
-    // Show detailed breakdown if insurance contributed
-    if (roundData.payoutReceived > 0) {
+    if (roundData.payoutReceived > 0 && gameState.treatmentGroup !== 'control') {
         const outcomeCards = document.querySelector('.outcome-cards');
         if (outcomeCards) {
             const multiplier = (roundData.payoutReceived / roundData.insuranceSpend).toFixed(1);
@@ -714,7 +703,7 @@ function displayWeatherResult(roundData, weather) {
                     </div>
                 </div>
                 <div style="font-size: 14px; color: #555; margin-top: 10px;">
-                    <strong>Net insurance profit:</strong> ${profit > 0 ? `+${profit} GHS gain! 🎉` : `${profit} GHS (you paid ${roundData.insuranceSpend} GHS for ${roundData.payoutReceived} GHS)`}
+                    <strong>Net insurance profit:</strong> ${profit > 0 ? `+${profit} GHS gain! 🎉` : `${profit} GHS`}
                 </div>
                 <div style="font-size: 13px; color: #666; margin-top: 8px; font-style: italic;">
                     Without insurance, you would have only earned ${roundData.harvestOutcome} GHS
@@ -765,15 +754,15 @@ function nextRound() {
     }
 }
 
-
-// ===== SECOND PARTNER & COUPLE FLOW =====
+// ===== FIXED: SECOND PARTNER & COUPLE FLOW WITH localStorage BACKUP =====
 function showSecondPartnerPrompt() {
     const promptScreen = document.getElementById('secondPartnerScreen');
     const messageEl = promptScreen.querySelector('.prompt-message');
     if (messageEl) {
+        const roleText = gameState.role === 'husband' ? 'husband' : 'wife';
         messageEl.innerHTML = `
             <h2>First Partner Completed! 🎉</h2>
-            <p>The ${gameState.role} has finished playing individually.</p>
+            <p>The ${roleText} has finished playing individually.</p>
             <p>Now it's time for the second partner to play on their own.</p>
             <p><strong>The second partner will:</strong></p>
             <ul style="text-align: left; max-width: 500px; margin: 20px auto;">
@@ -789,15 +778,38 @@ function showSecondPartnerPrompt() {
 }
 
 function startSecondPartner() {
-    console.log('Starting second partner...');
+    console.log('🔄 Starting second partner...');
     
-    // Store first respondent info
+    // CRITICAL: Save ALL household and first partner data BEFORE resetting
+    const savedState = {
+        householdId: gameState.householdId,
+        treatmentGroup: gameState.treatmentGroup,
+        firstRespondentId: gameState.respondentId,
+        firstRole: gameState.role,
+        firstGender: gameState.gender,
+        firstSessionType: gameState.sessionType
+    };
+    
+    console.log('💾 Saving first partner state:', savedState);
+    
+    // Store in gameState permanently
     if (!gameState.firstRespondentId) {
-        gameState.firstRespondentId = gameState.respondentId;
+        gameState.firstRespondentId = savedState.firstRespondentId;
         gameState.firstRespondentData = {
-            ...gameState.demographics,
-            treatmentGroup: gameState.treatmentGroup
+            role: savedState.firstRole,
+            gender: savedState.firstGender,
+            sessionType: savedState.firstSessionType,
+            treatmentGroup: savedState.treatmentGroup
         };
+        console.log('✅ First respondent data stored:', gameState.firstRespondentId);
+    }
+    
+    // ALSO store in localStorage as backup
+    try {
+        localStorage.setItem('weather_game_household', JSON.stringify(savedState));
+        console.log('💾 Saved to localStorage as backup');
+    } catch (e) {
+        console.warn('⚠️ Could not save to localStorage:', e);
     }
     
     // Reset for second partner
@@ -809,12 +821,23 @@ function startSecondPartner() {
     gameState.currentRound = 1;
     gameState.gender = null;
     gameState.role = null;
+    gameState.sessionType = null;
     
-    // Go to demographics for second partner
+    // CRITICAL: Restore household-level data
+    gameState.householdId = savedState.householdId;
+    gameState.treatmentGroup = savedState.treatmentGroup;
+    
+    console.log('✅ Household data restored:', {
+        householdId: gameState.householdId,
+        treatment: gameState.treatmentGroup,
+        firstRespondent: gameState.firstRespondentId
+    });
+    
     showScreen('demographicsScreen');
 }
 
 function showCouplePrompt() {
+    console.log('👫 Showing couple prompt');
     const promptScreen = document.getElementById('coupleScreen');
     const messageEl = promptScreen.querySelector('.prompt-message');
     if (messageEl) {
@@ -833,17 +856,18 @@ function showCouplePrompt() {
 }
 
 function startCouplePreQuestions() {
+    console.log('💑 Starting couple pre-questions');
     showScreen('couplePreQuestionsScreen');
 }
 
 function startCoupleSession() {
-    // This will be called after couple pre-questions
+    console.log('💑 Starting couple joint session');
     gameState.sessionType = 'couple_joint';
     showScreen('tutorialScreen');
     initializeTutorial();
 }
 
-// ===== FIXED RESULTS =====
+// ===== FIXED RESULTS WITH ENHANCED STATE CHECKING =====
 async function showResults() {
     try {
         const session = await apiCall(`/session/${gameState.sessionId}`);
@@ -879,53 +903,96 @@ async function showResults() {
         insights += '</ul>';
         document.getElementById('insightsContent').innerHTML = insights;
         
-        // FIXED: Determine next flow based on session progress
-        console.log('Checking game flow:', {
+        // ENHANCED: Check localStorage backup if firstRespondentId is missing
+        if (!gameState.firstRespondentId) {
+            try {
+                const saved = localStorage.getItem('weather_game_household');
+                if (saved) {
+                    const savedState = JSON.parse(saved);
+                    gameState.firstRespondentId = savedState.firstRespondentId;
+                    console.log('✅ Restored firstRespondentId from localStorage:', gameState.firstRespondentId);
+                }
+            } catch (e) {
+                console.warn('⚠️ Could not restore from localStorage');
+            }
+        }
+        
+        // FIXED: Detailed flow detection
+        console.log('🔍 Detailed game flow check:', {
             sessionType: gameState.sessionType,
             firstRespondentId: gameState.firstRespondentId,
             secondRespondentId: gameState.secondRespondentId,
-            coupleInfoExists: !!gameState.coupleInfo.marriageDuration
+            currentRespondentId: gameState.respondentId,
+            role: gameState.role,
+            coupleInfoMarriage: gameState.coupleInfo.marriageDuration,
+            coupleInfoChildren: gameState.coupleInfo.numberOfChildren
         });
         
+        // Check 1: FIRST partner (husband) completing
         if (gameState.sessionType === 'individual_husband' && !gameState.secondRespondentId) {
-            // First partner (husband) completed - show prompt for second partner
-            console.log('✅ First partner completed, showing second partner prompt in 3s');
-            showScreen('resultsScreen'); // Show results briefly
+            console.log('✅ FIRST PARTNER (husband) completed → Show second partner prompt');
+            showScreen('resultsScreen');
             setTimeout(() => {
                 showSecondPartnerPrompt();
             }, 3000);
-        } else if (gameState.sessionType === 'individual_wife' && gameState.firstRespondentId && !gameState.coupleInfo.marriageDuration) {
-            // Second partner (wife) completed - show couple prompt
-            console.log('✅ Second partner completed, showing couple prompt in 3s');
-            showScreen('resultsScreen'); // Show results briefly
+            return;
+        }
+        
+        // Check 2: SECOND partner completing (by sessionType)
+        if (gameState.sessionType === 'individual_wife' && gameState.firstRespondentId) {
+            if (!gameState.secondRespondentId) {
+                gameState.secondRespondentId = gameState.respondentId;
+                console.log('✅ SECOND RESPONDENT marked:', gameState.secondRespondentId);
+            }
+            
+            if (!gameState.coupleInfo.marriageDuration) {
+                console.log('✅ SECOND PARTNER (wife/sessionType) completed → Show couple prompt');
+                showScreen('resultsScreen');
+                setTimeout(() => {
+                    showCouplePrompt();
+                }, 3000);
+                return;
+            }
+        }
+        
+        // Check 3: SECOND partner completing (by role - fallback)
+        if (gameState.role === 'wife' && gameState.firstRespondentId && !gameState.coupleInfo.marriageDuration) {
+            console.log('✅ SECOND PARTNER (wife/role) completed → Show couple prompt');
+            if (!gameState.secondRespondentId) {
+                gameState.secondRespondentId = gameState.respondentId;
+            }
+            showScreen('resultsScreen');
             setTimeout(() => {
                 showCouplePrompt();
             }, 3000);
-        } else {
-            // Show regular results screen (for couple joint session)
-            console.log('✅ Showing final results screen');
-            showScreen('resultsScreen');
+            return;
         }
+        
+        // Final results screen
+        console.log('✅ Showing final results screen (couple completed or end)');
+        showScreen('resultsScreen');
+        
     } catch (error) {
-        console.error('Error loading results:', error);
-        // FIXED: Only show results screen if no special flow needed
-        if (gameState.sessionType === 'couple_joint' || gameState.coupleInfo.marriageDuration) {
-            showScreen('resultsScreen');
-        } else {
-            alert('Error loading results: ' + error.message);
-        }
+        console.error('❌ Error loading results:', error);
+        alert('Error loading results: ' + error.message);
     }
 }
 
 function restartGame() {
     if (confirm('Are you sure you want to restart? All progress will be lost.')) {
+        try {
+            localStorage.removeItem('weather_game_household');
+        } catch (e) {
+            console.warn('Could not clear localStorage');
+        }
         location.reload();
     }
 }
 
+
 // ===== EVENT LISTENERS =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Weather Index Insurance Game Loaded - Ghana Edition - 4 Rounds');
+    console.log('Weather Index Insurance Game Loaded - Ghana Edition - 4 Rounds - FIXED');
 
     // Welcome
     const startBtn = document.getElementById('startBtn');
@@ -1011,7 +1078,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Empowerment Form
+    // Empowerment Form - WITH ENHANCED LOGGING
     const empForm = document.getElementById('empowermentForm');
     if (empForm) {
         empForm.addEventListener('submit', async (e) => {
@@ -1035,21 +1102,48 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const respondent = await apiCall('/respondent/create', 'POST', respondentData);
                 gameState.respondentId = respondent._id;
+                
+                // Verify treatment group matches household
+                if (gameState.treatmentGroup && respondent.treatmentGroup !== gameState.treatmentGroup) {
+                    console.error('⚠️ WARNING: Treatment group mismatch!', {
+                        expected: gameState.treatmentGroup,
+                        received: respondent.treatmentGroup
+                    });
+                }
                 gameState.treatmentGroup = respondent.treatmentGroup;
                 
-                // Track which respondent this is
+                console.log(`✅ Respondent created: ${respondent._id}, Treatment: ${respondent.treatmentGroup}`);
+                
+                // ENHANCED: Track which respondent this is with DETAILED logging
+                console.log('📋 Current state before role assignment:', {
+                    role: gameState.role,
+                    firstRespondentId: gameState.firstRespondentId,
+                    secondRespondentId: gameState.secondRespondentId,
+                    newRespondentId: respondent._id
+                });
+                
                 if (gameState.role === 'husband' && !gameState.firstRespondentId) {
                     gameState.firstRespondentId = respondent._id;
                     gameState.sessionType = 'individual_husband';
+                    console.log('✅ FIRST partner (husband) registered:', respondent._id);
                 } else if (gameState.role === 'wife') {
-                    if (gameState.firstRespondentId) {
+                    if (gameState.firstRespondentId && gameState.firstRespondentId !== respondent._id) {
                         gameState.secondRespondentId = respondent._id;
                         gameState.sessionType = 'individual_wife';
-                    } else {
+                        console.log('✅ SECOND partner (wife) registered:', respondent._id);
+                        console.log('   First partner was:', gameState.firstRespondentId);
+                    } else if (!gameState.firstRespondentId) {
                         gameState.firstRespondentId = respondent._id;
                         gameState.sessionType = 'individual_wife';
+                        console.log('✅ FIRST partner (wife) registered:', respondent._id);
                     }
                 }
+                
+                console.log('📋 State after role assignment:', {
+                    sessionType: gameState.sessionType,
+                    firstRespondentId: gameState.firstRespondentId,
+                    secondRespondentId: gameState.secondRespondentId
+                });
                 
                 const session = await apiCall('/session/start', 'POST', { 
                     respondentId: gameState.respondentId,
@@ -1079,7 +1173,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 gameState.coupleInfo.marriageDuration = parseInt(formData.get('marriageDuration'));
                 gameState.coupleInfo.numberOfChildren = parseInt(formData.get('numberOfChildren'));
                 
-                console.log('Couple info saved:', gameState.coupleInfo);
+                console.log('✅ Couple info saved:', gameState.coupleInfo);
                 
                 showLoading(false);
                 startCoupleSession();
@@ -1150,13 +1244,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // FIXED: Knowledge Form - Prevent Double Submission
+    // Knowledge Form - PREVENT DOUBLE SUBMISSION
     const knowledgeForm = document.getElementById('knowledgeForm');
     if (knowledgeForm) {
         knowledgeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // FIXED: Prevent double submission
             if (isSubmittingKnowledge) {
                 console.log('⚠️ Knowledge form already submitting, ignoring duplicate');
                 return;
@@ -1178,13 +1271,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
                 
                 await apiCall('/knowledge/submit', 'POST', testData);
-                await apiCall(`/session/${gameState.sessionId}/complete`, 'PUT');
+                await apiCall(`/session/${gameState.sessionId}/complete', 'PUT');
                 
                 showLoading(false);
                 showResults();
             } catch (error) {
                 showLoading(false);
-                isSubmittingKnowledge = false; // Reset on error
+                isSubmittingKnowledge = false;
                 alert('Error: ' + error.message);
             }
         });
