@@ -50,7 +50,7 @@ const TUTORIAL_CARDS = {
   ],
 
   // ==========================================
-  // FERTILIZER BUNDLE (7 cards with examples)
+  // FERTILIZER BUNDLE (8 cards with examples)
   // ==========================================
   fertilizer_bundle: [
     {
@@ -121,7 +121,7 @@ const TUTORIAL_CARDS = {
   ],
 
   // ==========================================
-  // SEEDLING BUNDLE (7 cards with examples)
+  // SEEDLING BUNDLE (8 cards with examples)
   // ==========================================
   seedling_bundle: [
     {

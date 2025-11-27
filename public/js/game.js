@@ -1,6 +1,7 @@
 // ===============================================
 // WEATHER INDEX INSURANCE GAME - COMPLETE GAME.JS
 // Ghana Edition - WITH COUPLE PLAY FLOW - 4 ROUNDS
+// FIXED: Double submit, insurance display, couple navigation, clear explanations
 // ===============================================
 
 // ===== GAME STATE =====
@@ -10,7 +11,7 @@ let gameState = {
     sessionId: null,
     currentScreen: 'welcomeScreen',
     currentRound: 1,
-    totalRounds: 4,  // CHANGED FROM 3 TO 4
+    totalRounds: 4,
     language: 'english',
     treatmentGroup: null,
     gender: null,
@@ -37,6 +38,9 @@ let currentTimerSeconds = null;
 // Touch swipe state
 let touchStartX = 0;
 let touchEndX = 0;
+
+// FIXED: Form submission flags
+let isSubmittingKnowledge = false;
 
 // ===== ROUND STORIES - 4 ROUNDS =====
 const ROUND_STORIES = [
@@ -184,7 +188,6 @@ function showScreen(screenId) {
     if (targetScreen) {
         targetScreen.classList.add('active');
         gameState.currentScreen = screenId;
-        // Scroll to top when changing screens
         window.scrollTo(0, 0);
     }
 }
@@ -226,7 +229,6 @@ function initializeTutorial() {
     
     console.log(`Loading ${tutorialCards.length} tutorial cards`);
     
-    // Show treatment badge
     const badge = document.getElementById('treatmentBadge');
     if (badge) {
         if (treatment === 'control') {
@@ -433,6 +435,7 @@ function startGame() {
     loadRound(1);
 }
 
+
 // ===== LOAD ROUND =====
 function loadRound(roundNumber) {
     const roundInfo = ROUND_STORIES[roundNumber - 1];
@@ -607,26 +610,27 @@ function calculateOutcomes(roundData, weather) {
     roundData.endTime = new Date();
 }
 
+// ===== FIXED WEATHER OUTCOME - ALWAYS SHOWS =====
 function showWeatherOutcome(roundData, weather) {
     const roundNumber = roundData.roundNumber;
     const isGoodWeather = weather.type === 'normal';
     
-    if (roundNumber === 4) {  // Changed from 3 to 4
-        if (!isGoodWeather) {
-            setTimeout(() => {
-                displayWeatherResult(roundData, weather);
-            }, 2000);
-            return;
-        } else {
-            setTimeout(() => {
-                showConfetti();
-            }, 1000);
-        }
+    // FIXED: Always display weather result first, then add confetti for round 4 good weather
+    if (roundNumber === 4 && isGoodWeather) {
+        displayWeatherResult(roundData, weather);
+        setTimeout(() => {
+            showConfetti();
+        }, 1000);
+    } else if (roundNumber === 4 && !isGoodWeather) {
+        setTimeout(() => {
+            displayWeatherResult(roundData, weather);
+        }, 2000);
+    } else {
+        displayWeatherResult(roundData, weather);
     }
-    
-    displayWeatherResult(roundData, weather);
 }
 
+// ===== FIXED DISPLAY WITH CLEAR CALCULATIONS =====
 function displayWeatherResult(roundData, weather) {
     const animation = document.getElementById('weatherAnimation');
     animation.innerHTML = getWeatherVisual(weather);
@@ -634,36 +638,81 @@ function displayWeatherResult(roundData, weather) {
     
     document.getElementById('weatherTitle').textContent = weather.title;
     
-    // ENHANCED: Show if insurance helped
+    // ENHANCED: Show weather impact with multiplier
     let weatherDesc = weather.desc;
+    
+    // Show harvest multiplier info
+    if (weather.type === 'normal') {
+        weatherDesc += ` Your harvest was boosted by 50% (1.5x).`;
+    } else if (weather.harvestMultiplier === 0.7) {
+        weatherDesc += ` Your harvest was reduced to 70% of normal.`;
+    } else if (weather.harvestMultiplier === 0.3) {
+        weatherDesc += ` Your harvest was reduced to only 30% of normal.`;
+    } else if (weather.harvestMultiplier === 0.5) {
+        weatherDesc += ` Your harvest was reduced to 50% of normal.`;
+    }
+    
+    // Show insurance info
     if (roundData.payoutReceived > 0) {
-        weatherDesc += ` Your insurance protected you with a ${roundData.payoutReceived} GHS payout!`;
+        const multiplier = roundData.payoutReceived / roundData.insuranceSpend;
+        weatherDesc += ` Your insurance paid out ${multiplier}x what you paid (${roundData.insuranceSpend} GHS → ${roundData.payoutReceived} GHS)!`;
     } else if (roundData.insuranceSpend > 0 && weather.type === 'normal') {
         weatherDesc += ` No insurance payout needed - weather was good.`;
     }
+    
     document.getElementById('weatherDescription').textContent = weatherDesc;
     
     document.getElementById('harvestValue').textContent = roundData.harvestOutcome + ' GHS';
     document.getElementById('payoutValue').textContent = roundData.payoutReceived + ' GHS';
     
-    // ENHANCED: Show total earnings with insurance contribution clearly
+    // Show total earnings with breakdown
     const totalEarnings = roundData.harvestOutcome + roundData.payoutReceived;
     const finalIncomeEl = document.getElementById('finalIncomeValue');
     finalIncomeEl.textContent = totalEarnings + ' GHS';
     
-    // Add explanation if insurance contributed
-    const insuranceNote = document.getElementById('insuranceContributionNote');
-    if (insuranceNote) insuranceNote.remove();
+    // FIXED: Always remove old insurance note before creating new one
+    const existingNote = document.getElementById('insuranceContributionNote');
+    if (existingNote) existingNote.remove();
     
+    // Show detailed breakdown if insurance contributed
     if (roundData.payoutReceived > 0) {
-        const noteDiv = document.createElement('div');
-        noteDiv.id = 'insuranceContributionNote';
-        noteDiv.style.cssText = 'background: #E8F5E9; padding: 15px; border-radius: 12px; margin-top: 15px; text-align: center; font-weight: 600; color: #2E7D32;';
-        noteDiv.innerHTML = `
-            💚 Your insurance payout of ${roundData.payoutReceived} GHS increased your total income to ${totalEarnings} GHS!<br>
-            <small style="font-weight: normal; color: #555;">Without insurance, you would have only earned ${roundData.harvestOutcome} GHS</small>
-        `;
-        document.querySelector('.outcome-cards').after(noteDiv);
+        const outcomeCards = document.querySelector('.outcome-cards');
+        if (outcomeCards) {
+            const multiplier = (roundData.payoutReceived / roundData.insuranceSpend).toFixed(1);
+            const profit = roundData.payoutReceived - roundData.insuranceSpend;
+            
+            const noteDiv = document.createElement('div');
+            noteDiv.id = 'insuranceContributionNote';
+            noteDiv.style.cssText = 'background: linear-gradient(135deg, #E8F5E9, #C8E6C9); padding: 20px; border-radius: 12px; margin-top: 15px; text-align: center; border: 2px solid #4CAF50;';
+            noteDiv.innerHTML = `
+                <div style="font-size: 24px; margin-bottom: 10px;">💚 Insurance Protected You!</div>
+                <div style="font-weight: 700; font-size: 20px; color: #2E7D32; margin-bottom: 15px;">
+                    You paid ${roundData.insuranceSpend} GHS → Got ${roundData.payoutReceived} GHS back = ${multiplier}x return!
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
+                    <div style="font-size: 16px; margin-bottom: 8px;"><strong>Breakdown:</strong></div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Harvest from farming:</span>
+                        <span style="font-weight: 600;">${roundData.harvestOutcome} GHS</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Insurance payout:</span>
+                        <span style="font-weight: 600; color: #4CAF50;">+ ${roundData.payoutReceived} GHS</span>
+                    </div>
+                    <div style="border-top: 2px solid #2E7D32; padding-top: 8px; margin-top: 8px; display: flex; justify-content: space-between;">
+                        <span><strong>Total Income:</strong></span>
+                        <span style="font-weight: 700; font-size: 18px; color: #2E7D32;">${totalEarnings} GHS</span>
+                    </div>
+                </div>
+                <div style="font-size: 14px; color: #555; margin-top: 10px;">
+                    <strong>Net insurance profit:</strong> ${profit > 0 ? `+${profit} GHS gain! 🎉` : `${profit} GHS (you paid ${roundData.insuranceSpend} GHS for ${roundData.payoutReceived} GHS)`}
+                </div>
+                <div style="font-size: 13px; color: #666; margin-top: 8px; font-style: italic;">
+                    Without insurance, you would have only earned ${roundData.harvestOutcome} GHS
+                </div>
+            `;
+            outcomeCards.insertAdjacentElement('afterend', noteDiv);
+        }
     }
     
     showScreen('weatherScreen');
@@ -699,13 +748,14 @@ function showConfetti() {
 }
 
 function nextRound() {
-    if (gameState.currentRound < 4) {  // Changed from 3 to 4
+    if (gameState.currentRound < 4) {
         gameState.currentRound++;
         loadRound(gameState.currentRound);
     } else {
         showScreen('knowledgeScreen');
     }
 }
+
 
 // ===== SECOND PARTNER & COUPLE FLOW =====
 function showSecondPartnerPrompt() {
@@ -784,7 +834,7 @@ function startCoupleSession() {
     initializeTutorial();
 }
 
-// ===== RESULTS =====
+// ===== FIXED RESULTS =====
 async function showResults() {
     try {
         const session = await apiCall(`/session/${gameState.sessionId}`);
@@ -821,25 +871,40 @@ async function showResults() {
         document.getElementById('insightsContent').innerHTML = insights;
         
         // FIXED: Determine next flow based on session progress
+        console.log('Checking game flow:', {
+            sessionType: gameState.sessionType,
+            firstRespondentId: gameState.firstRespondentId,
+            secondRespondentId: gameState.secondRespondentId,
+            coupleInfoExists: !!gameState.coupleInfo.marriageDuration
+        });
+        
         if (gameState.sessionType === 'individual_husband' && !gameState.secondRespondentId) {
             // First partner (husband) completed - show prompt for second partner
-            console.log('First partner completed, showing second partner prompt');
+            console.log('✅ First partner completed, showing second partner prompt in 3s');
+            showScreen('resultsScreen'); // Show results briefly
             setTimeout(() => {
                 showSecondPartnerPrompt();
             }, 3000);
         } else if (gameState.sessionType === 'individual_wife' && gameState.firstRespondentId && !gameState.coupleInfo.marriageDuration) {
             // Second partner (wife) completed - show couple prompt
-            console.log('Second partner completed, showing couple prompt');
+            console.log('✅ Second partner completed, showing couple prompt in 3s');
+            showScreen('resultsScreen'); // Show results briefly
             setTimeout(() => {
                 showCouplePrompt();
             }, 3000);
         } else {
-            // Show regular results screen
+            // Show regular results screen (for couple joint session)
+            console.log('✅ Showing final results screen');
             showScreen('resultsScreen');
         }
     } catch (error) {
         console.error('Error loading results:', error);
-        showScreen('resultsScreen');
+        // FIXED: Only show results screen if no special flow needed
+        if (gameState.sessionType === 'couple_joint' || gameState.coupleInfo.marriageDuration) {
+            showScreen('resultsScreen');
+        } else {
+            alert('Error loading results: ' + error.message);
+        }
     }
 }
 
@@ -1076,11 +1141,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Knowledge Form
+    // FIXED: Knowledge Form - Prevent Double Submission
     const knowledgeForm = document.getElementById('knowledgeForm');
     if (knowledgeForm) {
         knowledgeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // FIXED: Prevent double submission
+            if (isSubmittingKnowledge) {
+                console.log('⚠️ Knowledge form already submitting, ignoring duplicate');
+                return;
+            }
+            
+            isSubmittingKnowledge = true;
             showLoading();
             
             try {
@@ -1102,6 +1175,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 showResults();
             } catch (error) {
                 showLoading(false);
+                isSubmittingKnowledge = false; // Reset on error
                 alert('Error: ' + error.message);
             }
         });
