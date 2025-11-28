@@ -47,6 +47,9 @@ let gameState = {
 // ===== 1. REPLACE THE TRANSLATIONS OBJECT =====
 // Find the existing TRANSLATIONS object and replace it with this:
 
+// ===== COMPLETE DAGBANI TRANSLATIONS =====
+// Replace the existing TRANSLATIONS object with this complete version
+
 const TRANSLATIONS = {
     english: {
         welcome: {
@@ -196,6 +199,51 @@ const TRANSLATIONS = {
             true: "True",
             false: "False",
             submit: "Submit Answers"
+        },
+        perception: {
+            title: "Your Experience with the Bundle",
+            subtitle: "Share your thoughts about the insurance and farming bundle you experienced",
+            q1: "How much did the bundle (insurance + inputs) influence your farming decisions?",
+            q2: "How well do you understand how weather index insurance works?",
+            q3: "Would you be willing to pay for this bundle in real life?",
+            q4: "How likely are you to recommend this bundle to other farmers?",
+            q5: "Do you think the insurance payouts were fair?",
+            q6: "How much do you trust that insurance companies would pay out in real life?",
+            q7: "How valuable was getting insurance AND farming inputs together in one package?",
+            q8: "If this bundle was available next season, how likely would you be to use it?",
+            notAtAll: "Not at all",
+            veryMuch: "Very much",
+            dontUnderstand: "Don't understand at all",
+            understandCompletely: "Understand completely",
+            yes: "Yes",
+            no: "No",
+            veryUnlikely: "Very unlikely",
+            veryLikely: "Very likely",
+            veryUnfair: "Very unfair",
+            veryFair: "Very fair",
+            dontTrust: "Don't trust at all",
+            trustCompletely: "Trust completely",
+            notValuable: "Not valuable at all",
+            extremelyValuable: "Extremely valuable",
+            definitelyNot: "Definitely not",
+            definitelyYes: "Definitely yes",
+            submit: "Submit Assessment"
+        },
+        couple: {
+            title: "About Your Marriage",
+            subtitle: "Before you begin playing together, please answer these questions",
+            marriageDuration: "How long have you been married?",
+            lessThan1: "Less than 1 year",
+            years12: "1-2 years",
+            years35: "3-5 years",
+            years610: "6-10 years",
+            years1115: "11-15 years",
+            years1620: "16-20 years",
+            moreThan20: "More than 20 years",
+            numberOfChildren: "How many children do you have?",
+            enterNumber: "Enter number of children",
+            rememberInfo: "Remember: You will now make decisions together. Discuss each choice and reach agreement before proceeding.",
+            startSession: "Start Couple Session"
         },
         results: {
             title: "Game Completed!",
@@ -368,6 +416,51 @@ const TRANSLATIONS = {
             false: "Bani",
             submit: "Ti Pahi"
         },
+        perception: {
+            title: "Yi Lahi Bundle Zaa",
+            subtitle: "Pahi yi lahi insurance ni puuni di bundle ni yi nya",
+            q1: "Bundle (insurance + puuni di) nyɛ yi puuni chɛŋa lahiri?",
+            q2: "Yi lahi saŋa insurance niŋi lahiri?",
+            q3: "Yi di mali bundle ŋɔ ka yɛl tiŋa?",
+            q4: "Yi pahi din puunima ka sa bundle ŋɔ lahiri?",
+            q5: "Yi lahi insurance mali yɛlni?",
+            q6: "Yi lahi insurance company be di lahiri?",
+            q7: "Insurance NI puuni di bee yɛlni lahiri?",
+            q8: "Ka bundle ŋɔ yɛl kpeeni din, yi sa lahiri?",
+            notAtAll: "Kani",
+            veryMuch: "Pam",
+            dontUnderstand: "Mi ka lahi kani",
+            understandCompletely: "Mi lahi pam",
+            yes: "Yɔɔ",
+            no: "Ayi",
+            veryUnlikely: "Kani pam",
+            veryLikely: "Yɛlni pam",
+            veryUnfair: "Ka yɛl kani pam",
+            veryFair: "Yɛlni pam",
+            dontTrust: "Mi ka lahi kani",
+            trustCompletely: "Mi lahi pam",
+            notValuable: "Ka yɛlni kani",
+            extremelyValuable: "Yɛlni pam",
+            definitelyNot: "Kani tiŋa",
+            definitelyYes: "Yɛlni tiŋa",
+            submit: "Ti Pahi"
+        },
+        couple: {
+            title: "Yi Yuɣu Zaŋ",
+            subtitle: "Ni ka yi dɔɣi ayi bee, ti pahi zaŋa di",
+            marriageDuration: "Yiŋa lahira ni yi yuɣu?",
+            lessThan1: "Kpɛ yiŋa 1",
+            years12: "Yiŋa 1-2",
+            years35: "Yiŋa 3-5",
+            years610: "Yiŋa 6-10",
+            years1115: "Yiŋa 11-15",
+            years1620: "Yiŋa 16-20",
+            moreThan20: "Yiŋa 20 pam",
+            numberOfChildren: "Bihi lahira ni yi nya?",
+            enterNumber: "Ti bihi nimdi",
+            rememberInfo: "Lahiri: Yi be chɛm chɛŋa bee. Pahi ni yi chɛ chɛŋa ni yi ti dɔɣi.",
+            startSession: "Ti Dɔɣi Bee Ayi"
+        },
         results: {
             title: "Ayi Ti Pahi!",
             subtitle: "Yi chɛŋa lahira",
@@ -390,6 +483,7 @@ const TRANSLATIONS = {
         }
     }
 };
+
 
 
 
@@ -2410,6 +2504,9 @@ function handleSwipe() {
 // Add this function to your game.js
 
 // ===== LANGUAGE TOGGLE FUNCTION =====
+// ===== UPDATED updateLanguage FUNCTION =====
+// Replace the existing updateLanguage function with this complete version
+
 function updateLanguage(language) {
     console.log('🌍 Changing language to:', language);
     gameState.language = language;
@@ -2447,6 +2544,8 @@ function updateLanguage(language) {
     updateRiskScreenLang();
     updateEmpowermentScreenLang();
     updateKnowledgeScreenLang();
+    updatePerceptionScreenLang();      // NEW - Added
+    updateCoupleQuestionsLang();       // NEW - Added
     updateResultsScreenLang();
     
     // Refresh current screen if needed
@@ -2460,6 +2559,8 @@ function updateLanguage(language) {
     
     console.log('✅ Language updated to:', language);
 }
+
+
 
 function updateWelcomeScreenLang() {
     // Most content handled by data-translate attributes

@@ -1674,3 +1674,1111 @@ button:disabled {
         --text-secondary: #2A2A2A;
     }
 }
+
+
+
+/* ===== RESPONSIVE DESIGN ADD-ON - APPEND TO END OF EXISTING game.css ===== */
+/* Copy everything below and paste at the very end of your game.css file */
+
+/* ===== BASE RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 1200px) {
+    body {
+        min-width: 320px;
+        max-width: 100%;
+    }
+}
+
+/* ===== TABLET LANDSCAPE (768px - 1024px) ===== */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+    body {
+        font-size: 16px;
+    }
+    
+    .screen {
+        padding: 24px 16px;
+    }
+    
+    .form-container {
+        max-width: 95%;
+        padding: 24px;
+    }
+    
+    /* Welcome Screen */
+    .welcome-hero {
+        padding: 24px;
+    }
+    
+    .hero-icon-large {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .hero-icon-large i {
+        font-size: 70px;
+    }
+    
+    .welcome-hero h1 {
+        font-size: clamp(28px, 5vw, 38px);
+    }
+    
+    .feature-icon-circle {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .feature-icon-circle i {
+        font-size: 40px;
+    }
+    
+    .cta-button-large {
+        min-width: 280px;
+        min-height: 60px;
+        font-size: 20px;
+        padding: 16px 24px;
+    }
+    
+    /* Tutorial Cards */
+    .tutorial-card-enhanced {
+        width: 90%;
+        max-width: 600px;
+        padding: 24px;
+    }
+    
+    .tutorial-card-icon {
+        font-size: 60px;
+    }
+    
+    .tutorial-card-title {
+        font-size: 24px;
+    }
+    
+    .tutorial-card-content {
+        font-size: 18px;
+    }
+    
+    /* Game Screen */
+    .budget-amount {
+        font-size: 32px;
+    }
+    
+    .item-header i {
+        font-size: 32px;
+    }
+    
+    .item-input input {
+        width: 120px;
+        font-size: 18px;
+        min-height: 50px;
+    }
+    
+    /* Outcome Cards */
+    .outcome-card {
+        padding: 24px;
+    }
+    
+    .outcome-card i {
+        font-size: 44px;
+    }
+    
+    .outcome-value {
+        font-size: 28px;
+    }
+}
+
+/* ===== TABLET PORTRAIT (768px - 1024px) ===== */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+    body {
+        font-size: 18px;
+        min-width: 320px;
+    }
+    
+    .screen {
+        padding: 32px 16px;
+    }
+    
+    .form-container {
+        max-width: 95%;
+    }
+    
+    /* Welcome Screen */
+    .feature-cards-enhanced {
+        grid-template-columns: 1fr;
+        max-width: 600px;
+    }
+    
+    .feature-card-enhanced {
+        padding: 24px;
+    }
+    
+    /* Tutorial */
+    .tutorial-card-enhanced {
+        width: 90%;
+        max-width: 600px;
+    }
+    
+    /* Option Cards */
+    .option-cards {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .option-content {
+        min-height: 200px;
+    }
+    
+    /* Outcome Cards */
+    .outcome-cards {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+    
+    /* Results Grid */
+    .results-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+    
+    /* Likert Scale */
+    .likert-scale {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .likert-scale label {
+        min-width: 45%;
+    }
+}
+
+/* ===== MOBILE LANDSCAPE (481px - 767px) ===== */
+@media (min-width: 481px) and (max-width: 767px) and (orientation: landscape) {
+    body {
+        font-size: 14px;
+        min-width: 320px;
+    }
+    
+    .screen {
+        padding: 16px;
+    }
+    
+    .form-container {
+        padding: 16px;
+    }
+    
+    h1 {
+        font-size: clamp(24px, 4vw, 32px);
+    }
+    
+    h2 {
+        font-size: clamp(20px, 3.5vw, 26px);
+    }
+    
+    /* Welcome Screen */
+    .welcome-hero {
+        padding: 16px;
+    }
+    
+    .hero-icon-large {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .hero-icon-large i {
+        font-size: 60px;
+    }
+    
+    .feature-cards-enhanced {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+    
+    .feature-card-enhanced {
+        padding: 16px;
+    }
+    
+    .feature-icon-circle {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .feature-icon-circle i {
+        font-size: 32px;
+    }
+    
+    .feature-card-enhanced h3 {
+        font-size: 16px;
+    }
+    
+    .feature-card-enhanced p {
+        font-size: 13px;
+    }
+    
+    .cta-button-large {
+        min-width: 220px;
+        min-height: 50px;
+        font-size: 16px;
+        padding: 12px 16px;
+    }
+    
+    /* Language Toggle */
+    .lang-btn {
+        padding: 8px 16px;
+        min-height: 44px;
+        font-size: 14px;
+    }
+    
+    .lang-btn i {
+        font-size: 18px;
+    }
+    
+    /* Forms */
+    .form-group input,
+    .form-group select {
+        min-height: 48px;
+        font-size: 16px;
+        padding: 12px;
+    }
+    
+    .btn-primary, .btn-secondary {
+        min-height: 50px;
+        font-size: 16px;
+        padding: 12px 16px;
+    }
+    
+    .btn-large {
+        min-height: 56px;
+        font-size: 18px;
+    }
+    
+    /* Tutorial */
+    .tutorial-card-enhanced {
+        width: 95%;
+        padding: 16px;
+    }
+    
+    .tutorial-card-icon {
+        font-size: 50px;
+    }
+    
+    .tutorial-card-title {
+        font-size: 20px;
+    }
+    
+    .tutorial-card-content {
+        font-size: 15px;
+    }
+    
+    .tutorial-nav-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+    
+    /* Game Screen */
+    .round-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .budget-amount {
+        font-size: 28px;
+    }
+    
+    .allocation-item {
+        flex-direction: column;
+        padding: 16px;
+    }
+    
+    .item-input {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .item-input input {
+        width: 100px;
+        font-size: 16px;
+    }
+    
+    /* Outcome Cards */
+    .outcome-cards {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .outcome-card {
+        padding: 16px;
+    }
+    
+    .outcome-card i {
+        font-size: 40px;
+    }
+    
+    .outcome-value {
+        font-size: 24px;
+    }
+    
+    /* Results */
+    .results-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .celebration-animation {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .celebration-animation i {
+        font-size: 60px;
+    }
+}
+
+/* ===== MOBILE PORTRAIT (320px - 767px) ===== */
+@media (max-width: 767px) and (orientation: portrait) {
+    body {
+        font-size: 16px;
+        min-width: 320px;
+    }
+    
+    .screen {
+        padding: 16px;
+        min-height: auto;
+    }
+    
+    .screen.active {
+        padding-top: 24px;
+    }
+    
+    .form-container {
+        padding: 16px;
+    }
+    
+    h1 {
+        font-size: clamp(26px, 7vw, 36px);
+    }
+    
+    h2 {
+        font-size: clamp(22px, 6vw, 30px);
+    }
+    
+    h3 {
+        font-size: clamp(18px, 5vw, 24px);
+    }
+    
+    p {
+        font-size: 16px;
+    }
+    
+    /* Language Toggle */
+    .language-toggle {
+        top: 12px;
+        right: 12px;
+    }
+    
+    .lang-btn {
+        padding: 8px 16px;
+        min-height: 48px;
+        font-size: 16px;
+    }
+    
+    .lang-btn i {
+        font-size: 20px;
+    }
+    
+    /* Welcome Screen */
+    .welcome-hero {
+        padding: 16px;
+    }
+    
+    .hero-icon-large {
+        width: 120px;
+        height: 120px;
+        margin-bottom: 16px;
+    }
+    
+    .hero-icon-large i {
+        font-size: 70px;
+    }
+    
+    .welcome-hero h1 {
+        font-size: clamp(28px, 8vw, 40px);
+        margin-bottom: 16px;
+    }
+    
+    .welcome-hero .subtitle {
+        font-size: clamp(16px, 4vw, 20px);
+        margin-bottom: 24px;
+    }
+    
+    .feature-cards-enhanced {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 0 16px 24px;
+    }
+    
+    .feature-card-enhanced {
+        padding: 24px;
+    }
+    
+    .feature-icon-circle {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 16px;
+    }
+    
+    .feature-icon-circle i {
+        font-size: 40px;
+    }
+    
+    .feature-card-enhanced h3 {
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+    
+    .feature-card-enhanced p {
+        font-size: 15px;
+    }
+    
+    .cta-button-large {
+        width: 100%;
+        max-width: 400px;
+        min-height: 60px;
+        font-size: 18px;
+        padding: 16px 24px;
+        margin: 24px auto;
+    }
+    
+    .cta-button-large i {
+        font-size: 22px;
+    }
+    
+    /* Progress Header */
+    .progress-bar {
+        height: 8px;
+    }
+    
+    .progress-text {
+        font-size: 14px;
+    }
+    
+    /* Forms */
+    .game-form {
+        gap: 16px;
+    }
+    
+    .form-group {
+        gap: 8px;
+    }
+    
+    .form-group label {
+        font-size: 16px;
+    }
+    
+    .form-group input,
+    .form-group select {
+        min-height: 52px;
+        font-size: 16px;
+        padding: 16px;
+    }
+    
+    /* Checkboxes and Radios */
+    .checkbox-group,
+    .radio-group {
+        gap: 8px;
+    }
+    
+    .checkbox-group label,
+    .radio-group label {
+        min-height: 52px;
+        font-size: 16px;
+        padding: 12px 16px;
+    }
+    
+    .checkbox-group input,
+    .radio-group input {
+        width: 24px;
+        height: 24px;
+    }
+    
+    /* Option Cards */
+    .option-cards {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .option-content {
+        padding: 24px;
+        min-height: 180px;
+    }
+    
+    .option-content i {
+        font-size: 48px;
+        margin-bottom: 12px;
+    }
+    
+    .option-content h4 {
+        font-size: 18px;
+        margin-bottom: 6px;
+    }
+    
+    .option-content p {
+        font-size: 14px;
+    }
+    
+    /* Rating Scale */
+    .rating-scale {
+        gap: 8px;
+    }
+    
+    .rating-scale label {
+        min-height: 48px;
+        font-size: 16px;
+    }
+    
+    .rating-scale input {
+        width: 24px;
+        height: 24px;
+    }
+    
+    /* Empowerment Questions */
+    .empowerment-questions {
+        gap: 24px;
+    }
+    
+    .question-item {
+        padding: 16px;
+    }
+    
+    .question-item p {
+        font-size: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .likert-scale {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+    }
+    
+    .likert-scale label {
+        flex: 0 0 calc(20% - 6px);
+        min-width: 60px;
+        padding: 12px;
+    }
+    
+    .likert-scale input {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .likert-scale span {
+        font-size: 16px;
+    }
+    
+    .scale-labels {
+        font-size: 12px;
+    }
+    
+    /* Buttons */
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        min-height: 56px;
+        font-size: 18px;
+        padding: 16px 24px;
+    }
+    
+    .btn-large {
+        min-height: 64px;
+        font-size: 20px;
+    }
+    
+    /* Tutorial */
+    .tutorial-container-enhanced {
+        padding: 16px;
+    }
+    
+    .skip-tutorial-btn {
+        top: 6px;
+        right: 6px;
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+    
+    .treatment-badge {
+        padding: 12px 16px;
+        font-size: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .card-stack-wrapper {
+        min-height: 400px;
+        margin: 24px 0;
+    }
+    
+    .tutorial-card-stack {
+        height: 400px;
+    }
+    
+    .tutorial-card-enhanced {
+        width: 95%;
+        max-width: 100%;
+        padding: 24px;
+    }
+    
+    .tutorial-card-icon {
+        font-size: 60px;
+        margin-bottom: 16px;
+    }
+    
+    .tutorial-card-title {
+        font-size: 22px;
+        margin-bottom: 12px;
+    }
+    
+    .tutorial-card-content {
+        font-size: 17px;
+        line-height: 1.6;
+    }
+    
+    .tutorial-card-timer {
+        margin-top: 16px;
+        font-size: 26px;
+    }
+    
+    .tutorial-nav-controls {
+        gap: 16px;
+        margin-top: 24px;
+    }
+    
+    .tutorial-nav-btn {
+        width: 52px;
+        height: 52px;
+        font-size: 22px;
+    }
+    
+    .progress-dot {
+        width: 10px;
+        height: 10px;
+    }
+    
+    .progress-dot.active {
+        width: 24px;
+    }
+    
+    .tutorial-finish-btn {
+        margin: 24px auto 0;
+        padding: 16px 24px;
+        font-size: 18px;
+        width: 100%;
+        max-width: 400px;
+    }
+    
+    .tutorial-help {
+        margin-top: 16px;
+        font-size: 14px;
+        padding: 0 16px;
+    }
+    
+    /* Game Screen */
+    .game-container {
+        max-width: 100%;
+    }
+    
+    .round-header {
+        flex-direction: column;
+        padding: 16px;
+        gap: 16px;
+    }
+    
+    .round-info h3 {
+        font-size: 22px;
+    }
+    
+    .round-info p {
+        font-size: 14px;
+    }
+    
+    .budget-display {
+        text-align: center;
+    }
+    
+    .budget-display label {
+        font-size: 14px;
+    }
+    
+    .budget-amount {
+        font-size: 36px;
+    }
+    
+    .budget-amount small {
+        font-size: 18px;
+    }
+    
+    /* Story Panel */
+    .story-panel {
+        padding: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .story-content {
+        gap: 12px;
+    }
+    
+    .story-content i {
+        font-size: 24px;
+    }
+    
+    .story-content p {
+        font-size: 16px;
+    }
+    
+    /* Allocation */
+    .allocation-container {
+        padding: 24px;
+    }
+    
+    .allocation-container h3 {
+        font-size: 22px;
+        margin-bottom: 16px;
+    }
+    
+    .allocation-item {
+        flex-direction: column;
+        padding: 16px;
+        gap: 16px;
+    }
+    
+    .item-header {
+        gap: 12px;
+    }
+    
+    .item-header i {
+        font-size: 36px;
+    }
+    
+    .item-info h4 {
+        font-size: 18px;
+        margin-bottom: 6px;
+    }
+    
+    .item-info p {
+        font-size: 14px;
+    }
+    
+    .item-input {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .item-input input {
+        width: 120px;
+        font-size: 18px;
+        min-height: 52px;
+    }
+    
+    .item-input .currency {
+        font-size: 18px;
+    }
+    
+    /* Bundle Specific */
+    .bundle-badge {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+    
+    .bundle-checkbox {
+        padding: 16px;
+        font-size: 16px;
+        min-height: 52px;
+    }
+    
+    .bundle-checkbox input[type="checkbox"] {
+        width: 28px;
+        height: 28px;
+    }
+    
+    /* Allocation Summary */
+    .allocation-summary {
+        padding: 16px;
+        margin: 16px 0;
+    }
+    
+    .summary-row {
+        font-size: 18px;
+        padding: 6px 0;
+    }
+    
+    .summary-row:last-child {
+        font-size: 20px;
+        padding-top: 12px;
+    }
+    
+    /* Weather Screen */
+    .weather-container {
+        max-width: 100%;
+        padding: 24px 16px;
+    }
+    
+    .weather-animation {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto 24px;
+        font-size: 100px;
+    }
+    
+    #weatherTitle {
+        font-size: 26px;
+        margin-bottom: 16px;
+    }
+    
+    #weatherDescription {
+        font-size: 16px;
+        line-height: 1.7;
+        margin: 24px auto;
+        padding: 16px;
+    }
+    
+    .outcome-cards {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin: 24px 0;
+    }
+    
+    .outcome-card {
+        padding: 24px;
+    }
+    
+    .outcome-card i {
+        font-size: 48px;
+        margin-bottom: 12px;
+    }
+    
+    .outcome-card h4 {
+        font-size: 14px;
+        margin-bottom: 12px;
+    }
+    
+    .outcome-value {
+        font-size: 30px;
+    }
+    
+    .outcome-value.highlight {
+        font-size: 36px;
+    }
+    
+    #nextRoundBtn {
+        width: 100%;
+        max-width: 400px;
+        margin-top: 24px;
+    }
+    
+    /* Knowledge Test */
+    .question-block {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    
+    .question-text {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+    
+    /* Results Screen */
+    .results-container {
+        max-width: 100%;
+        padding: 16px;
+    }
+    
+    .celebration-animation {
+        width: 120px;
+        height: 120px;
+        margin-bottom: 16px;
+    }
+    
+    .celebration-animation i {
+        font-size: 70px;
+    }
+    
+    .results-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin: 24px 0;
+    }
+    
+    .result-card {
+        padding: 24px;
+    }
+    
+    .result-card i {
+        font-size: 48px;
+        margin-bottom: 12px;
+    }
+    
+    .result-card h4 {
+        font-size: 14px;
+        margin-bottom: 12px;
+    }
+    
+    .result-value {
+        font-size: 30px;
+    }
+    
+    .insights-panel {
+        padding: 24px;
+        margin: 24px 0;
+    }
+    
+    .insights-panel h3 {
+        font-size: 22px;
+        margin-bottom: 16px;
+    }
+    
+    .insights-panel ul {
+        font-size: 15px;
+    }
+    
+    #restartBtn {
+        width: 100%;
+        max-width: 400px;
+    }
+}
+
+/* ===== VERY SMALL MOBILE (320px - 480px) ===== */
+@media (max-width: 480px) {
+    body {
+        font-size: 15px;
+    }
+    
+    h1 {
+        font-size: clamp(24px, 7vw, 32px);
+    }
+    
+    h2 {
+        font-size: clamp(20px, 6vw, 26px);
+    }
+    
+    .hero-icon-large {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .hero-icon-large i {
+        font-size: 60px;
+    }
+    
+    .feature-icon-circle {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .feature-icon-circle i {
+        font-size: 36px;
+    }
+    
+    .cta-button-large {
+        font-size: 16px;
+        min-height: 56px;
+    }
+    
+    .tutorial-card-icon {
+        font-size: 50px;
+    }
+    
+    .tutorial-card-title {
+        font-size: 20px;
+    }
+    
+    .tutorial-card-content {
+        font-size: 15px;
+    }
+    
+    .budget-amount {
+        font-size: 30px;
+    }
+    
+    .item-input input {
+        width: 100px;
+        font-size: 16px;
+    }
+    
+    .outcome-value {
+        font-size: 26px;
+    }
+    
+    .outcome-value.highlight {
+        font-size: 32px;
+    }
+    
+    .likert-scale label {
+        flex: 0 0 calc(33.33% - 6px);
+        min-width: 90px;
+    }
+}
+
+/* ===== FIX FOR INPUT ZOOM ON iOS ===== */
+@media (max-width: 767px) {
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* ===== TOUCH OPTIMIZATION ===== */
+@media (hover: none) and (pointer: coarse) {
+    /* Larger touch targets */
+    button,
+    .btn-primary,
+    .btn-secondary,
+    input[type="checkbox"],
+    input[type="radio"],
+    .option-card,
+    .bundle-checkbox,
+    .tutorial-nav-btn {
+        min-height: 48px;
+    }
+    
+    /* Remove hover effects on touch devices */
+    .feature-card-enhanced:hover,
+    .option-card:hover,
+    .allocation-item:hover,
+    .tutorial-nav-btn:hover {
+        transform: none;
+        box-shadow: 0 4px 8px rgba(0, 107, 63, 0.1);
+    }
+    
+    /* Use active state instead */
+    .feature-card-enhanced:active,
+    .option-card:active,
+    .allocation-item:active {
+        transform: scale(0.98);
+    }
+}
+
+/* ===== LANDSCAPE WARNING FOR VERY SMALL SCREENS ===== */
+@media (max-height: 500px) and (orientation: landscape) {
+    .tutorial-card-stack {
+        height: 350px;
+    }
+    
+    .tutorial-card-enhanced {
+        padding: 16px;
+    }
+    
+    .tutorial-card-icon {
+        font-size: 40px;
+        margin-bottom: 12px;
+    }
+    
+    .tutorial-card-title {
+        font-size: 18px;
+        margin-bottom: 6px;
+    }
+    
+    .tutorial-card-content {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+}
