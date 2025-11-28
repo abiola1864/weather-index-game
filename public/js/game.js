@@ -34,6 +34,414 @@ let gameState = {
     }
 };
 
+
+
+// ===== DAGBANI TRANSLATIONS =====
+// Add this object at the top of your game.js file (after gameState)
+
+// ===============================================
+// CONSOLIDATED FIX FOR game.js
+// Copy and replace the relevant sections
+// ===============================================
+
+// ===== 1. REPLACE THE TRANSLATIONS OBJECT =====
+// Find the existing TRANSLATIONS object and replace it with this:
+
+const TRANSLATIONS = {
+    english: {
+        welcome: {
+            title: "Farming Decisions Game",
+            subtitle: "Make important decisions for your farm and family across 4 seasons",
+            seasons: "4 Farming Seasons",
+            seasonsDesc: "Experience different challenges and make strategic choices each season",
+            decisions: "Real Trade-offs",
+            decisionsDesc: "Balance farm investments, education, and household needs with limited resources",
+            weather: "Weather Challenges",
+            weatherDesc: "Face unpredictable weather that affects your harvest and livelihood",
+            startBtn: "Begin Your Journey"
+        },
+        demographics: {
+            title: "Tell Us About Yourself",
+            gender: "Gender",
+            male: "Male",
+            female: "Female",
+            role: "Role in Household",
+            husband: "Husband",
+            wife: "Wife",
+            age: "Age (years)",
+            education: "Highest Education Level",
+            noSchooling: "No schooling",
+            primary: "Primary",
+            jhs: "Junior High School (JHS)",
+            shs: "Senior High School (SHS)",
+            tertiary: "Tertiary/Technical",
+            farmingYears: "Years of Farming Experience",
+            land: "Land Cultivated (acres)",
+            crops: "Main Crops (select all that apply)",
+            maize: "Maize",
+            rice: "Rice",
+            soybeans: "Soybeans",
+            groundnuts: "Groundnuts",
+            other: "Other",
+            income: "Last Season Income (GHS)",
+            priorKnowledge: "Have you heard about weather index insurance before?"
+        },
+        risk: {
+            title: "Understanding Your Risk Preferences",
+            scenario: "If you had to choose between these two options:",
+            guaranteed: "Guaranteed 200 GHS",
+            guaranteedDesc: "You receive 200 GHS for sure",
+            chance: "Take a Chance",
+            chanceDesc: "50% chance of 450 GHS or nothing",
+            comfort: "How comfortable are you with financial risks?",
+            notAtAll: "1 - Not at all",
+            level2: "2",
+            neutral: "3 - Neutral",
+            level4: "4",
+            veryComfortable: "5 - Very comfortable",
+            decisionMaker: "Who usually makes major farm investment decisions?",
+            mainlyHusband: "Mainly husband",
+            mainlyWife: "Mainly wife",
+            joint: "Joint decisions",
+            otherMember: "Another household member"
+        },
+        empowerment: {
+            title: "Decision Making in Your Household",
+            subtitle: "Please indicate your level of agreement with each statement",
+            q1: "I have a say in decisions about which crops to plant",
+            q2: "I help decide how money earned from farming is used",
+            q3: "I can decide whether we buy inputs each season",
+            q4: "My opinion is considered in financial matters",
+            q5: "I feel confident expressing my preferences",
+            stronglyDisagree: "Strongly Disagree",
+            stronglyAgree: "Strongly Agree"
+        },
+        game: {
+            season: "Season",
+            budget: "Your Budget",
+            allocateTitle: "How will you spend your money?",
+            insurance: "Weather Insurance",
+            insuranceDesc: "Protection against bad weather",
+            bundleFertilizer: "Weather Insurance + Fertilizer Bundle",
+            bundleSeeds: "Weather Insurance + Improved Seeds Bundle",
+            bundleDescFertilizer: "Insurance protection PLUS 2 bags of NPK fertilizer",
+            bundleDescSeeds: "Insurance protection PLUS hybrid maize seeds",
+            fixedPrice: "Fixed Price",
+            buyInsurance: "Buy Insurance",
+            buyBundle: "Buy Bundle",
+            chooseInput: "Choose ONE farm input to receive with insurance:",
+            selectInputType: "-- Select Input Type --",
+            improvedSeeds: "🌱 Improved Seeds (drought-resistant)",
+            npkFertilizer: "🌾 NPK Fertilizer (2 bags)",
+            selectInputWarning: "⚠️ Please select an input type before submitting",
+            inputs: "Additional Farm Inputs",
+            inputsDesc: "Extra seeds, tools, labor",
+            education: "Education",
+            educationDesc: "School fees, books",
+            household: "Household Needs",
+            householdDesc: "Food, clothing, other needs",
+            total: "Total Spent:",
+            remaining: "Remaining:",
+            submitBtn: "Submit Allocation",
+            individualPlay: "Individual Play",
+            husbandPlaying: "👨 Husband Playing Alone",
+            wifePlaying: "👩 Wife Playing Alone",
+            couplePlaying: "👫 Couple Playing Together"
+        },
+        weather: {
+            goodTitle: "Good Weather!",
+            goodDesc: "Normal rainfall. Your crops grew well!",
+            mildDroughtTitle: "Mild Drought",
+            mildDroughtDesc: "Below average rainfall affected your harvest.",
+            severeDroughtTitle: "Severe Drought!",
+            severeDroughtDesc: "Very low rainfall. Major crop damage.",
+            floodTitle: "Flooding!",
+            floodDesc: "Heavy rains damaged crops.",
+            harvest: "Harvest Outcome",
+            insurancePayout: "Insurance Payout",
+            finalIncome: "Final Income",
+            continueNext: "Continue to Next Season",
+            continueKnowledge: "Continue to Knowledge Test",
+            completeFeedback: "Complete & Share Feedback",
+            harvestBoost: "Your harvest was boosted by 50% (1.5x).",
+            harvestReduced70: "Your harvest was reduced to 70% of normal.",
+            harvestReduced30: "Your harvest was reduced to only 30% of normal.",
+            harvestReduced50: "Your harvest was reduced to 50% of normal.",
+            insurancePaidOut: "Your insurance paid out {multiplier}x what you paid ({paid} GHS → {received} GHS)!",
+            noPayoutNeeded: "No insurance payout needed - weather was good.",
+            noInsurance: "You didn't buy insurance this season.",
+            insuranceProtected: "💚 Insurance Protected You!",
+            insuranceReturn: "You paid {paid} GHS → Got {received} GHS back = {multiplier}x return!",
+            takeTime: "Take your time to review the results before continuing"
+        },
+        seasons: {
+            s1Name: "Planting Season - March",
+            s1Story: "The planting season begins. You have 500 GHS to prepare for farming.",
+            s2Name: "Growing Season - May",
+            s2Story: "Your crops are growing. Some neighbors talk about weather patterns. Budget: 550 GHS.",
+            s3Name: "Mid-Season - July",
+            s3Story: "Weather reports are mixed. Many farmers are concerned. You must decide wisely. Budget: 600 GHS.",
+            s4Name: "Final Season - September",
+            s4Story: "⚠️ FINAL SEASON! The rains are unpredictable. Your family's future depends on this decision! Budget: 650 GHS.",
+            finalWarning: "⚠️ FINAL SEASON! This decision counts! ⚠️"
+        },
+        knowledge: {
+            title: "Test Your Understanding",
+            subtitle: "Answer these questions about weather index insurance",
+            q1: "Weather index insurance pays out based on rainfall conditions, not on whether my own farm was damaged.",
+            q2: "If there is a drought according to the index, all insured farmers in the area receive payouts.",
+            q3: "Insurance guarantees that I will earn more profit every season.",
+            q4: "The cost of insurance is paid before the farming season begins.",
+            q5: "It is possible to receive no payout even if my harvest is poor, if rainfall conditions were normal.",
+            true: "True",
+            false: "False",
+            submit: "Submit Answers"
+        },
+        results: {
+            title: "Game Completed!",
+            subtitle: "Here's how you performed",
+            firstPartnerComplete: "First Partner Complete!",
+            secondPartnerComplete: "Second Partner Complete!",
+            totalEarnings: "Total Earnings",
+            insuranceSpent: "Insurance Spent",
+            payoutsReceived: "Payouts Received",
+            knowledgeScore: "Knowledge Score",
+            insights: "Key Insights",
+            playAgain: "Play Again",
+            startNew: "Start New Game"
+        },
+        common: {
+            continue: "Continue",
+            loading: "Loading...",
+            yes: "Yes",
+            no: "No",
+            select: "Select..."
+        }
+    },
+    
+    dagbani: {
+        welcome: {
+            title: "Puuni Chɛŋa Ayi",
+            subtitle: "Ti chɛm zugu bee ni yi puuni ni yi doo yuli kpeeni 4",
+            seasons: "Puuni Kpeeni 4",
+            seasonsDesc: "Yi nya lahira gbɛma bee yi chɛm chɛŋa kpeeni pam zaa",
+            decisions: "Chɛŋa Tiŋa",
+            decisionsDesc: "Ti yi puuni di, karimi ni doo yuli di maa bee mali ŋmani",
+            weather: "Saŋa Lahira",
+            weatherDesc: "Yi saŋa ni ka yɛl yini ka ni yi puuni",
+            startBtn: "Ti Dɔɣi"
+        },
+        demographics: {
+            title: "Ti Pam Yi Yɛltɔɣa",
+            gender: "Sabinima",
+            male: "Niriba",
+            female: "Puhima",
+            role: "Yi Yuli Doo Zaa",
+            husband: "O Yidana",
+            wife: "O Paga",
+            age: "Yi Himɔɣu (Yiŋa)",
+            education: "Karimi Ni Yi Nya",
+            noSchooling: "Ban karimi",
+            primary: "Primary",
+            jhs: "JHS",
+            shs: "SHS",
+            tertiary: "Tertiary/Technical",
+            farmingYears: "Yiŋa Ni Yi Puuni",
+            land: "Tɔɣim Ni Yi Puuni (acres)",
+            crops: "Yi Puuni Ni Yi Chɛ (chɛ zaa)",
+            maize: "Zaamnɛ",
+            rice: "Mɔɣu",
+            soybeans: "Soya",
+            groundnuts: "Suma",
+            other: "Din",
+            income: "Mali Ni Yi Nya Kpeeni Zaŋ Pam (GHS)",
+            priorKnowledge: "Yi lahi saŋa insurance zaŋ?"
+        },
+        risk: {
+            title: "Yi Lahira Chɛŋa",
+            scenario: "Ka yi chɛm ni ayi zuɣu:",
+            guaranteed: "200 GHS Ni Yɛlni",
+            guaranteedDesc: "Yi nya 200 GHS tiŋa",
+            chance: "Ti Nya Lahira",
+            chanceDesc: "50% yi nya 450 GHS bee ka mali",
+            comfort: "Yi lahiri saŋa mali?",
+            notAtAll: "1 - Kani",
+            level2: "2",
+            neutral: "3 - Neutral",
+            level4: "4",
+            veryComfortable: "5 - Yɛlni pam",
+            decisionMaker: "Ŋun ni chɛ chɛŋa puuni di?",
+            mainlyHusband: "O yidana pam",
+            mainlyWife: "O paga pam",
+            joint: "Bee nya",
+            otherMember: "Din bi"
+        },
+        empowerment: {
+            title: "Chɛŋa Yi Doo Zaa",
+            subtitle: "Ti pahi ka yi lahiri",
+            q1: "Mi chɛŋi puuni ni mi chɛ",
+            q2: "Mi chɛŋi mali ni mi nya puuni",
+            q3: "Mi chɛŋi ka mi sa puuni di",
+            q4: "Ban lahiri mi chɛŋa mali zaa",
+            q5: "Mi lahiri ka mi pahi mi lahi",
+            stronglyDisagree: "Mi ka lahiri kani",
+            stronglyAgree: "Mi lahiri pam"
+        },
+        game: {
+            season: "Kpeeni",
+            budget: "Yi Mali",
+            allocateTitle: "Ka yi sa yi mali lahiri?",
+            insurance: "Saŋa Insurance",
+            insuranceDesc: "Saŋa nyɛlibu",
+            bundleFertilizer: "Saŋa Insurance + Fertilizer",
+            bundleSeeds: "Saŋa Insurance + Zaamnɛ Nyɛlibu",
+            bundleDescFertilizer: "Insurance ni NPK fertilizer baga ayi",
+            bundleDescSeeds: "Insurance ni zaamnɛ nyɛlibu",
+            fixedPrice: "Mali Tiŋa",
+            buyInsurance: "Sa Insurance",
+            buyBundle: "Sa Bundle",
+            chooseInput: "Chɛ puuni di ni yi nya insurance:",
+            selectInputType: "-- Chɛ Di --",
+            improvedSeeds: "🌱 Zaamnɛ Nyɛlibu",
+            npkFertilizer: "🌾 NPK Fertilizer (baga ayi)",
+            selectInputWarning: "⚠️ Chɛ puuni di ni yi pahi",
+            inputs: "Puuni Di Din",
+            inputsDesc: "Zaamnɛ, tools, niŋa",
+            education: "Karimi",
+            educationDesc: "Karimi mali, buka",
+            household: "Doo Yuli",
+            householdDesc: "Dimi, suhiya, din bee",
+            total: "Zaa:",
+            remaining: "Ni Yɛm:",
+            submitBtn: "Ti Di",
+            individualPlay: "Yi Yɛɣini Ayi",
+            husbandPlaying: "👨 O Yidana Ayi",
+            wifePlaying: "👩 O Paga Ayi",
+            couplePlaying: "👫 Bee Nya Ayi"
+        },
+        weather: {
+            goodTitle: "Saŋa Nyɛlibu!",
+            goodDesc: "Koom ŋmani. Yi puuni nya nyɛlibu!",
+            mildDroughtTitle: "Koom Kpɛrigu",
+            mildDroughtDesc: "Koom ban ŋmani yi puuni.",
+            severeDroughtTitle: "Koom Kpɛrigu Pam!",
+            severeDroughtDesc: "Koom ban yɛl kani. Yi puuni ku.",
+            floodTitle: "Koom Nyinini!",
+            floodDesc: "Koom nyini yi puuni ku.",
+            harvest: "Puuni Ni Yi Nya",
+            insurancePayout: "Insurance Mali",
+            finalIncome: "Mali Zaa",
+            continueNext: "Ti Kpeeni Din",
+            continueKnowledge: "Ti Knowledge Test",
+            completeFeedback: "Ti Pahi Yi Lahi",
+            harvestBoost: "Yi puuni nya 50% pam (1.5x).",
+            harvestReduced70: "Yi puuni ku 70%.",
+            harvestReduced30: "Yi puuni ku 30% yɛɣini.",
+            harvestReduced50: "Yi puuni ku 50%.",
+            insurancePaidOut: "Yi insurance di {multiplier}x mali ({paid} GHS → {received} GHS)!",
+            noPayoutNeeded: "Insurance ban di - saŋa nyɛlibu.",
+            noInsurance: "Yi ban sa insurance kpeeni ŋɔ.",
+            insuranceProtected: "💚 Insurance Nyɛli Yi!",
+            insuranceReturn: "Yi di {paid} GHS → Nya {received} GHS = {multiplier}x!",
+            takeTime: "Nya lahira ni yi ti dɔɣi"
+        },
+        seasons: {
+            s1Name: "Puuni Kpeeni - March",
+            s1Story: "Puuni kpeeni dɔɣi. Yi nya 500 GHS puuni di.",
+            s2Name: "Puuni Nyini - May",
+            s2Story: "Yi puuni nyini. Ninkurli pahi saŋa. Mali: 550 GHS.",
+            s3Name: "Kpeeni Chɛla - July",
+            s3Story: "Saŋa lahira gbɛma. Puunima lahiri. Yi chɛŋi nyɛlibu. Mali: 600 GHS.",
+            s4Name: "Kpeeni Zaŋ Pam - September",
+            s4Story: "⚠️ KPEENI ZAŊ PAM! Koom lahira gbɛma. Yi doo yuli kpeeni chɛŋa ŋɔ! Mali: 650 GHS.",
+            finalWarning: "⚠️ KPEENI ZAŊ PAM! Chɛŋa ŋɔ yɛlni! ⚠️"
+        },
+        knowledge: {
+            title: "Ti Nya Ka Yi Lahi",
+            subtitle: "Ti pahi saŋa insurance zaŋa",
+            q1: "Saŋa insurance di koom lahira, ka yi puuni lahira.",
+            q2: "Ka koom kpɛrigu, banbu zaa ni insurance nya mali.",
+            q3: "Insurance yɛlni ka yi nya mali kpeeni zaa.",
+            q4: "Yi di insurance mali ni kpeeni ka dɔɣi.",
+            q5: "Yi ni nya insurance mali ka yi puuni ban nyɛlibu, ka koom nyɛlibu.",
+            true: "Yɛlni",
+            false: "Bani",
+            submit: "Ti Pahi"
+        },
+        results: {
+            title: "Ayi Ti Pahi!",
+            subtitle: "Yi chɛŋa lahira",
+            firstPartnerComplete: "Bi Dɔɣi Ti Pahi!",
+            secondPartnerComplete: "Bi Ayi Ti Pahi!",
+            totalEarnings: "Mali Zaa",
+            insuranceSpent: "Insurance Mali",
+            payoutsReceived: "Mali Ni Yi Nya",
+            knowledgeScore: "Lahi Score",
+            insights: "Lahira Nyɛlibu",
+            playAgain: "Ayi Din",
+            startNew: "Dɔɣi Ayi Palli"
+        },
+        common: {
+            continue: "Ti Dɔɣi",
+            loading: "Yi Zaŋa...",
+            yes: "Yɔɔ",
+            no: "Ayi",
+            select: "Chɛ..."
+        }
+    }
+};
+
+
+
+// Helper function to get translation
+
+function t(key, params = {}) {
+    const lang = gameState.language || 'english';
+    const keys = key.split('.');
+    let value = TRANSLATIONS[lang];
+    
+    for (const k of keys) {
+        if (value && value[k] !== undefined) {
+            value = value[k];
+        } else {
+            // Fallback to English
+            value = TRANSLATIONS.english;
+            for (const ek of keys) {
+                if (value && value[ek] !== undefined) {
+                    value = value[ek];
+                } else {
+                    return key;
+                }
+            }
+            break;
+        }
+    }
+    
+    // Replace parameters like {multiplier}, {paid}, {received}
+    if (typeof value === 'string' && Object.keys(params).length > 0) {
+        for (const [param, val] of Object.entries(params)) {
+            value = value.replace(new RegExp(`\\{${param}\\}`, 'g'), val);
+        }
+    }
+    
+    return value;
+}
+
+
+function getSeasonStory(seasonNumber) {
+    const budgets = [500, 550, 600, 650];
+    return {
+        season: seasonNumber,
+        seasonName: t(`seasons.s${seasonNumber}Name`),
+        story: t(`seasons.s${seasonNumber}Story`),
+        budget: budgets[seasonNumber - 1]
+    };
+}
+
+
+
+
+
 // Tutorial state
 let currentTutorialIndex = 0;
 let tutorialCards = [];
@@ -46,6 +454,14 @@ let touchEndX = 0;
 
 // Form submission flags
 let isSubmittingKnowledge = false;
+
+
+
+
+
+
+
+
 
 // ===== SEASON STORIES =====
 const SEASON_STORIES = [
@@ -245,24 +661,41 @@ function startDemographics() {
 }
 
 // ===== TUTORIAL SYSTEM =====
+// ===== TUTORIAL SYSTEM - REVISED WITH LANGUAGE SUPPORT =====
 function initializeTutorial() {
     console.log('Initializing tutorial for treatment:', gameState.treatmentGroup);
+    console.log('Language:', gameState.language);
     
     const treatment = gameState.treatmentGroup || 'control';
-    tutorialCards = TUTORIAL_CARDS[treatment];
+    const language = gameState.language || 'english';
     
-    console.log(`Loading ${tutorialCards.length} tutorial cards for ${treatment} group`);
+    // Get tutorial cards based on treatment AND language
+    tutorialCards = getTutorialCardsForLanguage(treatment, language);
+    
+    console.log(`Loading ${tutorialCards.length} tutorial cards for ${treatment} group in ${language}`);
     
     const badge = document.getElementById('treatmentBadge');
     if (badge) {
         if (treatment === 'control') {
-            badge.textContent = '📋 Standard Farming';
+            if (language === 'dagbani') {
+                badge.textContent = '📋 Puuni Yɛlibu';
+            } else {
+                badge.textContent = '📋 Standard Farming';
+            }
             badge.style.background = 'linear-gradient(135deg, #006B3F, #00A651)';
         } else if (treatment === 'fertilizer_bundle') {
-            badge.textContent = '🌾 Insurance + Fertilizer Bundle';
+            if (language === 'dagbani') {
+                badge.textContent = '🌾 Insurance + Fertilizer';
+            } else {
+                badge.textContent = '🌾 Insurance + Fertilizer Bundle';
+            }
             badge.style.background = 'linear-gradient(135deg, #FCD116, #D4AF37)';
         } else {
-            badge.textContent = '🌱 Insurance + Improved Seeds Bundle';
+            if (language === 'dagbani') {
+                badge.textContent = '🌱 Insurance + Zaamnɛ Nyɛlibu';
+            } else {
+                badge.textContent = '🌱 Insurance + Improved Seeds Bundle';
+            }
             badge.style.background = 'linear-gradient(135deg, #FCD116, #D4AF37)';
         }
     }
@@ -273,6 +706,7 @@ function initializeTutorial() {
     updateTutorialProgress();
     startTutorialTimer();
 }
+
 
 function generateTutorialCards() {
     const cardStack = document.getElementById('tutorialCardStack');
@@ -483,7 +917,7 @@ function shuffleArray(array) {
 
 
 function loadSeason(seasonNumber) {
-    const seasonInfo = SEASON_STORIES[seasonNumber - 1];
+    const seasonInfo = getSeasonStory(seasonNumber);
     const intensity = ROUND_INTENSITY[seasonNumber];
     
     console.log(`Loading Season ${seasonNumber}`);
@@ -502,25 +936,42 @@ function loadSeason(seasonNumber) {
     document.getElementById('currentRound').textContent = seasonNumber;
     document.getElementById('totalRoundsDisplay').textContent = gameState.totalSeasons;
     document.getElementById('totalBudget').textContent = seasonInfo.budget;
-    document.getElementById('storyText').textContent = intensity.storyText;
+    document.getElementById('storyText').textContent = seasonInfo.story;
     
-    let sessionTypeText = 'Individual Play';
+    // Update "Season" label
+    const seasonLabel = document.querySelector('.round-info h3 span[data-translate="game.season"]');
+    if (seasonLabel) {
+        seasonLabel.textContent = t('game.season');
+    }
+    
+    // Update "Your Budget" label
+    const budgetLabel = document.querySelector('.budget-display label');
+    if (budgetLabel) {
+        budgetLabel.textContent = t('game.budget');
+    }
+    
+    // Session type text
+    let sessionTypeText = t('game.individualPlay');
     if (gameState.sessionType === 'individual_husband') {
-        sessionTypeText = '👨 Husband Playing Alone';
+        sessionTypeText = t('game.husbandPlaying');
     } else if (gameState.sessionType === 'individual_wife') {
-        sessionTypeText = '👩 Wife Playing Alone';
+        sessionTypeText = t('game.wifePlaying');
     } else if (gameState.sessionType === 'couple_joint') {
-        sessionTypeText = '👫 Couple Playing Together';
+        sessionTypeText = t('game.couplePlaying');
     }
     document.getElementById('roundContext').textContent = sessionTypeText;
+    
+    // Update allocate title
+    const allocateTitle = document.querySelector('.allocation-container h3');
+    if (allocateTitle) {
+        allocateTitle.textContent = t('game.allocateTitle');
+    }
     
     setupRandomizedAllocationUI();
     
     document.getElementById('allocationForm').reset();
     resetAllocationInputs();
     updateAllocation();
-    
-    // KEY ADDITION: Initialize button text
     updateNextRoundButtonText();
     
     showScreen('gameScreen');
@@ -530,11 +981,12 @@ function loadSeason(seasonNumber) {
 
 
 
+
+
 // ===== SETUP RANDOMIZED UI =====
 function setupRandomizedAllocationUI() {
     const bundleInfo = BUNDLE_INFO[gameState.treatmentGroup] || BUNDLE_INFO.control;
     
-    // Define all allocation items
     const allocationItems = [
         {
             id: 'insurance',
@@ -548,8 +1000,8 @@ function setupRandomizedAllocationUI() {
                     <div class="item-header">
                         <i class="fas fa-seedling"></i>
                         <div class="item-info">
-                            <h4>Additional Farm Inputs</h4>
-                            <p>Extra seeds, tools, labor</p>
+                            <h4>${t('game.inputs')}</h4>
+                            <p>${t('game.inputsDesc')}</p>
                         </div>
                     </div>
                     <div class="item-input">
@@ -567,8 +1019,8 @@ function setupRandomizedAllocationUI() {
                     <div class="item-header">
                         <i class="fas fa-graduation-cap"></i>
                         <div class="item-info">
-                            <h4>Education</h4>
-                            <p>School fees, books</p>
+                            <h4>${t('game.education')}</h4>
+                            <p>${t('game.educationDesc')}</p>
                         </div>
                     </div>
                     <div class="item-input">
@@ -586,8 +1038,8 @@ function setupRandomizedAllocationUI() {
                     <div class="item-header">
                         <i class="fas fa-home"></i>
                         <div class="item-info">
-                            <h4>Household Needs</h4>
-                            <p>Food, clothing, other needs</p>
+                            <h4>${t('game.household')}</h4>
+                            <p>${t('game.householdDesc')}</p>
                         </div>
                     </div>
                     <div class="item-input">
@@ -600,24 +1052,35 @@ function setupRandomizedAllocationUI() {
         }
     ];
     
-    // Sort by random order
     allocationItems.sort((a, b) => a.order - b.order);
     
-    // Find the allocation container
     const form = document.getElementById('allocationForm');
     const summarySection = form.querySelector('.allocation-summary');
     
-    // Remove all existing allocation items
     const existingItems = form.querySelectorAll('.allocation-item');
     existingItems.forEach(item => item.remove());
     
-    // Insert randomized items before summary
     allocationItems.forEach(item => {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = item.html;
         summarySection.parentNode.insertBefore(tempDiv.firstElementChild, summarySection);
     });
+    
+    // Update summary labels
+    const summaryRows = form.querySelectorAll('.summary-row span:first-child');
+    if (summaryRows.length >= 2) {
+        summaryRows[0].textContent = t('game.total');
+        summaryRows[1].textContent = t('game.remaining');
+    }
+    
+    // Update submit button
+    const submitBtn = document.getElementById('submitAllocation');
+    if (submitBtn) {
+        submitBtn.innerHTML = `<span>${t('game.submitBtn')}</span><i class="fas fa-check"></i>`;
+    }
 }
+
+
 
 
 
@@ -627,64 +1090,68 @@ function createInsuranceHTML(bundleInfo) {
     const isControl = gameState.treatmentGroup === 'control';
     
     if (isControl) {
-        // CONTROL: Standalone insurance with input choice dropdown
         return `
             <div class="allocation-item" id="insuranceAllocationItem">
                 <div class="item-header">
                     <i class="fas fa-shield-alt"></i>
                     <div class="item-info">
-                        <h4>${bundleInfo.title}</h4>
-                        <p>${bundleInfo.description}</p>
-                        <span class="bundle-badge">Fixed Price - ${bundleInfo.bundleCost} GHS</span>
+                        <h4>${t('game.insurance')}</h4>
+                        <p>${t('game.insuranceDesc')}</p>
+                        <span class="bundle-badge">${t('game.fixedPrice')} - ${bundleInfo.bundleCost} GHS</span>
                     </div>
                 </div>
                 <div class="item-input bundle-toggle">
                     <label class="bundle-checkbox">
                         <input type="checkbox" id="bundleAccepted" onchange="handleBundleToggle()">
-                        <span>${bundleInfo.label}</span>
+                        <span>${t('game.buyInsurance')} (${bundleInfo.bundleCost} GHS)</span>
                     </label>
                     <input type="hidden" id="insuranceSpend" value="0">
                 </div>
                 <div class="input-choice-section" id="inputChoiceSection" style="display: none; margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 2px solid transparent; transition: all 0.3s ease;">
                     <label style="display: block; margin-bottom: 10px; font-weight: 600;">
                         <i class="fas fa-seedling" style="margin-right: 8px;"></i>
-                        <span id="inputChoiceLabel">Choose ONE farm input to receive with insurance:</span>
+                        <span id="inputChoiceLabel">${t('game.chooseInput')}</span>
                     </label>
                     <select id="inputChoiceType" onchange="updateAllocation()" style="width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 2px solid var(--primary); background: white;">
-                        <option value="">-- Select Input Type --</option>
-                        <option value="seeds">🌱 Improved Seeds (drought-resistant)</option>
-                        <option value="fertilizer">🌾 NPK Fertilizer (2 bags)</option>
+                        <option value="">${t('game.selectInputType')}</option>
+                        <option value="seeds">${t('game.improvedSeeds')}</option>
+                        <option value="fertilizer">${t('game.npkFertilizer')}</option>
                     </select>
                     <div id="inputChoiceWarning" style="display: none; margin-top: 10px; padding: 10px; background: #fff3cd; color: #856404; border-radius: 6px; font-size: 14px;">
-                        ⚠️ Please select an input type before submitting
+                        ${t('game.selectInputWarning')}
                     </div>
                 </div>
             </div>
         `;
     } else {
-        // TREATMENT: Bundled insurance + specific input (no choice)
+        // Treatment groups
+        const isFertilizer = gameState.treatmentGroup === 'fertilizer_bundle';
+        const bundleTitle = isFertilizer ? t('game.bundleFertilizer') : t('game.bundleSeeds');
+        const bundleDesc = isFertilizer ? t('game.bundleDescFertilizer') : t('game.bundleDescSeeds');
+        
         return `
             <div class="allocation-item" id="insuranceAllocationItem">
                 <div class="item-header">
                     <i class="fas fa-shield-alt"></i>
                     <div class="item-info">
-                        <h4>${bundleInfo.title}</h4>
-                        <p>${bundleInfo.description}</p>
-                        <span class="bundle-badge">Fixed Price - ${bundleInfo.bundleCost} GHS</span>
+                        <h4>${bundleTitle}</h4>
+                        <p>${bundleDesc}</p>
+                        <span class="bundle-badge">${t('game.fixedPrice')} - ${bundleInfo.bundleCost} GHS</span>
                     </div>
                 </div>
                 <div class="item-input bundle-toggle">
                     <label class="bundle-checkbox">
                         <input type="checkbox" id="bundleAccepted" onchange="handleBundleToggle()">
-                        <span>${bundleInfo.label}</span>
+                        <span>${t('game.buyBundle')} (${bundleInfo.bundleCost} GHS)</span>
                     </label>
                     <input type="hidden" id="insuranceSpend" value="0">
-                    <input type="hidden" id="inputChoiceType" value="${gameState.treatmentGroup === 'fertilizer_bundle' ? 'fertilizer' : 'seeds'}">
+                    <input type="hidden" id="inputChoiceType" value="${isFertilizer ? 'fertilizer' : 'seeds'}">
                 </div>
             </div>
         `;
     }
 }
+
 
 
 
@@ -701,7 +1168,7 @@ function showFinalSeasonWarning() {
     warningDiv.className = 'final-season-warning';
     warningDiv.innerHTML = `
         <div class="warning-banner">
-            ⚠️ <strong>FINAL SEASON!</strong> This decision counts! ⚠️
+            ${t('seasons.finalWarning')}
         </div>
     `;
     
@@ -894,63 +1361,106 @@ function displayWeatherResult(seasonData, weather) {
     animation.innerHTML = getWeatherVisual(weather);
     animation.style.background = weather.color;
     
-    document.getElementById('weatherTitle').textContent = weather.title;
-    
-    let weatherDesc = weather.desc;
-    
+    // Determine weather type for translation
+    let weatherTitle, weatherBaseDesc;
     if (weather.type === 'normal') {
-        weatherDesc += ` Your harvest was boosted by 50% (1.5x).`;
-    } else if (weather.harvestMultiplier === 0.7) {
-        weatherDesc += ` Your harvest was reduced to 70% of normal.`;
-    } else if (weather.harvestMultiplier === 0.3) {
-        weatherDesc += ` Your harvest was reduced to only 30% of normal.`;
-    } else if (weather.harvestMultiplier === 0.5) {
-        weatherDesc += ` Your harvest was reduced to 50% of normal.`;
+        weatherTitle = t('weather.goodTitle');
+        weatherBaseDesc = t('weather.goodDesc');
+    } else if (weather.type === 'drought') {
+        if (weather.harvestMultiplier < 0.5) {
+            weatherTitle = t('weather.severeDroughtTitle');
+            weatherBaseDesc = t('weather.severeDroughtDesc');
+        } else {
+            weatherTitle = t('weather.mildDroughtTitle');
+            weatherBaseDesc = t('weather.mildDroughtDesc');
+        }
+    } else if (weather.type === 'flood') {
+        weatherTitle = t('weather.floodTitle');
+        weatherBaseDesc = t('weather.floodDesc');
     }
     
+    document.getElementById('weatherTitle').textContent = weatherTitle;
+    
+    // Build weather description
+    let weatherDesc = weatherBaseDesc;
+    
+    if (weather.type === 'normal') {
+        weatherDesc += ' ' + t('weather.harvestBoost');
+    } else if (weather.harvestMultiplier === 0.7) {
+        weatherDesc += ' ' + t('weather.harvestReduced70');
+    } else if (weather.harvestMultiplier === 0.3) {
+        weatherDesc += ' ' + t('weather.harvestReduced30');
+    } else if (weather.harvestMultiplier === 0.5) {
+        weatherDesc += ' ' + t('weather.harvestReduced50');
+    }
+    
+    // Insurance info
     if (seasonData.payoutReceived > 0) {
-        const multiplier = seasonData.payoutReceived / seasonData.insuranceSpend;
-        weatherDesc += ` Your insurance paid out ${multiplier}x what you paid (${seasonData.insuranceSpend} GHS → ${seasonData.payoutReceived} GHS)!`;
+        const multiplier = (seasonData.payoutReceived / seasonData.insuranceSpend).toFixed(1);
+        weatherDesc += ' ' + t('weather.insurancePaidOut', {
+            multiplier: multiplier,
+            paid: seasonData.insuranceSpend,
+            received: seasonData.payoutReceived
+        });
     } else if (seasonData.insuranceSpend > 0 && weather.type === 'normal') {
-        weatherDesc += ` No insurance payout needed - weather was good.`;
+        weatherDesc += ' ' + t('weather.noPayoutNeeded');
     } else if (seasonData.insuranceSpend === 0 && weather.type !== 'normal') {
-        weatherDesc += ` You didn't buy insurance this season.`;
+        weatherDesc += ' ' + t('weather.noInsurance');
     }
     
     document.getElementById('weatherDescription').textContent = weatherDesc;
+    
+    // Update outcome card labels
+    const outcomeCards = document.querySelectorAll('.outcome-card');
+    if (outcomeCards.length >= 3) {
+        outcomeCards[0].querySelector('h4').textContent = t('weather.harvest');
+        outcomeCards[1].querySelector('h4').textContent = t('weather.insurancePayout');
+        outcomeCards[2].querySelector('h4').textContent = t('weather.finalIncome');
+    }
+    
     document.getElementById('harvestValue').textContent = seasonData.harvestOutcome + ' GHS';
     document.getElementById('payoutValue').textContent = seasonData.payoutReceived + ' GHS';
     
     const totalEarnings = seasonData.harvestOutcome + seasonData.payoutReceived;
     document.getElementById('finalIncomeValue').textContent = totalEarnings + ' GHS';
     
+    // Insurance protection note
     const existingNote = document.getElementById('insuranceContributionNote');
     if (existingNote) existingNote.remove();
     
     if (seasonData.payoutReceived > 0) {
-        const outcomeCards = document.querySelector('.outcome-cards');
-        if (outcomeCards) {
+        const outcomeCardsContainer = document.querySelector('.outcome-cards');
+        if (outcomeCardsContainer) {
             const multiplier = (seasonData.payoutReceived / seasonData.insuranceSpend).toFixed(1);
-            const profit = seasonData.payoutReceived - seasonData.insuranceSpend;
             
             const noteDiv = document.createElement('div');
             noteDiv.id = 'insuranceContributionNote';
             noteDiv.style.cssText = 'background: linear-gradient(135deg, #E8F5E9, #C8E6C9); padding: 20px; border-radius: 12px; margin-top: 15px; text-align: center; border: 2px solid #4CAF50;';
             noteDiv.innerHTML = `
-                <div style="font-size: 24px; margin-bottom: 10px;">💚 Insurance Protected You!</div>
+                <div style="font-size: 24px; margin-bottom: 10px;">${t('weather.insuranceProtected')}</div>
                 <div style="font-weight: 700; font-size: 20px; color: #2E7D32; margin-bottom: 15px;">
-                    You paid ${seasonData.insuranceSpend} GHS → Got ${seasonData.payoutReceived} GHS back = ${multiplier}x return!
+                    ${t('weather.insuranceReturn', {
+                        paid: seasonData.insuranceSpend,
+                        received: seasonData.payoutReceived,
+                        multiplier: multiplier
+                    })}
                 </div>
             `;
-            outcomeCards.insertAdjacentElement('afterend', noteDiv);
+            outcomeCardsContainer.insertAdjacentElement('afterend', noteDiv);
         }
     }
     
-    // KEY ADDITION: Update button text
-    updateNextRoundButtonText();
+    // Update info text at bottom
+    const infoContainer = document.querySelector('#weatherScreen .weather-container > div:last-child');
+    if (infoContainer && infoContainer.querySelector('p')) {
+        infoContainer.querySelector('p').innerHTML = `ℹ️ <strong>${t('weather.takeTime')}</strong>`;
+    }
     
+    updateNextRoundButtonText();
     showScreen('weatherScreen');
 }
+
+
 
 
 function getWeatherVisual(weather) {
@@ -1006,19 +1516,17 @@ function updateNextRoundButtonText() {
     if (!nextBtn) return;
     
     if (gameState.currentSeason < 4) {
-        // Seasons 1-3: Show "Continue to Next Season"
-        nextBtn.innerHTML = '<span>Continue to Next Season</span><i class="fas fa-arrow-right"></i>';
+        nextBtn.innerHTML = `<span>${t('weather.continueNext')}</span><i class="fas fa-arrow-right"></i>`;
     } else {
-        // Season 4 completed - different text based on session type
         if (gameState.sessionType === 'couple_joint') {
-            // Couple goes to perception survey
-            nextBtn.innerHTML = '<span>Complete & Share Feedback</span><i class="fas fa-arrow-right"></i>';
+            nextBtn.innerHTML = `<span>${t('weather.completeFeedback')}</span><i class="fas fa-arrow-right"></i>`;
         } else {
-            // Individual goes to knowledge test
-            nextBtn.innerHTML = '<span>Continue to Knowledge Test</span><i class="fas fa-arrow-right"></i>';
+            nextBtn.innerHTML = `<span>${t('weather.continueKnowledge')}</span><i class="fas fa-arrow-right"></i>`;
         }
     }
 }
+
+
 
 
 // ===== SECOND PARTNER & COUPLE FLOW =====
@@ -1359,6 +1867,36 @@ async function showResults() {
 }
 
 
+
+
+// ===== GET TUTORIAL CARDS FOR LANGUAGE =====
+// This function returns the appropriate tutorial cards based on treatment and language
+// Add this to your tutorial-content.js or game.js file
+
+function getTutorialCardsForLanguage(treatment, language) {
+    console.log(`Getting tutorial cards for treatment: ${treatment}, language: ${language}`);
+    
+    // Default to English if language not specified
+    if (!language || language === 'english') {
+        // Use existing English tutorial cards
+        return TUTORIAL_CARDS[treatment] || TUTORIAL_CARDS.control;
+    }
+    
+    // Use Dagbani tutorial cards
+    if (language === 'dagbani') {
+        // Check if TUTORIAL_CARDS_DAGBANI exists
+        if (typeof TUTORIAL_CARDS_DAGBANI !== 'undefined') {
+            return TUTORIAL_CARDS_DAGBANI[treatment] || TUTORIAL_CARDS_DAGBANI.control;
+        } else {
+            console.warn('⚠️ Dagbani tutorial cards not found, using English');
+            return TUTORIAL_CARDS[treatment] || TUTORIAL_CARDS.control;
+        }
+    }
+    
+    // Fallback to English
+    console.warn('⚠️ Unknown language, using English');
+    return TUTORIAL_CARDS[treatment] || TUTORIAL_CARDS.control;
+}
 
 function restartGame() {
     if (confirm('Are you sure you want to restart? All progress will be lost.')) {
@@ -1823,15 +2361,6 @@ if (knowledgeForm) {
 }
 
 
-    const langBtn = document.getElementById('languageBtn');
-    if (langBtn) {
-        langBtn.addEventListener('click', () => {
-            gameState.language = gameState.language === 'english' ? 'dagbani' : 'english';
-            document.getElementById('currentLang').textContent = 
-                gameState.language === 'english' ? 'English' : 'Dagbani';
-        });
-    }
-    
      const startSecondBtn = document.getElementById('startSecondPartnerBtn');
     if (startSecondBtn) {
         startSecondBtn.addEventListener('click', startSecondPartner);
@@ -1841,7 +2370,7 @@ if (knowledgeForm) {
     }
     
 
-    
+
     const startCouplePromptBtn = document.getElementById('startCouplePromptBtn');
     if (startCouplePromptBtn) {
         startCouplePromptBtn.addEventListener('click', startCouplePreQuestions);
@@ -1872,3 +2401,413 @@ function handleSwipe() {
         }
     }
 }
+
+
+
+
+
+// ===== LANGUAGE TOGGLE FUNCTION =====
+// Add this function to your game.js
+
+// ===== LANGUAGE TOGGLE FUNCTION =====
+function updateLanguage(language) {
+    console.log('🌍 Changing language to:', language);
+    gameState.language = language;
+    
+    // Update language button
+    const currentLangEl = document.getElementById('currentLang');
+    if (currentLangEl) {
+        currentLangEl.textContent = language === 'english' ? 'English' : 'Dagbani';
+    }
+    
+    // Update all data-translate attributes globally
+    document.querySelectorAll('[data-translate]').forEach(el => {
+        const key = el.getAttribute('data-translate');
+        const translation = t(key);
+        
+        // Handle different element types
+        if (el.tagName === 'BUTTON') {
+            const span = el.querySelector('span');
+            if (span) {
+                span.textContent = translation;
+            } else if (!el.querySelector('i')) {
+                el.textContent = translation;
+            }
+        } else if (el.querySelector('input') || el.querySelector('select')) {
+            // Skip labels that contain inputs/selects
+            return;
+        } else {
+            el.textContent = translation;
+        }
+    });
+    
+    // Update specific screens with complex structures
+    updateWelcomeScreenLang();
+    updateDemographicsScreenLang();
+    updateRiskScreenLang();
+    updateEmpowermentScreenLang();
+    updateKnowledgeScreenLang();
+    updateResultsScreenLang();
+    
+    // Refresh current screen if needed
+    if (gameState.currentScreen === 'gameScreen') {
+        loadSeason(gameState.currentSeason);
+    }
+    
+    if (gameState.currentScreen === 'tutorialScreen') {
+        initializeTutorial();
+    }
+    
+    console.log('✅ Language updated to:', language);
+}
+
+function updateWelcomeScreenLang() {
+    // Most content handled by data-translate attributes
+    // This handles any dynamic content if needed
+    console.log('Updating welcome screen language');
+}
+
+function updateResultsScreenLang() {
+    const resultsTitle = document.querySelector('#resultsScreen h2:not([data-translate])');
+    const resultsSubtitle = document.querySelector('#resultsScreen .subtitle:not([data-translate])');
+    
+    // These are dynamically set, so we update them here
+    if (gameState.sessionType === 'couple_joint') {
+        if (resultsTitle) resultsTitle.textContent = t('results.title');
+        if (resultsSubtitle) resultsSubtitle.textContent = t('results.subtitle');
+    }
+}
+
+
+
+function updateCheckboxesLang(name, valueTextMap) {
+    document.querySelectorAll(`input[name="${name}"]`).forEach(cb => {
+        const label = cb.closest('label');
+        if (label && valueTextMap[cb.value]) {
+            // Preserve the checkbox, update only the text
+            const textNode = Array.from(label.childNodes).find(node => node.nodeType === 3);
+            if (textNode) {
+                textNode.textContent = ' ' + valueTextMap[cb.value];
+            } else {
+                label.appendChild(document.createTextNode(' ' + valueTextMap[cb.value]));
+            }
+        }
+    });
+}
+
+function updateRadiosLang(name, valueTextMap) {
+    document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+        const label = radio.closest('label');
+        if (label && valueTextMap[radio.value]) {
+            // Preserve the radio button, update only the text
+            const textNode = Array.from(label.childNodes).find(node => node.nodeType === 3);
+            if (textNode) {
+                textNode.textContent = ' ' + valueTextMap[radio.value];
+            } else {
+                label.appendChild(document.createTextNode(' ' + valueTextMap[radio.value]));
+            }
+        }
+    });
+}
+
+
+
+
+
+
+
+
+
+
+function updateRiskScreenLang() {
+    const title = document.querySelector('#riskScreen h2');
+    if (title) title.textContent = t('risk.title');
+    
+    // Scenario label
+    const scenarioGroup = document.querySelector('.option-cards')?.closest('.form-group');
+    if (scenarioGroup) {
+        const label = scenarioGroup.querySelector('label:first-of-type');
+        if (label && !label.querySelector('input')) {
+            label.textContent = t('risk.scenario');
+        }
+    }
+    
+    // Option cards
+    const optionCards = document.querySelectorAll('.option-card');
+    if (optionCards.length >= 2) {
+        optionCards[0].querySelector('h4').textContent = t('risk.guaranteed');
+        optionCards[0].querySelector('p').textContent = t('risk.guaranteedDesc');
+        
+        optionCards[1].querySelector('h4').textContent = t('risk.chance');
+        optionCards[1].querySelector('p').textContent = t('risk.chanceDesc');
+    }
+    
+    // Risk comfort scale
+    const ratingScale = document.querySelector('.rating-scale');
+    if (ratingScale) {
+        const scaleTexts = [
+            t('risk.notAtAll'),
+            t('risk.level2'),
+            t('risk.neutral'),
+            t('risk.level4'),
+            t('risk.veryComfortable')
+        ];
+        const labels = ratingScale.querySelectorAll('label');
+        labels.forEach((label, index) => {
+            const input = label.querySelector('input');
+            if (input && scaleTexts[index]) {
+                label.innerHTML = '';
+                label.appendChild(input);
+                label.appendChild(document.createTextNode(' ' + scaleTexts[index]));
+            }
+        });
+    }
+    
+    // Decision maker select
+    updateSelectLang('decisionMaker', [
+        { value: '', text: t('common.select') },
+        { value: '1', text: t('risk.mainlyHusband') },
+        { value: '2', text: t('risk.mainlyWife') },
+        { value: '3', text: t('risk.joint') },
+        { value: '4', text: t('risk.otherMember') }
+    ]);
+    updateLabelLang('decisionMaker', t('risk.decisionMaker'));
+    
+    // Continue button
+    const continueBtn = document.querySelector('#riskForm .btn-primary span');
+    if (continueBtn) continueBtn.textContent = t('common.continue');
+}
+
+function updateEmpowermentScreenLang() {
+    const title = document.querySelector('#empowermentScreen h2');
+    if (title) title.textContent = t('empowerment.title');
+    
+    const subtitle = document.querySelector('#empowermentScreen .subtitle');
+    if (subtitle) subtitle.textContent = t('empowerment.subtitle');
+    
+    // Questions
+    const questions = document.querySelectorAll('#empowermentScreen .question-item > p');
+    const qKeys = ['q1', 'q2', 'q3', 'q4', 'q5'];
+    questions.forEach((q, i) => {
+        if (qKeys[i]) q.textContent = t(`empowerment.${qKeys[i]}`);
+    });
+    
+    // Scale labels
+    document.querySelectorAll('#empowermentScreen .scale-labels').forEach(container => {
+        const spans = container.querySelectorAll('span');
+        if (spans.length >= 2) {
+            spans[0].textContent = t('empowerment.stronglyDisagree');
+            spans[1].textContent = t('empowerment.stronglyAgree');
+        }
+    });
+    
+    // Continue button
+    const continueBtn = document.querySelector('#empowermentForm .btn-primary span');
+    if (continueBtn) continueBtn.textContent = t('common.continue');
+}
+
+
+
+
+
+function updateKnowledgeScreenLang() {
+    const title = document.querySelector('#knowledgeScreen h2');
+    if (title) title.textContent = t('knowledge.title');
+    
+    const subtitle = document.querySelector('#knowledgeScreen .subtitle');
+    if (subtitle) subtitle.textContent = t('knowledge.subtitle');
+    
+    // Update questions - these aren't in data-translate attributes
+    const questions = [
+        t('knowledge.q1'),
+        t('knowledge.q2'),
+        t('knowledge.q3'),
+        t('knowledge.q4'),
+        t('knowledge.q5')
+    ];
+    
+    const questionBlocks = document.querySelectorAll('.question-block');
+    questionBlocks.forEach((block, i) => {
+        const qText = block.querySelector('.question-text');
+        if (qText && questions[i]) {
+            qText.textContent = `${i + 1}. ${questions[i]}`;
+        }
+        
+        // Update True/False labels
+        const radios = block.querySelectorAll('.radio-group label');
+        radios.forEach(label => {
+            const input = label.querySelector('input');
+            if (input) {
+                const text = input.value === 'true' ? t('knowledge.true') : t('knowledge.false');
+                label.innerHTML = '';
+                label.appendChild(input);
+                label.appendChild(document.createTextNode(' ' + text));
+            }
+        });
+    });
+    
+    // Submit button
+    const submitBtn = document.querySelector('#knowledgeForm .btn-primary span');
+    if (submitBtn) submitBtn.textContent = t('knowledge.submit');
+}
+
+
+
+function testTranslations() {
+    console.log('🧪 Testing translations...');
+    console.log('Current language:', gameState.language);
+    console.log('Welcome title (EN):', t('welcome.title'));
+    
+    gameState.language = 'dagbani';
+    console.log('Welcome title (Dagbani):', t('welcome.title'));
+    
+    gameState.language = 'english'; // Reset
+    console.log('✅ Translation test complete');
+}
+
+
+
+// ===== 12. HELPER FUNCTIONS FOR LANGUAGE UPDATE =====
+
+function updateSelectLang(selectId, options) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    
+    const currentValue = select.value;
+    select.innerHTML = '';
+    
+    options.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.text;
+        select.appendChild(option);
+    });
+    
+    select.value = currentValue;
+}
+
+function updateLabelLang(inputId, text) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    const formGroup = input.closest('.form-group');
+    if (formGroup) {
+        const label = formGroup.querySelector('label:first-of-type');
+        if (label && !label.querySelector('input') && !label.querySelector('select')) {
+            label.textContent = text;
+        }
+    }
+}
+
+
+// ===== 13. UPDATE LANGUAGE BUTTON LISTENER IN DOMContentLoaded =====
+// Find the existing language button listener and replace it with:
+
+// Inside DOMContentLoaded:
+const langBtn = document.getElementById('languageBtn');
+if (langBtn) {
+    langBtn.addEventListener('click', () => {
+        const newLang = gameState.language === 'english' ? 'dagbani' : 'english';
+        updateLanguage(newLang);
+    });
+    console.log('✅ Language toggle button listener registered');
+}
+
+
+
+
+
+
+
+
+
+
+
+
+function updateWelcomeScreenLang() {
+    // Update all elements with data-translate attributes
+    document.querySelectorAll('[data-translate]').forEach(el => {
+        const key = el.getAttribute('data-translate');
+        const translation = t(key);
+        
+        if (el.tagName === 'INPUT' || el.tagName === 'BUTTON') {
+            if (el.value && !el.type.match(/radio|checkbox/)) {
+                el.value = translation;
+            }
+        } else {
+            el.textContent = translation;
+        }
+    });
+}
+
+
+function updateDemographicsScreenLang() {
+    // Update screen title and labels
+    const title = document.querySelector('#demographicsScreen h2');
+    if (title) title.textContent = t('demographics.title');
+    
+    // Update all form labels
+    updateLabelLang('gender', t('demographics.gender'));
+    updateLabelLang('role', t('demographics.role'));
+    updateLabelLang('age', t('demographics.age'));
+    updateLabelLang('education', t('demographics.education'));
+    updateLabelLang('farmingYears', t('demographics.farmingYears'));
+    updateLabelLang('landSize', t('demographics.land'));
+    updateLabelLang('lastIncome', t('demographics.income'));
+    
+    // Update select options
+    updateSelectLang('gender', [
+        { value: '', text: t('common.select') },
+        { value: 'male', text: t('demographics.male') },
+        { value: 'female', text: t('demographics.female') }
+    ]);
+    
+    updateSelectLang('role', [
+        { value: '', text: t('common.select') },
+        { value: 'husband', text: t('demographics.husband') },
+        { value: 'wife', text: t('demographics.wife') }
+    ]);
+    
+    updateSelectLang('education', [
+        { value: '', text: t('common.select') },
+        { value: '0', text: t('demographics.noSchooling') },
+        { value: '1', text: t('demographics.primary') },
+        { value: '2', text: t('demographics.jhs') },
+        { value: '3', text: t('demographics.shs') },
+        { value: '4', text: t('demographics.tertiary') }
+    ]);
+    
+    // Update crop checkboxes
+    updateCheckboxesLang('crops', {
+        'maize': t('demographics.maize'),
+        'rice': t('demographics.rice'),
+        'soybeans': t('demographics.soybeans'),
+        'groundnuts': t('demographics.groundnuts'),
+        'other': t('demographics.other')
+    });
+    
+    // Update Yes/No radio buttons
+    updateRadiosLang('priorKnowledge', {
+        '1': t('common.yes'),
+        '0': t('common.no')
+    });
+    
+    // Update crop label
+    const cropLabel = document.querySelector('label[data-translate="demographics.crops"]');
+    if (cropLabel) cropLabel.childNodes[0].textContent = t('demographics.crops');
+    
+    // Update prior knowledge label
+    const priorLabel = document.querySelector('label[data-translate="demographics.priorKnowledge"]');
+    if (priorLabel) priorLabel.childNodes[0].textContent = t('demographics.priorKnowledge');
+    
+    // Update continue button
+    const continueBtn = document.querySelector('#demographicsForm .btn-primary span');
+    if (continueBtn) continueBtn.textContent = t('common.continue');
+}
+
+
+
+
+
+
+

@@ -293,3 +293,201 @@ const WEATHER_ANIMATIONS = {
     }
   }
 };
+
+
+
+
+
+
+// ===== TUTORIAL CONTENT - DAGBANI TRANSLATIONS =====
+// Add this to your tutorial-content.js file
+
+const TUTORIAL_CARDS_DAGBANI = {
+  
+  // CONTROL GROUP - Dagbani
+  control: [
+    {
+      id: 1,
+      title: "Ansoama, Puubu!",
+      content: "Yi yɛ puubu Ghana zaa. Yi be chɛm chɛŋa yi mali zaŋ puuni kpeeni 4 zaa. Yi chɛŋa pam be nyɛ yi doo yuli dima.",
+      icon: "🌾",
+      highlight: true,
+      autoAdvanceSeconds: 50
+    },
+    {
+      id: 2,
+      title: "Yi Puuni Mali",
+      content: "Kpeeni pam zaa be yi mali ni yi sa: Puuni Nyɛlibu, Puuni Di (zaamnɛ, fertilizer, tools), Karimi (karimi mali), ni Doo Yuli (dimi, suhiya). Yi boɣi ka sa yi mali zaa yɛlni.",
+      icon: "💰",
+      autoAdvanceSeconds: 55
+    },
+    {
+      id: 3,
+      title: "Saŋa Ka Yɛl Yini",
+      content: "Saŋa be nyɛ yi puuni kpeeni pam zaa. Kani kpeeni ŋmani ☀️, kani kpeeni ban ŋmani 🌧️. Yi ka ni saŋa, ama yi ni nyɛlibu.",
+      icon: "🌤️",
+      highlight: true,
+      autoAdvanceSeconds: 50
+    },
+    {
+      id: 4,
+      title: "Chɛm Yi Chɛŋa",
+      content: "Kpeeni pam zaa, yi be chɛŋi ka yi sa yi mali lahiri. Lahiri ka zaa ni pahi yi doo yuli yɛlibu.",
+      icon: "🤔",
+      autoAdvanceSeconds: 50
+    },
+    {
+      id: 5,
+      title: "Nyɛlibu Ti Dɔɣi!",
+      content: "Yi be puuni kpeeni 4. Yi chɛŋa pam! Ti chɛm chɛŋa nyɛlibu ni yi doo. Yɛlibu be yi!",
+      icon: "🚀",
+      highlight: true
+    }
+  ],
+
+  // FERTILIZER BUNDLE - Dagbani
+  fertilizer_bundle: [
+    {
+      id: 1,
+      title: "Ansoama, Puubu!",
+      content: "Yi yɛ puubu Ghana zaa. Yi be chɛm chɛŋa yi mali zaŋ puuni kpeeni 4 zaa. Yi chɛŋa pam be nyɛ yi doo yuli dima.",
+      icon: "🌾",
+      highlight: true,
+      autoAdvanceSeconds: 55
+    },
+    {
+      id: 2,
+      title: "Yi Puuni Mali",
+      content: "Kpeeni pam zaa be yi mali ni yi sa: Insurance + Fertilizer, Puuni Di Din, Karimi, ni Doo Yuli. Sa yɛlni!",
+      icon: "💰",
+      autoAdvanceSeconds: 60
+    },
+    {
+      id: 3,
+      title: "Saŋa Be Nyɛ Puuni Lahiri",
+      content: "☀️ Saŋa ŋmani = 50% puuni nyini (1.5x yi di). ⛈️ Saŋa ban ŋmani = 30-70% puuni kpɛri. Saŋa ka yɛl yini kpeeni pam zaa!",
+      icon: "🌤️",
+      highlight: true,
+      autoAdvanceSeconds: 60
+    },
+    {
+      id: 4,
+      title: "Saŋa Insurance Pahi",
+      content: "Insurance be nyɛlibu yi saŋa ban ŋmani! Ka saŋa ban ŋmani yi kpeeni zaa, yi nya mali - ka yi puuni ka ku!",
+      icon: "🛡️",
+      special: true,
+      highlight: true,
+      autoAdvanceSeconds: 65
+    },
+    {
+      id: 5,
+      title: "Insurance Mali Lahiri 💰",
+      content: "DI: 100 GHS insurance. NYA ka saŋa ban ŋmani: Koom kpɛrigu kpiligu = 150 GHS (1.5x), Koom kpɛrigu pam = 300 GHS (3x), Koom nyini = 240 GHS (2.4x). Ka saŋa ŋmani = 0 GHS.",
+      icon: "📊",
+      special: true,
+      highlight: true,
+      autoAdvanceSeconds: 70
+    },
+    {
+      id: 6,
+      title: "Fertilizer Be Nyini Yi Puuni! 🌾",
+      content: "NPK fertilizer be nyini zaamnɛ 50%! Puubu yɛlibu be maa insurance ni fertilizer bee ni nyɛlibu yi di NI nyini yi puuni. Bee nya be nyɛlibu yi mali.",
+      icon: "🌾",
+      special: true,
+      highlight: true,
+      autoAdvanceSeconds: 70
+    },
+    {
+      id: 7,
+      title: "Pahi: Basis Risk ⚠️",
+      content: "Mali ni yi nya be zaŋ kpeeni saŋa pahi, ka yi puuni zaŋ. Ka saŋa station pahi koom ŋmani ama YI puuni ku (yiribu, lahira, gba), yi nya 0 GHS.",
+      icon: "⚠️",
+      critical: true,
+      autoAdvanceSeconds: 70
+    },
+    {
+      id: 8,
+      title: "Chɛm Yi Chɛŋa!",
+      content: "Kpeeni pam zaa, chɛŋi ka yi sa mali insurance + fertilizer. Yi be nya ka bee be niŋi bee kpeeni 4 zaa. Yɛlibu be yi!",
+      icon: "🎯",
+      highlight: true
+    }
+  ],
+
+  // SEEDLING BUNDLE - Dagbani
+  seedling_bundle: [
+    {
+      id: 1,
+      title: "Ansoama, Puubu!",
+      content: "Yi yɛ puubu Ghana zaa. Yi be chɛm chɛŋa yi mali zaŋ puuni kpeeni 4 zaa. Yi chɛŋa pam be nyɛ yi doo yuli dima.",
+      icon: "🌾",
+      highlight: true,
+      autoAdvanceSeconds: 55
+    },
+    {
+      id: 2,
+      title: "Yi Puuni Mali",
+      content: "Kpeeni pam zaa be yi mali ni yi sa: Insurance + Zaamnɛ, Puuni Di Din, Karimi, ni Doo Yuli. Sa yɛlni!",
+      icon: "💰",
+      autoAdvanceSeconds: 60
+    },
+    {
+      id: 3,
+      title: "Saŋa Be Nyɛ Puuni Lahiri",
+      content: "☀️ Saŋa ŋmani = 50% puuni nyini (1.5x yi di). ⛈️ Saŋa ban ŋmani = 30-70% puuni kpɛri. Saŋa ka yɛl yini kpeeni pam zaa!",
+      icon: "🌤️",
+      highlight: true,
+      autoAdvanceSeconds: 60
+    },
+    {
+      id: 4,
+      title: "Saŋa Insurance Pahi",
+      content: "Insurance be nyɛlibu yi saŋa ban ŋmani! Ka saŋa ban ŋmani yi kpeeni zaa, yi nya mali - ka yi puuni ka ku!",
+      icon: "🛡️",
+      special: true,
+      highlight: true,
+      autoAdvanceSeconds: 65
+    },
+    {
+      id: 5,
+      title: "Insurance Mali Lahiri 💰",
+      content: "DI: 100 GHS insurance. NYA ka saŋa ban ŋmani: Koom kpɛrigu kpiligu = 150 GHS (1.5x), Koom kpɛrigu pam = 300 GHS (3x), Koom nyini = 240 GHS (2.4x). Ka saŋa ŋmani = 0 GHS.",
+      icon: "📊",
+      special: true,
+      highlight: true,
+      autoAdvanceSeconds: 70
+    },
+    {
+      id: 6,
+      title: "Zaamnɛ Nyɛlibu Be Nyini Yi Puuni! 🌱",
+      content: "Hybrid zaamnɛ be diribu koom kpɛrigu ni be nyini puuni 50%! Puubu yɛlibu be maa insurance ni zaamnɛ nyɛlibu bee ni nyɛlibu yi di NI nyini yi puuni. Bee nya be nyɛlibu yi mali.",
+      icon: "🌱",
+      special: true,
+      highlight: true,
+      autoAdvanceSeconds: 70
+    },
+    {
+      id: 7,
+      title: "Pahi: Basis Risk ⚠️",
+      content: "Mali ni yi nya be zaŋ kpeeni saŋa pahi, ka yi puuni zaŋ. Ka saŋa station pahi koom ŋmani ama YI puuni ku (yiribu, lahira, gba), yi nya 0 GHS.",
+      icon: "⚠️",
+      critical: true,
+      autoAdvanceSeconds: 70
+    },
+    {
+      id: 8,
+      title: "Chɛm Yi Chɛŋa!",
+      content: "Kpeeni pam zaa, chɛŋi ka yi sa mali insurance + zaamnɛ. Yi be nya ka bee be niŋi bee kpeeni 4 zaa. Yɛlibu be yi!",
+      icon: "🎯",
+      highlight: true
+    }
+  ]
+};
+
+// Function to get tutorial cards based on treatment and language
+function getTutorialCardsForLanguage(treatment, language) {
+    if (language === 'dagbani') {
+        return TUTORIAL_CARDS_DAGBANI[treatment] || TUTORIAL_CARDS_DAGBANI.control;
+    }
+    return TUTORIAL_CARDS[treatment] || TUTORIAL_CARDS.control;
+}
