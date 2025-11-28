@@ -1,62 +1,63 @@
 // ===============================================
-// TUTORIAL CONTENT - UPDATED WITH CLEAR EXPLANATIONS
-// WITH AUTO-ADVANCE TIMERS - MINIMUM 55 SECONDS
-// Weather Index Insurance Game
+// TUTORIAL CONTENT - REVISED VERSION
+// Control = Minimal tutorial (5-6 cards), NO insurance education
+// Treatments = Full tutorial with insurance details
 // ===============================================
 
 const TUTORIAL_CARDS = {
   
   // ==========================================
-  // CONTROL GROUP (5 cards - NO insurance)
+  // CONTROL GROUP - MINIMAL TUTORIAL
+  // No insurance education, just basic game mechanics
   // ==========================================
   control: [
     {
       id: 1,
       title: "Welcome, Farmer!",
-      content: "You are a farmer in Ghana. You'll make decisions about how to invest your money across 4 farming rounds. Each decision affects your family's future.",
+      content: "You are a farmer in Ghana. You'll make decisions about how to invest your money across 4 farming seasons. Each decision affects your family's future.",
       icon: "🌾",
       highlight: true,
-      autoAdvanceSeconds: 55
+      autoAdvanceSeconds: 50
     },
     {
       id: 2,
       title: "Your Farm Budget",
-      content: "Each round gives you money to spend on: Farm Inputs (seeds, fertilizer), Education (school fees), and Household Needs (food, clothing). Spend wisely!",
+      content: "Each season gives you money to spend on: Farm Protection, Farm Inputs (seeds, fertilizer, tools), Education (school fees), and Household Needs (food, clothing). You must spend ALL your budget wisely.",
       icon: "💰",
-      autoAdvanceSeconds: 60
+      autoAdvanceSeconds: 55
     },
     {
       id: 3,
-      title: "The Weather Challenge",
-      content: "Weather is unpredictable! Good weather (☀️) = 50% MORE harvest (1.5x). Bad weather (⛈️) = 30-70% LESS harvest. You cannot control the weather.",
+      title: "Weather is Unpredictable",
+      content: "Weather affects your harvest each season. Sometimes it's good ☀️, sometimes it's challenging 🌧️. You cannot control the weather, but you can prepare for it.",
       icon: "🌤️",
       highlight: true,
-      autoAdvanceSeconds: 55
+      autoAdvanceSeconds: 50
     },
     {
       id: 4,
-      title: "Making Tough Choices",
-      content: "You must balance competing needs. Invest in farming? Pay for school? Save for emergencies? There's never enough for everything.",
-      icon: "⚖️",
-      autoAdvanceSeconds: 55
+      title: "Make Your Decisions",
+      content: "Each season, you'll decide how to allocate your budget across different needs. Think carefully about what's most important for your family's wellbeing.",
+      icon: "🤔",
+      autoAdvanceSeconds: 50
     },
     {
       id: 5,
-      title: "Let's Begin!",
-      content: "You'll play 4 farming rounds. Your decisions will show how you balance risk and reward. Good luck!",
+      title: "Ready to Begin!",
+      content: "You'll play through 4 farming seasons. Your choices matter! Try to make the best decisions you can for your household. Good luck!",
       icon: "🚀",
       highlight: true
     }
   ],
 
   // ==========================================
-  // FERTILIZER BUNDLE (8 cards with examples)
+  // FERTILIZER BUNDLE GROUP - FULL TUTORIAL
   // ==========================================
   fertilizer_bundle: [
     {
       id: 1,
       title: "Welcome, Farmer!",
-      content: "You are a farmer in Ghana. You'll make decisions about how to invest your money across 4 farming rounds. Each decision affects your family's future.",
+      content: "You are a farmer in Ghana. You'll make decisions about how to invest your money across 4 farming seasons. Each decision affects your family's future.",
       icon: "🌾",
       highlight: true,
       autoAdvanceSeconds: 55
@@ -64,14 +65,14 @@ const TUTORIAL_CARDS = {
     {
       id: 2,
       title: "Your Farm Budget",
-      content: "Each round gives you money to spend on: Farm Inputs (seeds, fertilizer), Education (school fees), and Household Needs (food, clothing). Spend wisely!",
+      content: "Each season gives you money to spend on: Insurance + Fertilizer Bundle, Additional Farm Inputs, Education (school fees), and Household Needs (food, clothing). Spend wisely!",
       icon: "💰",
       autoAdvanceSeconds: 60
     },
     {
       id: 3,
       title: "How Weather Affects Harvest",
-      content: "☀️ Good weather = 50% MORE harvest (1.5x your investment). ⛈️ Bad weather = 30-70% LESS harvest. Weather is unpredictable each round!",
+      content: "☀️ Good weather = 50% MORE harvest (1.5x your investment). ⛈️ Bad weather = 30-70% LESS harvest. Weather is unpredictable each season!",
       icon: "🌤️",
       highlight: true,
       autoAdvanceSeconds: 60
@@ -96,9 +97,9 @@ const TUTORIAL_CARDS = {
     },
     {
       id: 6,
-      title: "SPECIAL BUNDLE OFFER! 🎁",
-      content: "Get BOTH insurance protection AND 2 bags of NPK fertilizer for 100 GHS! The fertilizer boosts your harvest by 50% MORE. Double benefit in one package!",
-      icon: "📦",
+      title: "Fertilizer Boosts Your Harvest! 🌾",
+      content: "NPK fertilizer increases maize yields by 50%! Smart farmers combine fertilizer with insurance to protect their investment AND boost production. Both help secure your income.",
+      icon: "🌾",
       special: true,
       highlight: true,
       autoAdvanceSeconds: 70
@@ -114,20 +115,20 @@ const TUTORIAL_CARDS = {
     {
       id: 8,
       title: "Make Your Choice!",
-      content: "Each round, decide: Buy the bundle (100 GHS) or spend differently? You'll see how insurance and fertilizer work together over 4 rounds. Good luck!",
+      content: "Each season, decide how much to spend on the insurance + fertilizer bundle. You'll see how they work together over 4 seasons. Good luck!",
       icon: "🎯",
       highlight: true
     }
   ],
 
   // ==========================================
-  // SEEDLING BUNDLE (8 cards with examples)
+  // SEEDLING BUNDLE GROUP - FULL TUTORIAL
   // ==========================================
   seedling_bundle: [
     {
       id: 1,
       title: "Welcome, Farmer!",
-      content: "You are a farmer in Ghana. You'll make decisions about how to invest your money across 4 farming rounds. Each decision affects your family's future.",
+      content: "You are a farmer in Ghana. You'll make decisions about how to invest your money across 4 farming seasons. Each decision affects your family's future.",
       icon: "🌾",
       highlight: true,
       autoAdvanceSeconds: 55
@@ -135,14 +136,14 @@ const TUTORIAL_CARDS = {
     {
       id: 2,
       title: "Your Farm Budget",
-      content: "Each round gives you money to spend on: Farm Inputs (seeds, fertilizer), Education (school fees), and Household Needs (food, clothing). Spend wisely!",
+      content: "Each season gives you money to spend on: Insurance + Seeds Bundle, Additional Farm Inputs, Education (school fees), and Household Needs (food, clothing). Spend wisely!",
       icon: "💰",
       autoAdvanceSeconds: 60
     },
     {
       id: 3,
       title: "How Weather Affects Harvest",
-      content: "☀️ Good weather = 50% MORE harvest (1.5x your investment). ⛈️ Bad weather = 30-70% LESS harvest. Weather is unpredictable each round!",
+      content: "☀️ Good weather = 50% MORE harvest (1.5x your investment). ⛈️ Bad weather = 30-70% LESS harvest. Weather is unpredictable each season!",
       icon: "🌤️",
       highlight: true,
       autoAdvanceSeconds: 60
@@ -167,9 +168,9 @@ const TUTORIAL_CARDS = {
     },
     {
       id: 6,
-      title: "SPECIAL BUNDLE OFFER! 🎁",
-      content: "Get BOTH insurance protection AND hybrid maize seeds for 100 GHS! The improved seeds are drought-resistant and boost yields by 50% MORE. Double benefit in one package!",
-      icon: "📦",
+      title: "Improved Seeds Boost Your Harvest! 🌱",
+      content: "Hybrid maize seeds are drought-resistant and increase yields by 50%! Smart farmers combine improved seeds with insurance to protect their investment AND boost production. Both help secure your income.",
+      icon: "🌱",
       special: true,
       highlight: true,
       autoAdvanceSeconds: 70
@@ -185,7 +186,7 @@ const TUTORIAL_CARDS = {
     {
       id: 8,
       title: "Make Your Choice!",
-      content: "Each round, decide: Buy the bundle (100 GHS) or spend differently? You'll see how insurance and improved seeds work together over 4 rounds. Good luck!",
+      content: "Each season, decide how much to spend on the insurance + seeds bundle. You'll see how they work together over 4 seasons. Good luck!",
       icon: "🎯",
       highlight: true
     }
@@ -193,7 +194,7 @@ const TUTORIAL_CARDS = {
 };
 
 // ==========================================
-// ROUND INTENSITY CONFIGURATION - 4 ROUNDS
+// SEASON INTENSITY CONFIGURATION - 4 SEASONS
 // ==========================================
 const ROUND_INTENSITY = {
   1: {
@@ -224,7 +225,7 @@ const ROUND_INTENSITY = {
 };
 
 // ==========================================
-// WEATHER ANIMATIONS FOR OUTCOMES - 4 ROUNDS
+// WEATHER ANIMATIONS FOR OUTCOMES - 4 SEASONS
 // ==========================================
 const WEATHER_ANIMATIONS = {
   round1: {

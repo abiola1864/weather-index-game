@@ -1,3 +1,8 @@
+// ===============================================
+// GAME ROUTES - COMPLETE WITH PERCEPTION ENDPOINT
+// src/routes/gameRoutes.js
+// ===============================================
+
 const express = require('express');
 const router = express.Router();
 const gameController = require('../controllers/gameController');
@@ -7,12 +12,12 @@ router.post('/respondent/create', gameController.createRespondent);
 router.get('/respondent/:id', gameController.getRespondent);
 router.put('/respondent/:id', gameController.updateRespondent);
 
-// ===== SESSION ROUTES =====
+// ===== GAME SESSION ROUTES =====
 router.post('/session/start', gameController.startGameSession);
 router.get('/session/:sessionId', gameController.getGameSession);
 router.put('/session/:sessionId/complete', gameController.completeGameSession);
 
-// ===== ROUND ROUTES =====
+// ===== GAME ROUND ROUTES =====
 router.post('/round/save', gameController.saveGameRound);
 router.get('/round/:sessionId/:roundNumber', gameController.getGameRound);
 router.get('/rounds/:sessionId', gameController.getAllRounds);
@@ -21,15 +26,19 @@ router.get('/rounds/:sessionId', gameController.getAllRounds);
 router.post('/knowledge/submit', gameController.submitKnowledgeTest);
 router.get('/knowledge/:respondentId', gameController.getKnowledgeTest);
 
-// ===== COUPLE DECISION ROUTES (SECTION E) =====
-router.post('/couple-decision/save', gameController.saveCoupleDecision);
-router.get('/couple-decisions/:sessionId', gameController.getCoupleDecisions);
+// ===== COUPLE INFO ROUTES =====
+router.post('/couple/info', gameController.saveCoupleInfo);
+router.get('/couple/info/:householdId', gameController.getCoupleInfo);
 
-// ===== PERCEPTION ROUTES (SECTION D) =====
-router.post('/perception/save', gameController.savePerception);
+// ===== COUPLE DECISION ROUTES =====
+router.post('/couple/decision', gameController.saveCoupleDecision);
+router.get('/couple/decisions/:sessionId', gameController.getCoupleDecisions);
+
+// ===== PERCEPTION ROUTES (NEW: FOR COUPLE SESSION) =====
+router.post('/perception/submit', gameController.savePerception);
 router.get('/perception/:sessionId', gameController.getPerception);
 
-// ===== TRANSLATIONS ROUTES =====
+// ===== TRANSLATION ROUTES =====
 router.get('/translations/:language', gameController.getTranslations);
 
 module.exports = router;

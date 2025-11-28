@@ -1,18 +1,114 @@
 const mongoose = require('mongoose');
 
+// ===== GAME ROUND SCHEMA - FIXED ENUM VALUES =====
+const gameRoundSchema = new mongoose.Schema({
+  respondentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Respondent',
+    required: true
+  },
+  sessionId: {
+    type: String,
+    required: true
+  },
+  roundNumber: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 4
+  },
+  isPracticeRound: {
+    type: Boolean,
+    default: false
+  },
+  budget: {
+    type: Number,
+    required: true
+  },
+  insuranceSpend: {
+    type: Number,
+    default: 0
+  },
+  bundleAccepted: {
+    type: Boolean,
+    default: false
+  },
+  bundleProduct: {
+    type: String,
+    enum: ['none', 'fertilizer', 'seeds'], // ✅ FIXED: Added 'seeds' to enum
+    default: 'none'
+  },
+  inputChoiceType: {
+    type: String,
+    enum: ['', 'seeds', 'fertilizer'], // ✅ This was already correct
+    default: ''
+  },
+  inputSpend: {
+    type: Number,
+    default: 0
+  },
+  educationSpend: {
+    type: Number,
+    default: 0
+  },
+  consumptionSpend: {
+    type: Number,
+    default: 0
+  },
+  decisionContext: {
+    type: String,
+    enum: ['individual_husband', 'individual_wife', 'couple_joint'],
+    required: true
+  },
+  weatherShock: {
+    occurred: { type: Boolean, default: false },
+    type: { 
+      type: String, 
+      enum: ['normal', 'drought', 'flood'],
+      default: 'normal'
+    },
+    severity: { 
+      type: String, 
+      enum: ['none', 'mild', 'severe', 'moderate'],
+      default: 'none'
+    }
+  },
+  harvestOutcome: {
+    type: Number,
+    default: 0
+  },
+  payoutReceived: {
+    type: Number,
+    default: 0
+  },
+  startTime: {
+    type: Date,
+    required: true
+  },
+  endTime: {
+    type: Date
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+// ===== COMPLETE MODELS FILE =====
+// Copy your entire Game.js models file, just replace the gameRoundSchema section above
+
 // ===== RESPONDENT SCHEMA =====
 const respondentSchema = new mongoose.Schema({
   householdId: {
     type: String,
     required: true,
-    index: true  // Changed from unique to allow multiple respondents per household
+    index: true
   },
   respondentId: {
     type: String,
     required: true,
     unique: true
   },
-  // NEW: Gender and Role fields
   gender: {
     type: String,
     enum: ['male', 'female'],
@@ -23,7 +119,6 @@ const respondentSchema = new mongoose.Schema({
     enum: ['husband', 'wife'],
     required: true
   },
-  // NEW: Treatment group (assigned at household level)
   treatmentGroup: {
     type: String,
     enum: ['control', 'fertilizer_bundle', 'seedling_bundle'],
@@ -114,23 +209,25 @@ const gameSessionSchema = new mongoose.Schema({
     ref: 'Respondent',
     required: true
   },
-  // NEW: Household ID for tracking couple sessions
   householdId: {
     type: String,
     required: true,
     index: true
   },
-  // NEW: Session type
   sessionType: {
     type: String,
     enum: ['individual_husband', 'individual_wife', 'couple_joint'],
     required: true
   },
-  // NEW: Treatment group (copied from respondent for easier querying)
   treatmentGroup: {
     type: String,
     enum: ['control', 'fertilizer_bundle', 'seedling_bundle'],
     required: true
+  },
+  coupleInfo: {
+    marriageDuration: { type: Number },
+    numberOfChildren: { type: Number },
+    savedAt: { type: Date }
   },
   status: {
     type: String,
@@ -139,7 +236,7 @@ const gameSessionSchema = new mongoose.Schema({
   },
   totalRounds: {
     type: Number,
-    default: 4  // ✅ CHANGED FROM 3 TO 4
+    default: 4
   },
   roundsCompleted: {
     type: Number,
@@ -167,97 +264,6 @@ const gameSessionSchema = new mongoose.Schema({
   },
   completedAt: {
     type: Date
-  }
-});
-
-// ===== GAME ROUND SCHEMA =====
-const gameRoundSchema = new mongoose.Schema({
-  respondentId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Respondent',
-    required: true
-  },
-  sessionId: {
-    type: String,
-    required: true
-  },
-  roundNumber: {
-    type: Number,
-    required: true,
-    min: 1,
-    max: 4  // ✅ CHANGED FROM 3 TO 4
-  },
-  // NEW: Practice round flag
-  isPracticeRound: {
-    type: Boolean,
-    default: false
-  },
-  budget: {
-    type: Number,
-    required: true
-  },
-  insuranceSpend: {
-    type: Number,
-    default: 0
-  },
-  // NEW: Bundle fields
-  bundleAccepted: {
-    type: Boolean,
-    default: false
-  },
-  bundleProduct: {
-    type: String,
-    enum: ['none', 'fertilizer', 'seedling'],
-    default: 'none'
-  },
-  inputSpend: {
-    type: Number,
-    default: 0
-  },
-  educationSpend: {
-    type: Number,
-    default: 0
-  },
-  consumptionSpend: {
-    type: Number,
-    default: 0
-  },
-  decisionContext: {
-    type: String,
-    enum: ['individual_husband', 'individual_wife', 'couple_joint'],
-    required: true
-  },
-  weatherShock: {
-    occurred: { type: Boolean, default: false },
-    type: { 
-      type: String, 
-      enum: ['normal', 'drought', 'flood'],
-      default: 'normal'
-    },
-    severity: { 
-      type: String, 
-      enum: ['none', 'mild', 'severe', 'moderate'],
-      default: 'none'
-    }
-  },
-  harvestOutcome: {
-    type: Number,
-    default: 0
-  },
-  payoutReceived: {
-    type: Number,
-    default: 0
-  },
-  startTime: {
-    type: Date,
-    required: true
-  },
-  endTime: {
-    type: Date
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
   }
 });
 
@@ -303,7 +309,7 @@ const knowledgeTestSchema = new mongoose.Schema({
   }
 });
 
-// ===== COUPLE DECISION SCHEMA (Section E) =====
+// ===== COUPLE DECISION SCHEMA =====
 const coupleDecisionSchema = new mongoose.Schema({
   respondentId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -318,8 +324,7 @@ const coupleDecisionSchema = new mongoose.Schema({
     type: Number,
     required: true,
     min: 1,
-    max: 4,  // ✅ CHANGED FROM 3 TO 4
-    // 1 = Husband, 2 = Wife, 3 = Both equally
+    max: 4
   },
   finalSay: {
     type: Number,
@@ -339,7 +344,7 @@ const coupleDecisionSchema = new mongoose.Schema({
   }
 });
 
-// ===== PERCEPTION SCHEMA (Section D) =====
+// ===== PERCEPTION SCHEMA =====
 const perceptionSchema = new mongoose.Schema({
   respondentId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -350,26 +355,51 @@ const perceptionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  understanding: {
+  householdId: {
+    type: String,
+    required: true
+  },
+  bundleInfluence: {
     type: Number,
     required: true,
     min: 1,
     max: 5
   },
-  coupleDifficulty: {
-    type: Number,
-    min: 1,
-    max: 5,
-    required: false
-    // Only for couple context
-  },
-  bundleValue: {
+  insuranceUnderstanding: {
     type: Number,
     required: true,
     min: 1,
     max: 5
   },
-  purchaseIntent: {
+  willingnessToPay: {
+    type: Boolean,
+    required: true
+  },
+  recommendToOthers: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5
+  },
+  perceivedFairness: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5
+  },
+  trustInPayout: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5
+  },
+  bundleValuePerception: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5
+  },
+  futureUseLikelihood: {
     type: Number,
     required: true,
     min: 1,

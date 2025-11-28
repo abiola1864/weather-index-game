@@ -210,6 +210,63 @@
             90% { opacity: 0.6; }
             100% { transform: translateY(-100px) translateX(100px) rotate(360deg); opacity: 0; }
         }
+
+        /* Weather screen improvements - longer viewing time */
+        .weather-container {
+            padding: 40px 20px;
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        #weatherDescription {
+            font-size: 18px;
+            line-height: 1.8;
+            margin: 30px auto;
+            max-width: 800px;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+        }
+
+        .outcome-cards {
+            margin: 40px 0;
+        }
+
+        #nextRoundBtn {
+            margin-top: 30px;
+        }
+
+        /* Warning for final season */
+        .final-season-warning {
+            animation: pulse 2s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .warning-banner {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 22px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+        }
+
+        /* Secondary button style for skip option */
+        .btn-secondary {
+            background: linear-gradient(135deg, #757575, #616161) !important;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #616161, #424242) !important;
+        }
     </style>
 </head>
 <body>
@@ -235,7 +292,7 @@
                 </div>
                 <h1 data-translate="welcome.title">Farming Decisions Game</h1>
                 <p class="subtitle" data-translate="welcome.subtitle">
-                    Make important decisions for your farm and family across 3 seasons
+                    Make important decisions for your farm and family across 4 seasons
                 </p>
             </div>
             
@@ -244,7 +301,7 @@
                     <div class="feature-icon-circle">
                         <i class="fas fa-calendar-alt"></i>
                     </div>
-                    <h3 data-translate="welcome.seasons">3 Farming Seasons</h3>
+                    <h3 data-translate="welcome.seasons">4 Farming Seasons</h3>
                     <p data-translate="welcome.seasonsDesc">Experience different challenges and make strategic choices each season</p>
                 </div>
                 
@@ -284,6 +341,22 @@
                 <h2 data-translate="demographics.title">Tell Us About Yourself</h2>
                 
                 <form id="demographicsForm" class="game-form">
+                    
+                    <!-- Role Guidance for Second Partner -->
+                    <div id="roleGuidance" style="display: none; background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 20px; border-radius: 12px; margin-bottom: 25px; border-left: 5px solid #2196F3;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <i class="fas fa-info-circle" style="font-size: 36px; color: #1976D2;"></i>
+                            <div>
+                                <h3 style="margin: 0 0 8px 0; color: #1976D2; font-size: 20px;">
+                                    Second Partner's Turn
+                                </h3>
+                                <p id="roleGuidanceText" style="margin: 0; font-size: 16px; line-height: 1.6; color: #0D47A1;">
+                                    <!-- Populated by JavaScript -->
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label data-translate="demographics.gender">Gender</label>
                         <select id="gender" name="gender" required>
@@ -589,13 +662,13 @@
             </div>
         </div>
 
-        <!-- Game Round Screen -->
+        <!-- Game Season Screen -->
         <div id="gameScreen" class="screen">
             <div class="game-container">
-                <!-- Round Header -->
+                <!-- Season Header -->
                 <div class="round-header">
                     <div class="round-info">
-                        <h3><span data-translate="game.round">Round</span> <span id="currentRound">1</span>/<span id="totalRoundsDisplay">3</span></h3>
+                        <h3><span data-translate="game.season">Season</span> <span id="currentRound">1</span>/<span id="totalRoundsDisplay">4</span></h3>
                         <p id="roundContext">Individual Play</p>
                     </div>
                     <div class="budget-display">
@@ -619,55 +692,7 @@
                     <h3 data-translate="game.allocateTitle">How will you spend your money?</h3>
                     
                     <form id="allocationForm">
-                        <!-- Insurance - Dynamic based on treatment -->
-                        <div class="allocation-item" id="insuranceAllocationItem">
-                            <!-- Populated by JavaScript -->
-                        </div>
-
-                        <!-- Inputs -->
-                        <div class="allocation-item">
-                            <div class="item-header">
-                                <i class="fas fa-seedling"></i>
-                                <div class="item-info">
-                                    <h4 data-translate="game.inputs">Farm Inputs</h4>
-                                    <p data-translate="game.inputsDesc">Seeds, fertilizer, tools</p>
-                                </div>
-                            </div>
-                            <div class="item-input">
-                                <input type="number" id="inputSpend" min="0" value="0">
-                                <span class="currency">GHS</span>
-                            </div>
-                        </div>
-
-                        <!-- Education -->
-                        <div class="allocation-item">
-                            <div class="item-header">
-                                <i class="fas fa-graduation-cap"></i>
-                                <div class="item-info">
-                                    <h4 data-translate="game.education">Education</h4>
-                                    <p data-translate="game.educationDesc">School fees, books</p>
-                                </div>
-                            </div>
-                            <div class="item-input">
-                                <input type="number" id="educationSpend" min="0" value="0">
-                                <span class="currency">GHS</span>
-                            </div>
-                        </div>
-
-                        <!-- Consumption -->
-                        <div class="allocation-item">
-                            <div class="item-header">
-                                <i class="fas fa-home"></i>
-                                <div class="item-info">
-                                    <h4 data-translate="game.consumption">Household Needs</h4>
-                                    <p data-translate="game.consumptionDesc">Food, clothing, other needs</p>
-                                </div>
-                            </div>
-                            <div class="item-input">
-                                <input type="number" id="consumptionSpend" min="0" value="0">
-                                <span class="currency">GHS</span>
-                            </div>
-                        </div>
+                        <!-- Allocation items will be inserted here by JavaScript in random order -->
 
                         <!-- Summary -->
                         <div class="allocation-summary">
@@ -716,9 +741,15 @@
                 </div>
 
                 <button class="btn-primary btn-large" id="nextRoundBtn">
-                    <span data-translate="outcome.continue">Continue to Next Round</span>
+                    <span data-translate="outcome.continue">Continue to Next Season</span>
                     <i class="fas fa-arrow-right"></i>
                 </button>
+
+                <div style="text-align: center; margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                    <p style="font-size: 16px; color: white; margin: 0;">
+                        ℹ️ <strong>Take your time to review the results before continuing</strong>
+                    </p>
+                </div>
             </div>
         </div>
 
@@ -787,6 +818,146 @@
             </div>
         </div>
 
+        <!-- Perception Assessment Screen (After Couple Session) -->
+        <div id="perceptionScreen" class="screen">
+            <div class="form-container" style="max-width: 800px;">
+                <div class="progress-header">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%; background: linear-gradient(90deg, var(--ghana-red), var(--ghana-yellow), var(--ghana-green));"></div>
+                    </div>
+                    <span class="progress-text">Final Assessment</span>
+                </div>
+
+                <h2 style="text-align: center; color: var(--primary);">
+                    <i class="fas fa-comments"></i> Your Experience with the Bundle
+                </h2>
+                <p class="subtitle" style="text-align: center;">
+                    Share your thoughts about the insurance and farming bundle you experienced
+                </p>
+                
+                <form id="perceptionForm" class="game-form">
+                    <div class="question-item">
+                        <p><strong>1. How much did the bundle (insurance + inputs) influence your farming decisions?</strong></p>
+                        <div class="likert-scale">
+                            <label><input type="radio" name="bundleInfluence" value="1" required><span>1</span></label>
+                            <label><input type="radio" name="bundleInfluence" value="2"><span>2</span></label>
+                            <label><input type="radio" name="bundleInfluence" value="3"><span>3</span></label>
+                            <label><input type="radio" name="bundleInfluence" value="4"><span>4</span></label>
+                            <label><input type="radio" name="bundleInfluence" value="5"><span>5</span></label>
+                        </div>
+                        <div class="scale-labels">
+                            <span>Not at all</span>
+                            <span>Very much</span>
+                        </div>
+                    </div>
+
+                    <div class="question-item">
+                        <p><strong>2. How well do you understand how weather index insurance works?</strong></p>
+                        <div class="likert-scale">
+                            <label><input type="radio" name="insuranceUnderstanding" value="1" required><span>1</span></label>
+                            <label><input type="radio" name="insuranceUnderstanding" value="2"><span>2</span></label>
+                            <label><input type="radio" name="insuranceUnderstanding" value="3"><span>3</span></label>
+                            <label><input type="radio" name="insuranceUnderstanding" value="4"><span>4</span></label>
+                            <label><input type="radio" name="insuranceUnderstanding" value="5"><span>5</span></label>
+                        </div>
+                        <div class="scale-labels">
+                            <span>Don't understand at all</span>
+                            <span>Understand completely</span>
+                        </div>
+                    </div>
+
+                    <div class="question-item">
+                        <p><strong>3. Would you be willing to pay for this bundle in real life?</strong></p>
+                        <div class="radio-group">
+                            <label><input type="radio" name="willingnessToPay" value="yes" required> Yes</label>
+                            <label><input type="radio" name="willingnessToPay" value="no"> No</label>
+                        </div>
+                    </div>
+
+                    <div class="question-item">
+                        <p><strong>4. How likely are you to recommend this bundle to other farmers?</strong></p>
+                        <div class="likert-scale">
+                            <label><input type="radio" name="recommendToOthers" value="1" required><span>1</span></label>
+                            <label><input type="radio" name="recommendToOthers" value="2"><span>2</span></label>
+                            <label><input type="radio" name="recommendToOthers" value="3"><span>3</span></label>
+                            <label><input type="radio" name="recommendToOthers" value="4"><span>4</span></label>
+                            <label><input type="radio" name="recommendToOthers" value="5"><span>5</span></label>
+                        </div>
+                        <div class="scale-labels">
+                            <span>Very unlikely</span>
+                            <span>Very likely</span>
+                        </div>
+                    </div>
+
+                    <div class="question-item">
+                        <p><strong>5. Do you think the insurance payouts were fair?</strong></p>
+                        <div class="likert-scale">
+                            <label><input type="radio" name="perceivedFairness" value="1" required><span>1</span></label>
+                            <label><input type="radio" name="perceivedFairness" value="2"><span>2</span></label>
+                            <label><input type="radio" name="perceivedFairness" value="3"><span>3</span></label>
+                            <label><input type="radio" name="perceivedFairness" value="4"><span>4</span></label>
+                            <label><input type="radio" name="perceivedFairness" value="5"><span>5</span></label>
+                        </div>
+                        <div class="scale-labels">
+                            <span>Very unfair</span>
+                            <span>Very fair</span>
+                        </div>
+                    </div>
+
+                    <div class="question-item">
+                        <p><strong>6. How much do you trust that insurance companies would pay out in real life?</strong></p>
+                        <div class="likert-scale">
+                            <label><input type="radio" name="trustInPayout" value="1" required><span>1</span></label>
+                            <label><input type="radio" name="trustInPayout" value="2"><span>2</span></label>
+                            <label><input type="radio" name="trustInPayout" value="3"><span>3</span></label>
+                            <label><input type="radio" name="trustInPayout" value="4"><span>4</span></label>
+                            <label><input type="radio" name="trustInPayout" value="5"><span>5</span></label>
+                        </div>
+                        <div class="scale-labels">
+                            <span>Don't trust at all</span>
+                            <span>Trust completely</span>
+                        </div>
+                    </div>
+
+                    <div class="question-item">
+                        <p><strong>7. How valuable was getting insurance AND farming inputs together in one package?</strong></p>
+                        <div class="likert-scale">
+                            <label><input type="radio" name="bundleValuePerception" value="1" required><span>1</span></label>
+                            <label><input type="radio" name="bundleValuePerception" value="2"><span>2</span></label>
+                            <label><input type="radio" name="bundleValuePerception" value="3"><span>3</span></label>
+                            <label><input type="radio" name="bundleValuePerception" value="4"><span>4</span></label>
+                            <label><input type="radio" name="bundleValuePerception" value="5"><span>5</span></label>
+                        </div>
+                        <div class="scale-labels">
+                            <span>Not valuable at all</span>
+                            <span>Extremely valuable</span>
+                        </div>
+                    </div>
+
+                    <div class="question-item">
+                        <p><strong>8. If this bundle was available next season, how likely would you be to use it?</strong></p>
+                        <div class="likert-scale">
+                            <label><input type="radio" name="futureUseLikelihood" value="1" required><span>1</span></label>
+                            <label><input type="radio" name="futureUseLikelihood" value="2"><span>2</span></label>
+                            <label><input type="radio" name="futureUseLikelihood" value="3"><span>3</span></label>
+                            <label><input type="radio" name="futureUseLikelihood" value="4"><span>4</span></label>
+                            <label><input type="radio" name="futureUseLikelihood" value="5"><span>5</span></label>
+                        </div>
+                        <div class="scale-labels">
+                            <span>Definitely not</span>
+                            <span>Definitely yes</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary btn-large" style="margin-top: 30px;">
+                        <i class="fas fa-check"></i>
+                        <span>Submit Assessment</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
         <!-- Results Screen -->
         <div id="resultsScreen" class="screen">
             <div class="results-container">
@@ -831,89 +1002,16 @@
             </div>
         </div>
 
-    </div>
-
-
-
-
-<!-- Results Screen -->
-        <div id="resultsScreen" class="screen">
-            <div class="results-container">
-                <div class="celebration-animation">
-                    <i class="fas fa-trophy"></i>
-                </div>
-                <h2 data-translate="results.title">Game Completed!</h2>
-                <p data-translate="results.subtitle">Here's how you performed</p>
-
-                <div class="results-grid">
-                    <div class="result-card">
-                        <i class="fas fa-coins"></i>
-                        <h4 data-translate="results.totalEarnings">Total Earnings</h4>
-                        <div class="result-value" id="totalEarnings">0 GHS</div>
-                    </div>
-                    <div class="result-card">
-                        <i class="fas fa-shield-alt"></i>
-                        <h4 data-translate="results.insuranceSpent">Insurance Spent</h4>
-                        <div class="result-value" id="totalInsurance">0 GHS</div>
-                    </div>
-                    <div class="result-card">
-                        <i class="fas fa-hand-holding-usd"></i>
-                        <h4 data-translate="results.payoutsReceived">Payouts Received</h4>
-                        <div class="result-value" id="totalPayouts">0 GHS</div>
-                    </div>
-                    <div class="result-card">
-                        <i class="fas fa-brain"></i>
-                        <h4 data-translate="results.knowledgeScore">Knowledge Score</h4>
-                        <div class="result-value" id="knowledgeScore">0/5</div>
-                    </div>
-                </div>
-
-                <div class="insights-panel">
-                    <h3 data-translate="results.insights">Key Insights</h3>
-                    <div id="insightsContent"></div>
-                </div>
-
-                <button class="btn-primary btn-large" id="restartBtn">
-                    <i class="fas fa-redo"></i>
-                    <span data-translate="results.playAgain">Play Again</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- ADD THE THREE NEW SCREENS HERE -->
-        <!-- ========================================== -->
-
         <!-- Second Partner Prompt Screen -->
         <div id="secondPartnerScreen" class="screen">
             <div class="form-container" style="max-width: 800px; text-align: center;">
                 <div class="prompt-message">
-                    <div style="font-size: 80px; margin-bottom: 30px;">🎉</div>
-                    <h2 style="color: var(--primary); margin-bottom: 20px;">First Partner Completed!</h2>
-                    <p style="font-size: 20px; line-height: 1.7; margin-bottom: 20px;">
-                        The first partner has finished playing individually.
-                    </p>
-                    <p style="font-size: 20px; margin-bottom: 30px;">
-                        Now it's time for the second partner to play on their own.
-                    </p>
-                </div>
-                
-                <div style="background: #E8F5E9; padding: 30px; border-radius: 16px; margin: 30px 0; border-left: 6px solid var(--primary);">
-                    <p style="font-weight: 700; margin-bottom: 20px; font-size: 20px; color: var(--primary);">
-                        <i class="fas fa-list-check"></i> The second partner will:
-                    </p>
-                    <ul style="text-align: left; max-width: 600px; margin: 0 auto; font-size: 18px; line-height: 2.2;">
-                        <li><i class="fas fa-user-circle" style="color: var(--primary); margin-right: 10px;"></i>Answer demographic questions</li>
-                        <li><i class="fas fa-balance-scale" style="color: var(--primary); margin-right: 10px;"></i>Complete risk assessment</li>
-                        <li><i class="fas fa-users" style="color: var(--primary); margin-right: 10px;"></i>Answer empowerment questions</li>
-                        <li><i class="fas fa-gamepad" style="color: var(--primary); margin-right: 10px;"></i>Play 4 farming rounds individually</li>
-                        <li><i class="fas fa-brain" style="color: var(--primary); margin-right: 10px;"></i>Take the knowledge test</li>
-                    </ul>
+                    <!-- Content populated by JavaScript -->
                 </div>
                 
                 <button class="btn-primary btn-large" id="startSecondPartnerBtn" style="margin-top: 30px;">
                     <i class="fas fa-user-plus"></i>
-                    <span>Start Second Partner</span>
+                    <span>Start Second Partner Session</span>
                     <i class="fas fa-arrow-right"></i>
                 </button>
             </div>
@@ -923,26 +1021,7 @@
         <div id="coupleScreen" class="screen">
             <div class="form-container" style="max-width: 800px; text-align: center;">
                 <div class="prompt-message">
-                    <div style="font-size: 80px; margin-bottom: 30px;">🎉👫</div>
-                    <h2 style="color: var(--primary); margin-bottom: 20px;">Both Partners Completed!</h2>
-                    <p style="font-size: 20px; line-height: 1.7; margin-bottom: 20px;">
-                        Great work! Both partners have finished playing individually.
-                    </p>
-                    <p style="font-size: 20px; margin-bottom: 30px;">
-                        Now it's time to play together as a couple.
-                    </p>
-                </div>
-                
-                <div style="background: #FFF9C4; padding: 30px; border-radius: 16px; margin: 30px 0; border-left: 6px solid var(--ghana-gold);">
-                    <p style="font-weight: 700; margin-bottom: 20px; font-size: 20px; color: var(--ghana-green-dark);">
-                        <i class="fas fa-heart"></i> Playing together, you will:
-                    </p>
-                    <ul style="text-align: left; max-width: 600px; margin: 0 auto; font-size: 18px; line-height: 2.2;">
-                        <li><i class="fas fa-ring" style="color: var(--ghana-gold); margin-right: 10px;"></i>Answer questions about your marriage</li>
-                        <li><i class="fas fa-handshake" style="color: var(--ghana-gold); margin-right: 10px;"></i>Make joint decisions for 4 farming rounds</li>
-                        <li><i class="fas fa-comments" style="color: var(--ghana-gold); margin-right: 10px;"></i>Work together to allocate resources</li>
-                        <li><i class="fas fa-hands-helping" style="color: var(--ghana-gold); margin-right: 10px;"></i>Discuss and agree on spending choices</li>
-                    </ul>
+                    <!-- Content populated by JavaScript -->
                 </div>
                 
                 <button class="btn-primary btn-large" id="startCouplePromptBtn" style="margin-top: 30px; background: linear-gradient(135deg, var(--ghana-yellow), var(--ghana-gold)); color: var(--ghana-green-dark);">
@@ -1014,29 +1093,7 @@
             </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- END OF NEW SCREENS -->
-        <!-- ========================================== -->
-
     </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay">

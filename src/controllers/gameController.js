@@ -1,3 +1,8 @@
+// ===============================================
+// GAME CONTROLLER - COMPLETE FIXED VERSION
+// WITH PERCEPTION HANDLING
+// ===============================================
+
 const { 
   Respondent, 
   GameRound, 
@@ -11,17 +16,13 @@ const fs = require('fs').promises;
 const path = require('path');
 
 // ===== TREATMENT GROUP ASSIGNMENT =====
-// This function assigns treatment at the household level
 async function assignTreatmentGroup(householdId) {
-  // Check if any respondent from this household already exists
   const existingRespondent = await Respondent.findOne({ householdId });
   
   if (existingRespondent) {
-    // Use existing household's treatment
     return existingRespondent.treatmentGroup;
   }
   
-  // Assign new treatment randomly (equal probability)
   const treatments = ['control', 'fertilizer_bundle', 'seedling_bundle'];
   const randomIndex = Math.floor(Math.random() * treatments.length);
   return treatments[randomIndex];
@@ -35,7 +36,6 @@ const createRespondent = async (req, res) => {
     
     console.log('📥 Received respondent data:', respondentData);
     
-    // Validate required fields
     if (!respondentData.householdId) {
       return res.status(400).json({
         success: false,
@@ -57,12 +57,10 @@ const createRespondent = async (req, res) => {
       });
     }
     
-    // Generate unique respondent ID if not provided
     if (!respondentData.respondentId) {
       respondentData.respondentId = `R-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
     
-    // Assign treatment group at household level
     respondentData.treatmentGroup = await assignTreatmentGroup(respondentData.householdId);
     
     console.log(`✅ Assigned treatment: ${respondentData.treatmentGroup} to household ${respondentData.householdId}`);
@@ -80,7 +78,6 @@ const createRespondent = async (req, res) => {
   } catch (error) {
     console.error('❌ Error creating respondent:', error);
     
-    // Send detailed error for validation issues
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(err => err.message);
       return res.status(400).json({
@@ -155,15 +152,12 @@ const updateRespondent = async (req, res) => {
 
 // ===== GAME SESSION MANAGEMENT =====
 
-// ===== GAME SESSION MANAGEMENT - UPDATED =====
-
 const startGameSession = async (req, res) => {
   try {
     const { respondentId, sessionType } = req.body;
     
     console.log('📥 Starting game session for respondent:', respondentId);
 
-    // Verify respondent exists
     const respondent = await Respondent.findById(respondentId);
     if (!respondent) {
       return res.status(404).json({
@@ -172,7 +166,6 @@ const startGameSession = async (req, res) => {
       });
     }
 
-    // Create new session
     const sessionId = uuidv4();
     const session = new GameSession({
       sessionId,
@@ -180,12 +173,12 @@ const startGameSession = async (req, res) => {
       householdId: respondent.householdId,
       sessionType: sessionType || 'individual_husband',
       treatmentGroup: respondent.treatmentGroup,
-      totalRounds: 4  // CHANGED FROM 3 TO 4
+      totalRounds: 4
     });
 
     await session.save();
     
-    console.log(`✅ Session created: ${sessionId}`);
+    console.log(`✅ Session created: ${sessionId}, Type: ${sessionType}`);
 
     res.status(201).json({
       success: true,
@@ -201,8 +194,6 @@ const startGameSession = async (req, res) => {
     });
   }
 };
-
-
 
 const getGameSession = async (req, res) => {
   try {
@@ -271,46 +262,96 @@ const saveGameRound = async (req, res) => {
   try {
     const roundData = req.body;
     
-    console.log('📥 Received round data:', roundData);
+    console.log('📥 Received round data:');
+    console.log('  - respondentId:', roundData.respondentId);
+    console.log('  - sessionId:', roundData.sessionId);
+    console.log('  - roundNumber:', roundData.roundNumber);
+    console.log('  - budget:', roundData.budget);
+    console.log('  - decisionContext:', roundData.decisionContext);
 
-    // Validate total spending equals budget
+    if (!roundData.respondentId) {
+      return res.status(400).json({
+        success: false,
+        message: 'respondentId is required'
+      });
+    }
+
+    if (!roundData.sessionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'sessionId is required'
+      });
+    }
+
+    const sanitizedRoundData = {
+      respondentId: roundData.respondentId,
+      sessionId: roundData.sessionId,
+      roundNumber: parseInt(roundData.roundNumber) || 1,
+      isPracticeRound: Boolean(roundData.isPracticeRound),
+      budget: parseFloat(roundData.budget) || 0,
+      insuranceSpend: parseFloat(roundData.insuranceSpend) || 0,
+      bundleAccepted: Boolean(roundData.bundleAccepted),
+      bundleProduct: roundData.bundleProduct || 'none',
+      inputSpend: parseFloat(roundData.inputSpend) || 0,
+      educationSpend: parseFloat(roundData.educationSpend) || 0,
+      consumptionSpend: parseFloat(roundData.consumptionSpend) || 0,
+      decisionContext: roundData.decisionContext || 'individual_husband',
+      weatherShock: {
+        occurred: Boolean(roundData.weatherShock?.occurred),
+        type: roundData.weatherShock?.type || 'normal',
+        severity: roundData.weatherShock?.severity || 'none'
+      },
+      harvestOutcome: parseFloat(roundData.harvestOutcome) || 0,
+      payoutReceived: parseFloat(roundData.payoutReceived) || 0,
+      startTime: roundData.startTime ? new Date(roundData.startTime) : new Date(),
+      endTime: roundData.endTime ? new Date(roundData.endTime) : undefined
+    };
+
+    console.log('✅ Sanitized round data');
+
     const totalSpent = 
-      (roundData.insuranceSpend || 0) +
-      (roundData.inputSpend || 0) +
-      (roundData.educationSpend || 0) +
-      (roundData.consumptionSpend || 0);
+      sanitizedRoundData.insuranceSpend +
+      sanitizedRoundData.inputSpend +
+      sanitizedRoundData.educationSpend +
+      sanitizedRoundData.consumptionSpend;
 
-    if (Math.abs(totalSpent - roundData.budget) > 0.01) {
+    console.log(`💰 Budget validation: ${sanitizedRoundData.budget} vs ${totalSpent}`);
+
+    if (Math.abs(totalSpent - sanitizedRoundData.budget) > 0.01) {
+      console.error('❌ Budget validation failed');
+      
       return res.status(400).json({
         success: false,
         message: 'Total spending must equal budget',
         details: {
-          budget: roundData.budget,
+          budget: sanitizedRoundData.budget,
           totalSpent,
-          difference: roundData.budget - totalSpent
+          difference: sanitizedRoundData.budget - totalSpent
         }
       });
     }
 
-    const gameRound = new GameRound(roundData);
+    console.log('✅ Budget validation passed');
+
+    const gameRound = new GameRound(sanitizedRoundData);
+    
+    console.log('💾 Attempting to save game round...');
     await gameRound.save();
     
-    console.log('✅ Game round saved:', gameRound._id);
+    console.log('✅ Game round saved successfully:', gameRound._id);
 
-    // Calculate total earnings from this round
-    const roundEarnings = (gameRound.harvestOutcome || 0) + (gameRound.payoutReceived || 0);
+    const roundEarnings = gameRound.harvestOutcome + gameRound.payoutReceived;
 
-    // Update session statistics
     const updatedSession = await GameSession.findOneAndUpdate(
       { sessionId: roundData.sessionId },
       {
         $inc: {
           roundsCompleted: 1,
           totalEarnings: roundEarnings,
-          totalInsuranceSpent: gameRound.insuranceSpend || 0,
-          totalPayoutsReceived: gameRound.payoutReceived || 0
+          totalInsuranceSpent: gameRound.insuranceSpend,
+          totalPayoutsReceived: gameRound.payoutReceived
         },
-        currentRound: roundData.roundNumber + 1
+        currentRound: sanitizedRoundData.roundNumber + 1
       },
       { new: true }
     );
@@ -327,6 +368,8 @@ const saveGameRound = async (req, res) => {
     
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(err => err.message);
+      console.error('❌ Validation errors:', messages);
+      
       return res.status(400).json({
         success: false,
         message: 'Validation error',
@@ -337,8 +380,7 @@ const saveGameRound = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to save game round',
-      error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: error.message
     });
   }
 };
@@ -400,15 +442,13 @@ const submitKnowledgeTest = async (req, res) => {
   try {
     const testData = req.body;
     
-    // Calculate knowledge score
     let knowledgeScore = 0;
     if (testData.q1_indexBased === true) knowledgeScore++;
     if (testData.q2_areaWide === true) knowledgeScore++;
-    if (testData.q3_profitGuarantee === false) knowledgeScore++; // False is correct answer
+    if (testData.q3_profitGuarantee === false) knowledgeScore++;
     if (testData.q4_upfrontCost === true) knowledgeScore++;
     if (testData.q5_basisRisk === true) knowledgeScore++;
     
-    // Add calculated score to test data
     testData.knowledgeScore = knowledgeScore;
     
     const knowledgeTest = new KnowledgeTest(testData);
@@ -458,7 +498,98 @@ const getKnowledgeTest = async (req, res) => {
   }
 };
 
-// ===== COUPLE DECISIONS (SECTION E) =====
+// ===== COUPLE INFO =====
+
+const saveCoupleInfo = async (req, res) => {
+  try {
+    const { householdId, marriageDuration, numberOfChildren } = req.body;
+    
+    console.log('📥 Saving couple info for household:', householdId);
+    
+    if (!householdId) {
+      return res.status(400).json({
+        success: false,
+        message: 'householdId is required'
+      });
+    }
+    
+    if (!marriageDuration || numberOfChildren === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'marriageDuration and numberOfChildren are required'
+      });
+    }
+    
+    let coupleSession = await GameSession.findOne({
+      householdId,
+      sessionType: 'couple_joint'
+    });
+    
+    if (!coupleSession) {
+      console.log('⚠️ No couple session found yet, will be saved later');
+      return res.status(201).json({
+        success: true,
+        message: 'Couple information saved (session will be created)',
+        data: { marriageDuration, numberOfChildren }
+      });
+    }
+    
+    coupleSession.coupleInfo = {
+      marriageDuration,
+      numberOfChildren,
+      savedAt: new Date()
+    };
+    
+    await coupleSession.save();
+    
+    console.log('✅ Couple info saved successfully');
+    
+    res.status(201).json({
+      success: true,
+      message: 'Couple information saved successfully',
+      data: coupleSession.coupleInfo
+    });
+  } catch (error) {
+    console.error('❌ Error saving couple info:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to save couple information',
+      error: error.message
+    });
+  }
+};
+
+const getCoupleInfo = async (req, res) => {
+  try {
+    const { householdId } = req.params;
+    
+    const coupleSession = await GameSession.findOne({
+      householdId,
+      sessionType: 'couple_joint'
+    });
+    
+    if (!coupleSession || !coupleSession.coupleInfo) {
+      return res.status(404).json({
+        success: false,
+        message: 'Couple information not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: coupleSession.coupleInfo
+    });
+  } catch (error) {
+    console.error('Error fetching couple info:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch couple information',
+      error: error.message
+    });
+  }
+};
+
+// ===== COUPLE DECISIONS =====
 
 const saveCoupleDecision = async (req, res) => {
   try {
@@ -502,13 +633,18 @@ const getCoupleDecisions = async (req, res) => {
   }
 };
 
-// ===== PERCEPTION (SECTION D) =====
+// ===== PERCEPTION (NEW: FOR COUPLE SESSION) =====
 
 const savePerception = async (req, res) => {
   try {
     const perceptionData = req.body;
+    
+    console.log('📥 Saving perception data for session:', perceptionData.sessionId);
+    
     const perception = new Perception(perceptionData);
     await perception.save();
+    
+    console.log('✅ Perception data saved:', perception._id);
 
     res.status(201).json({
       success: true,
@@ -516,7 +652,7 @@ const savePerception = async (req, res) => {
       data: perception
     });
   } catch (error) {
-    console.error('Error saving perception:', error);
+    console.error('❌ Error saving perception:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to save perception data',
@@ -589,8 +725,8 @@ const getTranslations = async (req, res) => {
           welcome: {
             title: "Welcome Farmer!",
             subtitle: "Learn about Weather Index Insurance through interactive gameplay",
-            rounds: "3 Farming Seasons",
-            roundsDesc: "Experience different weather conditions",
+            seasons: "4 Farming Seasons",
+            seasonsDesc: "Experience different challenges each season",
             insurance: "Insurance Protection",
             insuranceDesc: "Protect your harvest from weather risks",
             earnings: "Real Learning",
@@ -639,6 +775,8 @@ module.exports = {
   getAllRounds,
   submitKnowledgeTest,
   getKnowledgeTest,
+  saveCoupleInfo,
+  getCoupleInfo,
   saveCoupleDecision,
   getCoupleDecisions,
   savePerception,
