@@ -9,14 +9,14 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ===== SECURITY MIDDLEWARE - FIXED FOR PRODUCTION =====
+// ===== SECURITY MIDDLEWARE - FIXED CSP =====
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrcAttr: ["'unsafe-inline'"], // Allows onclick, onchange, oninput
+      scriptSrcAttr: ["'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: [
         "'self'",
@@ -24,27 +24,28 @@ app.use(helmet({
         "http://localhost:5500",
         "http://localhost:5501",
         "https://weather-index-game.onrender.com",
-        "https://*.onrender.com"
+        "https://*.onrender.com",
+        "https://cdnjs.cloudflare.com"  // ✅ FIXED: Added for service worker
       ],
       fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+      workerSrc: ["'self'", "blob:"],
     },
   },
 }));
+
 // ===== RATE LIMITING =====
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100,
   message: 'Too many requests, please try again later.'
 });
 app.use('/api/', limiter);
 
-// ===== CORS - FIXED FOR PRODUCTION =====
+// ===== CORS =====
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
     
-    // List of allowed origins
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:5500',
@@ -56,7 +57,6 @@ app.use(cors({
       'https://*.onrender.com'
     ];
     
-    // Check if origin matches
     const isAllowed = allowedOrigins.some(allowed => {
       if (allowed.includes('*')) {
         const pattern = allowed.replace('*', '.*');
@@ -69,7 +69,7 @@ app.use(cors({
       callback(null, true);
     } else {
       console.log('⚠️  Origin not allowed by CORS:', origin);
-      callback(null, true); // Still allow for now
+      callback(null, true);
     }
   },
   credentials: true,
@@ -78,7 +78,6 @@ app.use(cors({
   exposedHeaders: ['Content-Length', 'Content-Type']
 }));
 
-// Handle preflight requests
 app.options('*', cors());
 
 // ===== BODY PARSER =====
@@ -88,12 +87,11 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // ===== STATIC FILES =====
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ===== LOGGING MIDDLEWARE - ENHANCED =====
+// ===== LOGGING MIDDLEWARE =====
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] ${req.method} ${req.path}`);
   
-  // Log request body for POST/PUT (excluding sensitive data)
   if ((req.method === 'POST' || req.method === 'PUT') && req.body) {
     console.log('📦 Request body:', JSON.stringify(req.body, null, 2));
   }
@@ -109,11 +107,9 @@ async function fixDatabaseIndexes() {
     
     console.log('🔧 Checking database indexes...');
     
-    // Get current indexes
     const indexes = await respondentsCollection.indexes();
     console.log('📋 Current indexes:', indexes.map(idx => idx.name));
     
-    // Check if old unique index exists
     const hasOldUniqueIndex = indexes.some(idx => 
       idx.name === 'householdId_1' && idx.unique === true
     );
@@ -131,7 +127,6 @@ async function fixDatabaseIndexes() {
     }
   } catch (error) {
     console.error('⚠️  Error checking indexes:', error.message);
-    // Don't crash the server if index check fails
   }
 }
 
@@ -152,7 +147,6 @@ const connectDB = async () => {
     console.log('✅ MongoDB Atlas connected successfully');
     console.log('📍 Database:', mongoose.connection.name);
     
-    // Fix indexes after successful connection
     await fixDatabaseIndexes();
     
   } catch (error) {
@@ -162,7 +156,6 @@ const connectDB = async () => {
   }
 };
 
-// MongoDB event listeners
 mongoose.connection.on('error', (err) => {
   console.error('❌ MongoDB error:', err);
 });
@@ -194,6 +187,12 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// ===== SERVE SERVICE WORKER =====
+app.get('/service-worker.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(path.join(__dirname, 'public', 'service-worker.js'));
+});
+
 // ===== SERVE FRONTEND =====
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -209,7 +208,7 @@ app.use((req, res) => {
   });
 });
 
-// ===== ERROR HANDLER - ENHANCED =====
+// ===== ERROR HANDLER =====
 app.use((err, req, res, next) => {
   console.error('❌ Server Error:');
   console.error('Path:', req.path);
@@ -295,20 +294,17 @@ const startServer = async () => {
     });
   });
 
-  // Handle uncaught exceptions
   process.on('uncaughtException', (error) => {
     console.error('❌ Uncaught Exception:', error);
     process.exit(1);
   });
 
-  // Handle unhandled promise rejections
   process.on('unhandledRejection', (reason, promise) => {
     console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
     process.exit(1);
   });
 };
 
-// Start the server
 startServer();
 
 module.exports = app;

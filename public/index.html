@@ -6,6 +6,12 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Farming Decisions Game</title>
+      <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2E7D32">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+
+
     <link rel="stylesheet" href="css/game.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -1141,8 +1147,53 @@
     </script>
 
     <!-- Load tutorial content BEFORE game.js -->
+   <!-- Load scripts in correct order -->
     <script src="js/offline-storage.js"></script>
     <script src="js/tutorial-content.js"></script>
     <script src="js/game.js"></script>
+    
+    <!-- 🆕 ADD THIS: Register Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then((registration) => {
+                        console.log('✅ Service Worker registered successfully:', registration.scope);
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('🔄 New version available! Refresh to update.');
+                                    
+                                    // Optional: Show update notification to user
+                                    if (confirm('A new version is available! Reload to update?')) {
+                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch((error) => {
+                        console.error('❌ Service Worker registration failed:', error);
+                    });
+            });
+            
+            // Reload page when new service worker takes control
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                console.log('🔄 New Service Worker activated - Reloading...');
+                window.location.reload();
+            });
+        } else {
+            console.warn('⚠️ Service Workers not supported in this browser');
+        }
+    </script>
+
+
+
+
+
 </body>
 </html>
