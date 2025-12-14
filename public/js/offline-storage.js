@@ -1,0 +1,426 @@
+// ===============================================
+// OFFLINE STORAGE SYSTEM
+// Handles local data storage and sync when online
+// ===============================================
+
+const OFFLINE_STORAGE_KEY = 'farm_game_offline_data';
+const SYNC_STATUS_KEY = 'farm_game_sync_status';
+
+// Check if online
+function isOnline() {
+    return navigator.onLine;
+}
+
+// Initialize offline storage structure
+function initializeOfflineStorage() {
+    const existing = localStorage.getItem(OFFLINE_STORAGE_KEY);
+    if (!existing) {
+        const initialData = {
+            sessions: [],
+            respondents: [],
+            rounds: [],
+            knowledge: [],
+            perception: [],
+            coupleInfo: [],
+            pending_sync: [],
+            lastSyncAttempt: null,
+            deviceId: generateDeviceId()
+        };
+        localStorage.setItem(OFFLINE_STORAGE_KEY, JSON.stringify(initialData));
+        console.log('📦 Offline storage initialized');
+    }
+}
+
+// Generate unique device ID
+function generateDeviceId() {
+    const existing = localStorage.getItem('device_id');
+    if (existing) return existing;
+    
+    const deviceId = 'DEVICE_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('device_id', deviceId);
+    return deviceId;
+}
+
+// Generate offline ID
+function generateOfflineId() {
+    return 'OFFLINE_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// Get offline data
+function getOfflineData() {
+    const data = localStorage.getItem(OFFLINE_STORAGE_KEY);
+    return data ? JSON.parse(data) : null;
+}
+
+// Save offline data
+function saveOfflineData(data) {
+    localStorage.setItem(OFFLINE_STORAGE_KEY, JSON.stringify(data));
+    console.log('💾 Offline data saved');
+}
+
+// Add to pending sync queue
+function addToPendingSync(type, endpoint, method, data) {
+    const offlineData = getOfflineData() || {};
+    if (!offlineData.pending_sync) offlineData.pending_sync = [];
+    
+    offlineData.pending_sync.push({
+        id: generateOfflineId(),
+        type,
+        endpoint,
+        method,
+        data,
+        timestamp: new Date().toISOString(),
+        synced: false
+    });
+    
+    saveOfflineData(offlineData);
+    console.log('📤 Added to sync queue:', type);
+}
+
+// Handle offline storage for different endpoints
+function handleOfflineStorage(endpoint, method, data) {
+    let offlineData = getOfflineData();
+    if (!offlineData) {
+        initializeOfflineStorage();
+        offlineData = getOfflineData();
+    }
+    
+    console.log('📴 OFFLINE MODE - Handling:', endpoint, method);
+    
+    // ===== RESPONDENT CREATION =====
+    if (endpoint.includes('/respondent/create') && method === 'POST') {
+        const respondent = {
+            _id: generateOfflineId(),
+            ...data,
+            treatmentGroup: assignTreatmentOffline(),
+            createdAt: new Date().toISOString(),
+            offline: true,
+            deviceId: offlineData.deviceId
+        };
+        
+        offlineData.respondents.push(respondent);
+        addToPendingSync('respondent', endpoint, method, respondent);
+        saveOfflineData(offlineData);
+        
+        return respondent;
+    }
+    
+    // ===== SESSION START =====
+    if (endpoint.includes('/session/start') && method === 'POST') {
+        const session = {
+            sessionId: generateOfflineId(),
+            respondentId: data.respondentId,
+            sessionType: data.sessionType,
+            startTime: new Date().toISOString(),
+            offline: true,
+            deviceId: offlineData.deviceId
+        };
+        
+        offlineData.sessions.push(session);
+        addToPendingSync('session', endpoint, method, session);
+        saveOfflineData(offlineData);
+        
+        return session;
+    }
+    
+    // ===== ROUND SAVE =====
+    if (endpoint.includes('/round/save') && method === 'POST') {
+        const round = {
+            _id: generateOfflineId(),
+            ...data,
+            savedAt: new Date().toISOString(),
+            offline: true,
+            deviceId: offlineData.deviceId
+        };
+        
+        offlineData.rounds.push(round);
+        addToPendingSync('round', endpoint, method, round);
+        saveOfflineData(offlineData);
+        
+        return round;
+    }
+    
+    // ===== KNOWLEDGE TEST =====
+    if (endpoint.includes('/knowledge/submit') && method === 'POST') {
+        const knowledge = {
+            _id: generateOfflineId(),
+            ...data,
+            submittedAt: new Date().toISOString(),
+            offline: true,
+            deviceId: offlineData.deviceId
+        };
+        
+        offlineData.knowledge.push(knowledge);
+        addToPendingSync('knowledge', endpoint, method, knowledge);
+        saveOfflineData(offlineData);
+        
+        return { success: true, offline: true };
+    }
+    
+    // ===== PERCEPTION SUBMIT =====
+    if (endpoint.includes('/perception/submit') && method === 'POST') {
+        const perception = {
+            _id: generateOfflineId(),
+            ...data,
+            submittedAt: new Date().toISOString(),
+            offline: true,
+            deviceId: offlineData.deviceId
+        };
+        
+        offlineData.perception.push(perception);
+        addToPendingSync('perception', endpoint, method, perception);
+        saveOfflineData(offlineData);
+        
+        return { success: true, offline: true };
+    }
+    
+    // ===== COUPLE INFO =====
+    if (endpoint.includes('/couple/info') && method === 'POST') {
+        const coupleInfo = {
+            _id: generateOfflineId(),
+            ...data,
+            submittedAt: new Date().toISOString(),
+            offline: true,
+            deviceId: offlineData.deviceId
+        };
+        
+        offlineData.coupleInfo.push(coupleInfo);
+        addToPendingSync('coupleInfo', endpoint, method, coupleInfo);
+        saveOfflineData(offlineData);
+        
+        return { success: true, offline: true };
+    }
+    
+    // ===== SESSION COMPLETE =====
+    if (endpoint.includes('/session/') && endpoint.includes('/complete') && method === 'PUT') {
+        const sessionId = endpoint.split('/')[2];
+        const session = offlineData.sessions.find(s => s.sessionId === sessionId);
+        
+        if (session) {
+            session.completedAt = new Date().toISOString();
+            session.completed = true;
+            addToPendingSync('session_complete', endpoint, method, { sessionId });
+            saveOfflineData(offlineData);
+        }
+        
+        return { success: true, offline: true };
+    }
+    
+    // ===== GET SESSION DATA =====
+    if (endpoint.includes('/session/') && method === 'GET') {
+        const sessionId = endpoint.split('/').pop();
+        const session = offlineData.sessions.find(s => s.sessionId === sessionId);
+        
+        if (session) {
+            const sessionRounds = offlineData.rounds.filter(r => r.sessionId === sessionId);
+            const totalEarnings = sessionRounds.reduce((sum, r) => 
+                sum + (r.harvestOutcome || 0) + (r.payoutReceived || 0), 0);
+            const totalInsuranceSpent = sessionRounds.reduce((sum, r) => 
+                sum + (r.insuranceSpend || 0), 0);
+            const totalPayoutsReceived = sessionRounds.reduce((sum, r) => 
+                sum + (r.payoutReceived || 0), 0);
+            
+            return {
+                ...session,
+                totalEarnings,
+                totalInsuranceSpent,
+                totalPayoutsReceived,
+                offline: true
+            };
+        }
+    }
+    
+    // ===== GET KNOWLEDGE DATA =====
+    if (endpoint.includes('/knowledge/') && method === 'GET') {
+        const respondentId = endpoint.split('/').pop();
+        const knowledgeData = offlineData.knowledge.find(k => k.respondentId === respondentId);
+        
+        if (knowledgeData) {
+            const correctAnswers = [
+                knowledgeData.q1_indexBased === true,
+                knowledgeData.q2_areaWide === true,
+                knowledgeData.q3_profitGuarantee === false,
+                knowledgeData.q4_upfrontCost === true,
+                knowledgeData.q5_basisRisk === true
+            ].filter(Boolean).length;
+            
+            return {
+                ...knowledgeData,
+                knowledgeScore: correctAnswers,
+                offline: true
+            };
+        }
+        
+        return { knowledgeScore: 0, offline: true };
+    }
+    
+    return { success: true, offline: true, message: 'Stored locally for sync' };
+}
+
+// Assign treatment offline (balanced randomization)
+function assignTreatmentOffline() {
+    const offlineData = getOfflineData();
+    const existingRespondents = offlineData.respondents || [];
+    
+    // Count existing treatments
+    const treatmentCounts = {
+        control: existingRespondents.filter(r => r.treatmentGroup === 'control').length,
+        fertilizer_bundle: existingRespondents.filter(r => r.treatmentGroup === 'fertilizer_bundle').length,
+        seedling_bundle: existingRespondents.filter(r => r.treatmentGroup === 'seedling_bundle').length
+    };
+    
+    // Find treatment with lowest count
+    const minCount = Math.min(...Object.values(treatmentCounts));
+    const availableTreatments = Object.keys(treatmentCounts).filter(
+        t => treatmentCounts[t] === minCount
+    );
+    
+    // Random selection from available treatments
+    const treatment = availableTreatments[Math.floor(Math.random() * availableTreatments.length)];
+    console.log('📊 Assigned treatment offline:', treatment, 'Counts:', treatmentCounts);
+    
+    return treatment;
+}
+
+// Sync offline data to server
+async function syncOfflineData() {
+    if (!isOnline()) {
+        console.log('📴 Cannot sync - still offline');
+        return { success: false, message: 'Still offline' };
+    }
+    
+    const offlineData = getOfflineData();
+    if (!offlineData || !offlineData.pending_sync || offlineData.pending_sync.length === 0) {
+        console.log('✅ No data to sync');
+        return { success: true, message: 'No data to sync' };
+    }
+    
+    console.log('🔄 Starting sync...', offlineData.pending_sync.length, 'items');
+    
+    const results = {
+        total: offlineData.pending_sync.length,
+        successful: 0,
+        failed: 0,
+        errors: []
+    };
+    
+    // Sort by timestamp to maintain order
+    const sortedItems = offlineData.pending_sync.sort((a, b) => 
+        new Date(a.timestamp) - new Date(b.timestamp)
+    );
+    
+    for (const item of sortedItems) {
+        if (item.synced) continue;
+        
+        try {
+            const response = await fetch(`${API_BASE}/api/game${item.endpoint}`, {
+                method: item.method,
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-Offline-Sync': 'true',
+                    'X-Device-Id': offlineData.deviceId
+                },
+                body: JSON.stringify(item.data)
+            });
+            
+            if (response.ok) {
+                item.synced = true;
+                item.syncedAt = new Date().toISOString();
+                results.successful++;
+                console.log('✅ Synced:', item.type, item.id);
+            } else {
+                results.failed++;
+                results.errors.push({
+                    item: item.type,
+                    error: `HTTP ${response.status}`
+                });
+                console.error('❌ Sync failed:', item.type, response.status);
+            }
+        } catch (error) {
+            results.failed++;
+            results.errors.push({
+                item: item.type,
+                error: error.message
+            });
+            console.error('❌ Sync error:', item.type, error);
+        }
+    }
+    
+    // Remove synced items
+    offlineData.pending_sync = offlineData.pending_sync.filter(item => !item.synced);
+    offlineData.lastSyncAttempt = new Date().toISOString();
+    saveOfflineData(offlineData);
+    
+    // Update sync status
+    const syncStatus = {
+        lastSync: new Date().toISOString(),
+        results: results
+    };
+    localStorage.setItem(SYNC_STATUS_KEY, JSON.stringify(syncStatus));
+    
+    console.log('🔄 Sync complete:', results);
+    return { success: true, results };
+}
+
+// Get sync status
+function getSyncStatus() {
+    const offlineData = getOfflineData();
+    const syncStatus = localStorage.getItem(SYNC_STATUS_KEY);
+    
+    return {
+        isOnline: isOnline(),
+        pendingItems: offlineData?.pending_sync?.length || 0,
+        lastSync: syncStatus ? JSON.parse(syncStatus) : null,
+        offlineDataSize: offlineData ? JSON.stringify(offlineData).length : 0
+    };
+}
+
+// Export offline data (for backup)
+function exportOfflineData() {
+    const offlineData = getOfflineData();
+    const syncStatus = getSyncStatus();
+    
+    const exportData = {
+        exportDate: new Date().toISOString(),
+        syncStatus,
+        data: offlineData
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
+        type: 'application/json' 
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `farm-game-backup-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    console.log('💾 Data exported');
+}
+
+// Clear all offline data (use with caution)
+function clearOfflineData() {
+    if (confirm('⚠️ This will delete all offline data. Are you sure?')) {
+        localStorage.removeItem(OFFLINE_STORAGE_KEY);
+        localStorage.removeItem(SYNC_STATUS_KEY);
+        console.log('🗑️ Offline data cleared');
+        initializeOfflineStorage();
+    }
+}
+
+// Initialize on load
+initializeOfflineStorage();
+
+// Export functions for use in game.js
+window.offlineStorage = {
+    isOnline,
+    handleOfflineStorage,
+    syncOfflineData,
+    getSyncStatus,
+    exportOfflineData,
+    clearOfflineData,
+    initializeOfflineStorage
+};
+
+console.log('✅ Offline storage system loaded');

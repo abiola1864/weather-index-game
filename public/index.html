@@ -278,6 +278,27 @@
         </button>
     </div>
 
+
+
+    <!-- 🆕 ADD THIS SECTION HERE -->
+<!-- Connection Status & Sync Controls -->
+<div class="connection-controls">
+    <div id="connectionStatus" class="connection-status">
+        <i class="fas fa-circle"></i>
+        <span id="statusText">Checking...</span>
+    </div>
+    <button id="syncButton" class="sync-btn" onclick="manualSync()" style="display: none;">
+        <i class="fas fa-sync-alt"></i>
+        <span id="syncButtonText">Sync Now</span>
+    </button>
+    <button id="exportButton" class="export-btn" onclick="window.offlineStorage.exportOfflineData()" style="display: none;">
+        <i class="fas fa-download"></i>
+        <span>Backup Data</span>
+    </button>
+</div>
+
+
+
     <!-- Main Container -->
     <div id="app" class="app-container">
         
@@ -1120,6 +1141,7 @@
     </script>
 
     <!-- Load tutorial content BEFORE game.js -->
+    <script src="js/offline-storage.js"></script>
     <script src="js/tutorial-content.js"></script>
     <script src="js/game.js"></script>
 </body>

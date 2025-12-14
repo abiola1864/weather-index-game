@@ -670,8 +670,19 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
 
 console.log('🌐 API Base URL:', API_BASE);
 
+
+
+// ===== REVISED API CALL FUNCTION WITH OFFLINE SUPPORT =====
+// Replace the existing apiCall function in your game.js with this version
+
 async function apiCall(endpoint, method = 'GET', data = null) {
     try {
+        // Check if online
+        if (!navigator.onLine) {
+            console.log('📴 OFFLINE MODE - Using local storage');
+            return window.offlineStorage.handleOfflineStorage(endpoint, method, data);
+        }
+        
         const options = {
             method,
             headers: { 
@@ -705,12 +716,21 @@ async function apiCall(endpoint, method = 'GET', data = null) {
         return result.data;
     } catch (error) {
         console.error('💥 API Error:', error.message);
-        if (error.message.includes('Failed to fetch')) {
-            throw new Error('Cannot connect to server. Please check your connection.');
+        
+        // If fetch fails due to network, switch to offline mode
+        if (error.message.includes('Failed to fetch') || 
+            error.message.includes('NetworkError') ||
+            error.message.includes('Network request failed')) {
+            console.log('📴 Network error - Switching to OFFLINE MODE');
+            return window.offlineStorage.handleOfflineStorage(endpoint, method, data);
         }
+        
         throw error;
     }
 }
+
+
+
 
 // ===== SCREEN MANAGEMENT =====
 function showScreen(screenId) {
@@ -2905,6 +2925,187 @@ function updateDemographicsScreenLang() {
     const continueBtn = document.querySelector('#demographicsForm .btn-primary span');
     if (continueBtn) continueBtn.textContent = t('common.continue');
 }
+
+
+
+
+// Add to your game.js
+// ===== CONNECTION STATUS MANAGEMENT =====
+function updateConnectionStatus() {
+    const statusEl = document.getElementById('connectionStatus');
+    const statusText = document.getElementById('statusText');
+    const syncBtn = document.getElementById('syncButton');
+    const exportBtn = document.getElementById('exportButton');
+    
+    if (!statusEl || !statusText) {
+        console.warn('⚠️ Connection status elements not found');
+        return;
+    }
+    
+    const syncStatus = window.offlineStorage.getSyncStatus();
+    
+    if (syncStatus.isOnline) {
+        statusEl.className = 'connection-status status-online';
+        
+        if (syncStatus.pendingItems > 0) {
+            statusText.innerHTML = `Online <span style="color: #FF9800; font-weight: 700;">(${syncStatus.pendingItems} pending)</span>`;
+            if (syncBtn) {
+                syncBtn.style.display = 'flex';
+                const syncBtnText = document.getElementById('syncButtonText');
+                if (syncBtnText) {
+                    syncBtnText.textContent = `Sync ${syncStatus.pendingItems} items`;
+                }
+            }
+        } else {
+            statusText.textContent = 'Online';
+            if (syncBtn) syncBtn.style.display = 'none';
+        }
+        
+        // Show export button if there's offline data
+        if (exportBtn && syncStatus.offlineDataSize > 1000) {
+            exportBtn.style.display = 'flex';
+        }
+    } else {
+        statusEl.className = 'connection-status status-offline';
+        statusText.textContent = 'Offline - Data saved locally';
+        if (syncBtn) syncBtn.style.display = 'none';
+        if (exportBtn) exportBtn.style.display = 'flex';
+    }
+}
+
+async function manualSync() {
+    const syncBtn = document.getElementById('syncButton');
+    const statusEl = document.getElementById('connectionStatus');
+    const statusText = document.getElementById('statusText');
+    
+    if (!syncBtn || !statusEl || !statusText) {
+        console.error('❌ Sync UI elements not found');
+        return;
+    }
+    
+    try {
+        console.log('🔄 Starting manual sync...');
+        
+        // Update UI to show syncing
+        statusEl.className = 'connection-status status-syncing';
+        statusText.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Syncing...';
+        syncBtn.disabled = true;
+        
+        // Perform sync
+        const result = await window.offlineStorage.syncOfflineData();
+        
+        if (result.success) {
+            console.log('✅ Sync completed:', result);
+            
+            // Success feedback
+            statusText.innerHTML = '<i class="fas fa-check"></i> Synced successfully!';
+            
+            // Show detailed results
+            if (result.results) {
+                console.log('📊 Sync results:', result.results);
+                
+                if (result.results.successful > 0) {
+                    showToast(`✅ Successfully synced ${result.results.successful} items!`, 'success');
+                }
+                
+                if (result.results.failed > 0) {
+                    showToast(`⚠️ ${result.results.failed} items failed to sync. Check console for details.`, 'warning');
+                    console.error('Failed items:', result.results.errors);
+                }
+                
+                if (result.results.successful === 0 && result.results.failed === 0) {
+                    showToast('ℹ️ No items to sync', 'info');
+                }
+            }
+            
+            // Reset UI after 2 seconds
+            setTimeout(() => {
+                updateConnectionStatus();
+            }, 2000);
+        } else {
+            throw new Error(result.message || 'Sync failed');
+        }
+    } catch (error) {
+        console.error('❌ Sync error:', error);
+        statusText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Sync failed';
+        showToast('❌ Failed to sync data: ' + error.message, 'error');
+        
+        // Reset UI after 3 seconds
+        setTimeout(() => {
+            updateConnectionStatus();
+        }, 3000);
+    } finally {
+        syncBtn.disabled = false;
+    }
+}
+
+function showToast(message, type = 'info') {
+    console.log(`Toast [${type}]: ${message}`);
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = message;
+    
+    // Add toast styles if not already added
+    if (!document.getElementById('toastStyles')) {
+        const toastStyles = document.createElement('style');
+        toastStyles.id = 'toastStyles';
+        toastStyles.textContent = `
+            .toast {
+                position: fixed;
+                bottom: 30px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 16px 24px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 600;
+                z-index: 10000;
+                animation: slideUp 0.3s ease;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                max-width: 90%;
+                text-align: center;
+            }
+            .toast-success { background: linear-gradient(135deg, #4CAF50, #388E3C); }
+            .toast-error { background: linear-gradient(135deg, #F44336, #D32F2F); }
+            .toast-warning { background: linear-gradient(135deg, #FF9800, #F57C00); }
+            .toast-info { background: linear-gradient(135deg, #2196F3, #1976D2); }
+            @keyframes slideUp {
+                from { bottom: -50px; opacity: 0; }
+                to { bottom: 30px; opacity: 1; }
+            }
+            @media (max-width: 768px) {
+                .toast {
+                    bottom: 20px;
+                    padding: 12px 20px;
+                    font-size: 13px;
+                    max-width: 85%;
+                }
+            }
+        `;
+        document.head.appendChild(toastStyles);
+    }
+    
+    // Add toast to page
+    document.body.appendChild(toast);
+    
+    // Remove after 4 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideUp 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+
+
+
+// Call on page load and connection change
+window.addEventListener('online', updateConnectionStatus);
+window.addEventListener('offline', updateConnectionStatus);
+updateConnectionStatus();
 
 
 

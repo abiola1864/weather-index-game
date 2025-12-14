@@ -2782,3 +2782,141 @@ button:disabled {
         line-height: 1.5;
     }
 }
+
+
+
+
+  .connection-controls {
+        position: fixed;
+        top: 70px;
+        right: 20px;
+        z-index: 999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-end;
+    }
+
+    .connection-status {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 10px 18px;
+        border-radius: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .connection-status i {
+        font-size: 12px;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-online {
+        border-color: #4CAF50;
+        color: #2E7D32;
+    }
+
+    .status-online i {
+        color: #4CAF50;
+    }
+
+    .status-offline {
+        border-color: #FF9800;
+        color: #E65100;
+    }
+
+    .status-offline i {
+        color: #FF9800;
+    }
+
+    .status-syncing {
+        border-color: #2196F3;
+        color: #1565C0;
+    }
+
+    .status-syncing i {
+        color: #2196F3;
+        animation: spin 1s linear infinite;
+    }
+
+    .sync-btn, .export-btn {
+        background: linear-gradient(135deg, #2196F3, #1976D2);
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 25px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .sync-btn:hover, .export-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+    }
+
+    .sync-btn:active, .export-btn:active {
+        transform: translateY(0);
+    }
+
+    .export-btn {
+        background: linear-gradient(135deg, #4CAF50, #388E3C);
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+
+    .export-btn:hover {
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    }
+
+    .sync-btn i, .export-btn i {
+        font-size: 14px;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        .connection-controls {
+            top: 60px;
+            right: 10px;
+        }
+
+        .connection-status {
+            padding: 8px 14px;
+            font-size: 12px;
+        }
+
+        .sync-btn, .export-btn {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .sync-btn span, .export-btn span {
+            display: none;
+        }
+
+        .sync-btn i, .export-btn i {
+            font-size: 16px;
+        }
+    }
+
+    
