@@ -3539,6 +3539,8 @@ async function manualSync() {
 
 // ===== LOAD COMMUNITIES =====
 // ===== LOAD COMMUNITIES WITH OFFLINE SUPPORT =====
+
+// ===== LOAD COMMUNITIES WITH OFFLINE SUPPORT =====
 async function loadCommunities() {
   try {
     console.log('📋 Loading communities...');
@@ -3556,7 +3558,7 @@ async function loadCommunities() {
     let communities = [];
     
     try {
-      // Try to fetch from API (works both online and offline via apiCall)
+      // ✅ Use apiCall instead of fetch - handles offline automatically
       const response = await apiCall('/admin/communities');
       communities = response || [];
       console.log(`✅ Loaded ${communities.length} communities`);
@@ -3618,7 +3620,6 @@ async function loadCommunities() {
 
 // ===== DEFAULT COMMUNITIES FOR OFFLINE MODE =====
 function getDefaultCommunities() {
-  // This is your complete list of 30 communities
   return [
     // CONTROL GROUP (10 communities)
     { communityName: 'Kpalsabogu', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
@@ -3657,7 +3658,6 @@ function getDefaultCommunities() {
     { communityName: 'Gushegu', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 }
   ];
 }
-
 
 
 
