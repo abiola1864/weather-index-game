@@ -88,16 +88,29 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ===== LOGGING MIDDLEWARE =====
+// ===== CACHE CONTROL - OFFLINE FRIENDLY =====
 app.use((req, res, next) => {
-  const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ${req.method} ${req.path}`);
-  
-  if ((req.method === 'POST' || req.method === 'PUT') && req.body) {
-    console.log('📦 Request body:', JSON.stringify(req.body, null, 2));
+  // For HTML files: no browser cache (but service worker will still cache them)
+  if (req.url.endsWith('.html') || req.url === '/') {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  // For JS/CSS: allow short browser cache (service worker overrides when offline)
+  else if (req.url.endsWith('.js') || req.url.endsWith('.css')) {
+    res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutes
+  }
+  // For images/fonts: longer cache
+  else if (req.url.match(/\.(jpg|jpeg|png|gif|svg|woff|woff2|ttf|eot)$/)) {
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 day
   }
   
   next();
 });
+
+// Then your existing static middleware
+app.use(express.static(path.join(__dirname, 'public')));
+
 
 // ===== FIX DATABASE INDEXES ON STARTUP =====
 async function fixDatabaseIndexes() {
@@ -286,11 +299,11 @@ const startServer = async () => {
     console.log('⚠️  SIGINT received. Shutting down gracefully...');
     server.close(() => {
       console.log('✅ HTTP server closed');
-      mongoose.connection.close(false, () => {
-        console.log('✅ MongoDB connection closed');
-        console.log('👋 Server shutdown complete');
-        process.exit(0);
-      });
+    mongoose.connection.close().then(() => {
+    console.log('✅ MongoDB connection closed');
+    console.log('👋 Server shutdown complete');
+    process.exit(0);
+});
     });
   });
 

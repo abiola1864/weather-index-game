@@ -2,8 +2,7 @@
 // SERVICE WORKER - For Offline Functionality
 // FIXED: Removed Font Awesome from cache
 // ===============================================
-
-const CACHE_NAME = 'farm-game-v1.0.2'; // ✅ Changed version to force update
+const CACHE_NAME = 'weather-game-v7'; // Change from v5 to v6
 const urlsToCache = [
   '/',
   '/index.html',

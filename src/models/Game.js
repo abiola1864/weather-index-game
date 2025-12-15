@@ -106,9 +106,22 @@ const respondentSchema = new mongoose.Schema({
   },
   respondentId: {
     type: String,
-    required: true,
-    unique: true
+    required: false,  // ✅ CHANGED: Auto-generated, not required on creation
+    unique: true,
+    sparse: true
   },
+  
+  // ✅ ADD THESE FIELDS
+  communityName: {
+    type: String,
+    required: true,
+    index: true
+  },
+  enumeratorName: {
+    type: String,
+    required: true
+  },
+  
   gender: {
     type: String,
     enum: ['male', 'female'],
@@ -124,18 +137,16 @@ const respondentSchema = new mongoose.Schema({
     enum: ['control', 'fertilizer_bundle', 'seedling_bundle'],
     required: true
   },
-  enumeratorId: {
+  language: {
     type: String,
-    required: false
-  },
-  communityCode: {
-    type: String,
-    required: false
+    default: 'english'
   },
   sessionDate: {
     type: Date,
-    required: false
+    default: Date.now
   },
+  
+  // Basic demographics
   age: {
     type: Number,
     required: true
@@ -146,6 +157,36 @@ const respondentSchema = new mongoose.Schema({
     min: 0,
     max: 4
   },
+  householdSize: {
+    type: Number,
+    required: true
+  },
+  childrenUnder15: {
+    type: Number,
+    required: true
+  },
+  
+  // Assets - ✅ FIXED: Accept booleans or numbers
+  assets: {
+    radio: { type: Boolean, default: false },
+    tv: { type: Boolean, default: false },
+    refrigerator: { type: Boolean, default: false },
+    bicycle: { type: Boolean, default: false },
+    motorbike: { type: Boolean, default: false },
+    mobilePhone: { type: Boolean, default: false },
+    generator: { type: Boolean, default: false },
+    plough: { type: Boolean, default: false }
+  },
+  
+  // Livestock
+  livestock: {
+    cattle: { type: Number, default: 0 },
+    goats: { type: Number, default: 0 },
+    sheep: { type: Number, default: 0 },
+    poultry: { type: Number, default: 0 }
+  },
+  
+  // Farming information
   yearsOfFarming: {
     type: Number,
     required: true
@@ -154,17 +195,175 @@ const respondentSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  landAccessMethod: {
+    type: Number,
+    enum: [1, 2, 3, 4, 5],
+    required: true
+  },
+  landAccessOther: String,
   mainCrops: [{
     type: String
   }],
+  numberOfCropsPlanted: {
+    type: Number,
+    required: true
+  },
   lastSeasonIncome: {
     type: Number,
     required: true
   },
+  farmingInputExpenditure: {
+    type: Number,
+    required: true
+  },
+  
+  // ✅ FIXED: Changed from improvedInputsUsed to improvedInputs
+  improvedInputs: {
+    certifiedSeed: { type: Boolean, default: false },
+    fertilizer: { type: Boolean, default: false },
+    pesticides: { type: Boolean, default: false },
+    irrigation: { type: Boolean, default: false }
+  },
+  
+  hasIrrigationAccess: {
+    type: Boolean,
+    required: true
+  },
+  
+  // ✅ FIXED: Changed from shocksExperienced to shocks
+  shocks: {
+    drought: { type: Boolean, default: false },
+    flood: { type: Boolean, default: false },
+    pestsDisease: { type: Boolean, default: false },
+    cropPriceFall: { type: Boolean, default: false }
+  },
+  
+  estimatedLossLastYear: {
+    type: Number,
+    default: 0
+  },
+  harvestLossPercentage: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: 0
+  },
+  
+  // Savings & Credit
+  hasSavings: {
+    type: Boolean,
+    required: true
+  },
+  savingsAmount: {
+    type: Number,
+    default: 0
+  },
+  borrowedMoney: {
+    type: Boolean,
+    required: true
+  },
+  
+  // ✅ FIXED: Changed to simple array
+  borrowSources: [{
+    type: String,
+    enum: ['bank', 'microfinance', 'vsla', 'familyFriends', 'moneylender']
+  }],
+  
+  hasOffFarmIncome: {
+    type: Boolean,
+    required: true
+  },
+  offFarmIncomeAmount: {
+    type: Number,
+    default: 0
+  },
+  
+  // Insurance Experience
   priorInsuranceKnowledge: {
     type: Boolean,
     required: true
   },
+  purchasedInsuranceBefore: {
+    type: Boolean,
+    required: true
+  },
+  insuranceType: String,
+  
+  // ✅ FIXED: Flattened trust fields
+  trustFarmerGroup: {
+    type: Number,
+    min: 1,
+    max: 5,
+    required: true
+  },
+  trustNGO: {
+    type: Number,
+    min: 1,
+    max: 5,
+    required: true
+  },
+  trustInsuranceProvider: {
+    type: Number,
+    min: 1,
+    max: 5,
+    required: true
+  },
+  
+  rainfallChangePerception: {
+    type: Number,
+    min: 1,
+    max: 5,
+    required: true
+  },
+  
+  insurerPayoutTrust: {
+    type: Number,
+    min: 1,
+    max: 5,
+    required: true
+  },
+  
+  // ✅ FIXED: Made optional with default
+  communityInsuranceDiscussion: {
+    type: Boolean,
+    required: false,  // ✅ CHANGE from required: true
+    default: false
+},
+  
+  // Social capital
+  memberOfFarmerGroup: {
+    type: Boolean,
+    required: true
+  },
+  farmerGroupName: String,
+  
+  // Access & Market
+  distanceToMarket: {
+    type: Number,
+    required: true
+  },
+  distanceToInsurer: {
+    type: Number,
+    required: true
+  },
+  
+  // ✅ FIXED: Made optional with default
+ extensionVisits: {
+    type: Boolean,
+    required: false,  // ✅ CHANGE from required: true
+    default: false
+},
+
+ numberOfExtensionVisits: {
+    type: Number,
+    default: 0
+},
+  usesMobileMoney: {
+    type: Boolean,
+    required: true
+  },
+  
+  // Risk & Empowerment
   riskPreference: {
     type: Number,
     min: 1,
@@ -187,15 +386,49 @@ const respondentSchema = new mongoose.Schema({
     opinionConsidered: { type: Number, min: 1, max: 5 },
     confidenceExpressing: { type: Number, min: 1, max: 5 }
   },
-  language: {
+  
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+
+
+
+// ===== COMMUNITY ASSIGNMENT SCHEMA =====
+const communityAssignmentSchema = new mongoose.Schema({
+  communityName: {
     type: String,
-    default: 'english'
+    required: true,
+    unique: true
+  },
+  district: {
+    type: String,
+    enum: ['Savelugu Municipal', 'Nanton District'],
+    required: true
+  },
+  treatmentGroup: {
+    type: String,
+    enum: ['control', 'fertilizer_bundle', 'seedling_bundle'],
+    required: true
+  },
+  targetHouseholds: {
+    type: Number,
+    default: 100
+  },
+  completedHouseholds: {
+    type: Number,
+    default: 0
   },
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
+
+const CommunityAssignment = mongoose.model('CommunityAssignment', communityAssignmentSchema);
+
 
 // ===== GAME SESSION SCHEMA =====
 const gameSessionSchema = new mongoose.Schema({
@@ -411,6 +644,8 @@ const perceptionSchema = new mongoose.Schema({
   }
 });
 
+
+
 // ===== INDEXES =====
 respondentSchema.index({ householdId: 1, role: 1 });
 gameSessionSchema.index({ householdId: 1, sessionType: 1 });
@@ -433,5 +668,6 @@ module.exports = {
   GameRound,
   KnowledgeTest,
   CoupleDecision,
-  Perception
+  Perception,
+  CommunityAssignment 
 };

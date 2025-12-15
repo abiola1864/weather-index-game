@@ -1,8 +1,34 @@
 const express = require('express');
 const router = express.Router();
-const { GameSession, GameRound, Respondent, KnowledgeTest } = require('../models/Game');
+const { GameSession, GameRound, Respondent, KnowledgeTest, CommunityAssignment } = require('../models/Game');
 
-// ===== GET ALL SESSIONS =====
+const {
+  getDashboardStats,
+  getCommunityAssignments,
+  exportCommunityAssignments,
+  exportRespondentData,
+  getAllRespondents,
+  getCommunityProgress,      // ✅ ADD THIS
+  exportKnowledgeTests,      // ✅ ADD THIS
+  exportPerceptions          // ✅ ADD THIS
+} = require('../controllers/adminController');
+
+// ===== NEW DASHBOARD ROUTES =====
+router.get('/dashboard/stats', getDashboardStats);
+router.get('/respondents', getAllRespondents);
+router.get('/communities', getCommunityAssignments);
+router.get('/export/communities', exportCommunityAssignments);
+router.get('/export/respondents', exportRespondentData);
+router.get('/communities/progress', getCommunityProgress);
+router.get('/export/knowledge', exportKnowledgeTests);
+router.get('/export/perceptions', exportPerceptions);
+
+
+
+
+// ===== EXISTING ROUTES =====
+
+// GET ALL SESSIONS
 router.get('/sessions', async (req, res) => {
   try {
     const sessions = await GameSession.find()
@@ -24,7 +50,7 @@ router.get('/sessions', async (req, res) => {
   }
 });
 
-// ===== GET STATISTICS =====
+// GET STATISTICS
 router.get('/statistics', async (req, res) => {
   try {
     const stats = {
@@ -34,26 +60,22 @@ router.get('/statistics', async (req, res) => {
       totalRespondents: await Respondent.countDocuments(),
       totalRounds: await GameRound.countDocuments(),
       
-      // NEW: Treatment group breakdown
       treatmentBreakdown: {
         control: await Respondent.countDocuments({ treatmentGroup: 'control' }),
         fertilizerBundle: await Respondent.countDocuments({ treatmentGroup: 'fertilizer_bundle' }),
         seedlingBundle: await Respondent.countDocuments({ treatmentGroup: 'seedling_bundle' })
       },
       
-      // NEW: Gender breakdown
       genderBreakdown: {
         male: await Respondent.countDocuments({ gender: 'male' }),
         female: await Respondent.countDocuments({ gender: 'female' })
       },
       
-      // NEW: Role breakdown
       roleBreakdown: {
         husband: await Respondent.countDocuments({ role: 'husband' }),
         wife: await Respondent.countDocuments({ role: 'wife' })
       },
       
-      // NEW: Session type breakdown
       sessionTypeBreakdown: {
         individualHusband: await GameSession.countDocuments({ sessionType: 'individual_husband' }),
         individualWife: await GameSession.countDocuments({ sessionType: 'individual_wife' }),
@@ -71,7 +93,7 @@ router.get('/statistics', async (req, res) => {
   }
 });
 
-// ===== GET SPECIFIC SESSION DETAILS =====
+// GET SPECIFIC SESSION DETAILS
 router.get('/sessions/:sessionId', async (req, res) => {
   try {
     const session = await GameSession.findOne({ 
@@ -110,15 +132,16 @@ router.get('/sessions/:sessionId', async (req, res) => {
   }
 });
 
-// ===== NEW: GET ALL HOUSEHOLDS =====
+// GET ALL HOUSEHOLDS
 router.get('/households', async (req, res) => {
   try {
-    // Get all unique householdIds
     const households = await Respondent.aggregate([
       {
         $group: {
           _id: '$householdId',
           treatmentGroup: { $first: '$treatmentGroup' },
+          communityName: { $first: '$communityName' },
+          enumeratorName: { $first: '$enumeratorName' },
           respondentCount: { $sum: 1 },
           respondents: { $push: { _id: '$_id', role: '$role', gender: '$gender' } }
         }
@@ -128,7 +151,6 @@ router.get('/households', async (req, res) => {
       }
     ]);
 
-    // Get session counts for each household
     for (let household of households) {
       const sessionCount = await GameSession.countDocuments({ 
         householdId: household._id 
@@ -150,12 +172,11 @@ router.get('/households', async (req, res) => {
   }
 });
 
-// ===== NEW: GET HOUSEHOLD DETAILS =====
+// GET HOUSEHOLD DETAILS
 router.get('/households/:householdId', async (req, res) => {
   try {
     const { householdId } = req.params;
 
-    // Get all respondents in household
     const respondents = await Respondent.find({ householdId });
     
     if (respondents.length === 0) {
@@ -165,12 +186,10 @@ router.get('/households/:householdId', async (req, res) => {
       });
     }
 
-    // Get all sessions for household
     const sessions = await GameSession.find({ householdId })
       .populate('respondentId')
       .sort({ startedAt: 1 });
 
-    // Get all rounds across all sessions
     const sessionIds = sessions.map(s => s.sessionId);
     const rounds = await GameRound.find({
       sessionId: { $in: sessionIds }
@@ -183,6 +202,8 @@ router.get('/households/:householdId', async (req, res) => {
       data: {
         householdId,
         treatmentGroup: respondents[0].treatmentGroup,
+        communityName: respondents[0].communityName,
+        enumeratorName: respondents[0].enumeratorName,
         respondents,
         sessions,
         rounds,
@@ -202,20 +223,22 @@ router.get('/households/:householdId', async (req, res) => {
   }
 });
 
-// ===== EXPORT AS CSV =====
+// EXPORT SESSIONS AS CSV
 router.get('/export/csv', async (req, res) => {
   try {
     const sessions = await GameSession.find()
       .populate('respondentId')
       .sort({ startedAt: -1 });
 
-    let csv = 'Session ID,Household ID,Respondent ID,Gender,Role,Session Type,Treatment Group,Status,Rounds Completed,Total Earnings,Started At,Completed At\n';
+    let csv = 'Session ID,Household ID,Community,Enumerator,Respondent ID,Gender,Role,Session Type,Treatment Group,Status,Rounds Completed,Total Earnings,Started At,Completed At\n';
 
     sessions.forEach(session => {
       const respondent = session.respondentId;
       csv += `"${session.sessionId}",`;
       csv += `"${session.householdId || 'N/A'}",`;
-      csv += `"${respondent?.householdId || 'N/A'}",`;
+      csv += `"${respondent?.communityName || 'N/A'}",`;
+      csv += `"${respondent?.enumeratorName || 'N/A'}",`;
+      csv += `"${respondent?.respondentId || 'N/A'}",`;
       csv += `"${respondent?.gender || 'N/A'}",`;
       csv += `"${respondent?.role || 'N/A'}",`;
       csv += `"${session.sessionType || 'N/A'}",`;
@@ -239,19 +262,21 @@ router.get('/export/csv', async (req, res) => {
   }
 });
 
-// ===== NEW: EXPORT ROUNDS AS CSV =====
+// EXPORT ROUNDS AS CSV
 router.get('/export/rounds-csv', async (req, res) => {
   try {
     const rounds = await GameRound.find()
       .populate('respondentId')
       .sort({ createdAt: -1 });
 
-    let csv = 'Session ID,Household ID,Respondent ID,Gender,Role,Round Number,Is Practice,Budget,Insurance Spend,Bundle Accepted,Bundle Product,Input Spend,Education Spend,Consumption Spend,Weather Type,Harvest Outcome,Payout Received,Created At\n';
+    let csv = 'Session ID,Household ID,Community,Enumerator,Respondent ID,Gender,Role,Round Number,Is Practice,Budget,Insurance Spend,Bundle Accepted,Bundle Product,Input Choice Type,Input Spend,Education Spend,Consumption Spend,Weather Type,Harvest Outcome,Payout Received,Created At\n';
 
     rounds.forEach(round => {
       const respondent = round.respondentId;
       csv += `"${round.sessionId}",`;
       csv += `"${respondent?.householdId || 'N/A'}",`;
+      csv += `"${respondent?.communityName || 'N/A'}",`;
+      csv += `"${respondent?.enumeratorName || 'N/A'}",`;
       csv += `"${respondent?.respondentId || 'N/A'}",`;
       csv += `"${respondent?.gender || 'N/A'}",`;
       csv += `"${respondent?.role || 'N/A'}",`;
@@ -261,6 +286,7 @@ router.get('/export/rounds-csv', async (req, res) => {
       csv += `${round.insuranceSpend},`;
       csv += `${round.bundleAccepted || false},`;
       csv += `"${round.bundleProduct || 'none'}",`;
+      csv += `"${round.inputChoiceType || 'none'}",`;
       csv += `${round.inputSpend},`;
       csv += `${round.educationSpend},`;
       csv += `${round.consumptionSpend},`;
@@ -282,7 +308,7 @@ router.get('/export/rounds-csv', async (req, res) => {
   }
 });
 
-// ===== DELETE SESSION =====
+// DELETE SESSION
 router.delete('/sessions/:sessionId', async (req, res) => {
   try {
     const session = await GameSession.findOneAndDelete({ 
@@ -312,24 +338,18 @@ router.delete('/sessions/:sessionId', async (req, res) => {
   }
 });
 
-// ===== NEW: DELETE HOUSEHOLD =====
+// DELETE HOUSEHOLD
 router.delete('/households/:householdId', async (req, res) => {
   try {
     const { householdId } = req.params;
 
-    // Delete all respondents in household
     await Respondent.deleteMany({ householdId });
 
-    // Delete all sessions for household
     const sessions = await GameSession.find({ householdId });
     const sessionIds = sessions.map(s => s.sessionId);
     
     await GameSession.deleteMany({ householdId });
-    
-    // Delete all rounds for these sessions
     await GameRound.deleteMany({ sessionId: { $in: sessionIds } });
-    
-    // Delete all knowledge tests for these sessions
     await KnowledgeTest.deleteMany({ sessionId: { $in: sessionIds } });
 
     res.json({

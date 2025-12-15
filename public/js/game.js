@@ -35,7 +35,6 @@ let gameState = {
 };
 
 
-
 // ===== DAGBANI TRANSLATIONS =====
 // Add this object at the top of your game.js file (after gameState)
 
@@ -65,6 +64,25 @@ const TRANSLATIONS = {
         },
         demographics: {
             title: "Tell Us About Yourself",
+            
+            // Page headings
+            basicInfo: "Basic Information",
+            educationHousehold: "Education & Household",
+            householdAssets: "Household Assets",
+            farmingExperience: "Farming Experience",
+            cropsIncome: "Crops & Income",
+            livestock: "Livestock",
+            farmInputs: "Farm Inputs & Technology",
+            shocksLosses: "Shocks & Losses",
+            savingsCredit: "Savings & Credit",
+            insuranceTrust: "Insurance & Trust",
+            
+            // Page 1: Basic Info
+            enumeratorName: "Enumerator Name",
+            selectEnumerator: "Select Enumerator...",
+            communityName: "Community Name",
+            loadingCommunities: "Loading communities...",
+            selectCommunity: "-- Select Community --",
             gender: "Gender",
             male: "Male",
             female: "Female",
@@ -72,23 +90,112 @@ const TRANSLATIONS = {
             husband: "Husband",
             wife: "Wife",
             age: "Age (years)",
+            
+            // Page 2: Education & Household
             education: "Highest Education Level",
             noSchooling: "No schooling",
             primary: "Primary",
             jhs: "Junior High School (JHS)",
             shs: "Senior High School (SHS)",
             tertiary: "Tertiary/Technical",
+            householdSize: "Household size (all members)",
+            childrenUnder15: "Number of children under 15",
+            
+            // Page 3: Assets
+            assetsQuestion: "What assets does your household own? (Select all that apply)",
+            radio: "Radio",
+            tv: "TV",
+            refrigerator: "Refrigerator",
+            bicycle: "Bicycle",
+            motorbike: "Motorbike",
+            mobilePhone: "Mobile phone",
+            generator: "Generator",
+            plough: "Plough",
+            
+            // Page 4: Farming Experience
             farmingYears: "Years of Farming Experience",
             land: "Land Cultivated (acres)",
+            landAccessMethod: "How do you access your farmland?",
+            ownLand: "Own land",
+            rentLease: "Rent/Lease",
+            borrowedFamily: "Borrowed/Family land",
+            sharecropping: "Sharecropping",
+            otherAccess: "Other",
+            
+            // Page 5: Crops & Income
             crops: "Main Crops (select all that apply)",
             maize: "Maize",
             rice: "Rice",
             soybeans: "Soybeans",
             groundnuts: "Groundnuts",
             other: "Other",
+            cropsPlanted: "How many different crops did you plant last season?",
             income: "Last Season Income (GHS)",
-            priorKnowledge: "Have you heard about weather index insurance before?"
+            farmingInputExpenditure: "Farming inputs expenditure last season (GHS)",
+            
+            // Page 6: Livestock
+            livestockQuestion: "How many livestock does your household own?",
+            cattle: "Cattle",
+            goats: "Goats",
+            sheep: "Sheep",
+            poultry: "Poultry",
+            
+            // Page 7: Farm Inputs
+            improvedInputsQuestion: "Which improved inputs did you use last season? (Select all)",
+            certifiedSeed: "Certified/Improved seed",
+            chemicalFertilizer: "Chemical fertilizer",
+            pesticides: "Pesticides/Herbicides",
+            irrigation: "Irrigation",
+            hasIrrigationAccess: "Do you have access to irrigation?",
+            
+            // Page 8: Shocks
+            shocksQuestion: "What shocks have you experienced in the past 3 years? (Select all)",
+            drought: "Drought",
+            flood: "Flood",
+            pestsDisease: "Pests/Disease",
+            cropPriceFall: "Crop price fall",
+            estimatedLoss: "Estimated total loss from shocks last year (GHS)",
+            harvestLossPercentage: "Harvest loss percentage last season (0-100%)",
+            
+            // Page 9: Savings & Credit
+            hasSavings: "Do you currently have any savings?",
+            savingsAmount: "Estimated savings amount (GHS)",
+            borrowedMoney: "Did you borrow money in past 12 months?",
+            borrowingSources: "Where did you borrow from? (Select all):",
+            bank: "Bank",
+            microfinance: "Microfinance",
+            vsla: "VSLA/Savings group",
+            familyFriends: "Family/Friends",
+            moneylender: "Moneylender",
+            hasOffFarmIncome: "Any off-farm income last season?",
+            offFarmAmount: "Off-farm income amount (GHS)",
+            
+            // Page 10: Insurance & Trust
+            priorKnowledge: "Have you heard about weather index insurance before?",
+            purchasedInsurance: "Have you purchased any type of insurance before?",
+            trustInsuranceProvider: "How much do you trust insurance providers? (1 = Not at all, 5 = Fully)",
+            trustFarmerGroups: "How much do you trust farmer groups/cooperatives? (1-5)",
+            trustNGOs: "How much do you trust NGOs? (1-5)",
+            distanceMarket: "Distance to nearest market (minutes walking)",
+            distanceInsurer: "Distance to nearest insurance provider (km)",
+            usesMobileMoney: "Do you use mobile money (MoMo)?",
+            farmerGroupMember: "Are you a member of any farmer group?",
+            
+            // Navigation
+            back: "Back",
+            continue: "Continue",
+            continueRisk: "Continue to Risk Assessment",
+            yes: "Yes",
+            no: "No",
+            select: "Select..."
         },
+        
+        progress: {
+            step: "Step",
+            of: "of",
+            page: "Page"
+        },
+
         risk: {
             title: "Understanding Your Risk Preferences",
             scenario: "If you had to choose between these two options:",
@@ -108,6 +215,7 @@ const TRANSLATIONS = {
             joint: "Joint decisions",
             otherMember: "Another household member"
         },
+        
         empowerment: {
             title: "Decision Making in Your Household",
             subtitle: "Please indicate your level of agreement with each statement",
@@ -119,6 +227,7 @@ const TRANSLATIONS = {
             stronglyDisagree: "Strongly Disagree",
             stronglyAgree: "Strongly Agree"
         },
+        
         game: {
             season: "Season",
             budget: "Your Budget",
@@ -151,6 +260,7 @@ const TRANSLATIONS = {
             wifePlaying: "👩 Wife Playing Alone",
             couplePlaying: "👫 Couple Playing Together"
         },
+        
         weather: {
             goodTitle: "Good Weather!",
             goodDesc: "Normal rainfall. Your crops grew well!",
@@ -177,6 +287,7 @@ const TRANSLATIONS = {
             insuranceReturn: "You paid {paid} GHS → Got {received} GHS back = {multiplier}x return!",
             takeTime: "Take your time to review the results before continuing"
         },
+        
         seasons: {
             s1Name: "Planting Season - March",
             s1Story: "The planting season begins. You have 500 GHS to prepare for farming.",
@@ -188,6 +299,7 @@ const TRANSLATIONS = {
             s4Story: "⚠️ FINAL SEASON! The rains are unpredictable. Your family's future depends on this decision! Budget: 650 GHS.",
             finalWarning: "⚠️ FINAL SEASON! This decision counts! ⚠️"
         },
+        
         knowledge: {
             title: "Test Your Understanding",
             subtitle: "Answer these questions about weather index insurance",
@@ -200,6 +312,7 @@ const TRANSLATIONS = {
             false: "False",
             submit: "Submit Answers"
         },
+        
         perception: {
             title: "Your Experience with the Bundle",
             subtitle: "Share your thoughts about the insurance and farming bundle you experienced",
@@ -229,6 +342,7 @@ const TRANSLATIONS = {
             definitelyYes: "Definitely yes",
             submit: "Submit Assessment"
         },
+        
         couple: {
             title: "About Your Marriage",
             subtitle: "Before you begin playing together, please answer these questions",
@@ -245,6 +359,7 @@ const TRANSLATIONS = {
             rememberInfo: "Remember: You will now make decisions together. Discuss each choice and reach agreement before proceeding.",
             startSession: "Start Couple Session"
         },
+        
         results: {
             title: "Game Completed!",
             subtitle: "Here's how you performed",
@@ -258,6 +373,7 @@ const TRANSLATIONS = {
             playAgain: "Play Again",
             startNew: "Start New Game"
         },
+        
         common: {
             continue: "Continue",
             loading: "Loading...",
@@ -281,6 +397,25 @@ const TRANSLATIONS = {
         },
         demographics: {
             title: "Ti Pam Yi Yɛltɔɣa",
+            
+            // Page headings
+            basicInfo: "Lahira Dɔɣim",
+            educationHousehold: "Karimi Ni Doo Yuli",
+            householdAssets: "Doo Yuli Di",
+            farmingExperience: "Puuni Lahi",
+            cropsIncome: "Puuni Ni Mali",
+            livestock: "Dapam",
+            farmInputs: "Puuni Di Ni Niŋa",
+            shocksLosses: "Lahira Nyɛma",
+            savingsCredit: "Mali Tum Ni Bɔri",
+            insuranceTrust: "Insurance Ni Lahi",
+            
+            // Page 1: Basic Info
+            enumeratorName: "Enumerator Yuli",
+            selectEnumerator: "Chɛ Enumerator...",
+            communityName: "Tɔɣim Yuli",
+            loadingCommunities: "Yi zaŋa tɔɣa...",
+            selectCommunity: "-- Chɛ Tɔɣim --",
             gender: "Sabinima",
             male: "Niriba",
             female: "Puhima",
@@ -288,23 +423,114 @@ const TRANSLATIONS = {
             husband: "O Yidana",
             wife: "O Paga",
             age: "Yi Himɔɣu (Yiŋa)",
+            
+            // Page 2: Education & Household
             education: "Karimi Ni Yi Nya",
             noSchooling: "Ban karimi",
             primary: "Primary",
             jhs: "JHS",
             shs: "SHS",
             tertiary: "Tertiary/Technical",
+            householdSize: "Doo yuli nimdi (banbu zaa)",
+            childrenUnder15: "Bihi ni yɛl yiŋa 15 kpɛ",
+            
+            // Page 3: Assets
+            assetsQuestion: "Di lahira ni yi doo nya? (Chɛ zaa)",
+            radio: "Radio",
+            tv: "TV",
+            refrigerator: "Refrigerator",
+            bicycle: "Basikol",
+            motorbike: "Motorbike",
+            mobilePhone: "Mobile",
+            generator: "Generator",
+            plough: "Plough",
+            
+            // Page 4: Farming Experience
             farmingYears: "Yiŋa Ni Yi Puuni",
             land: "Tɔɣim Ni Yi Puuni (acres)",
+            landAccessMethod: "Ka yi nya yi tɔɣim lahiri?",
+            ownLand: "Mi tɔɣim",
+            rentLease: "Mi kuhi",
+            borrowedFamily: "Mi bɔri/Doo bi tɔɣim",
+            sharecropping: "Sharecropping",
+            otherAccess: "Din",
+            
+            // Page 5: Crops & Income
             crops: "Yi Puuni Ni Yi Chɛ (chɛ zaa)",
             maize: "Zaamnɛ",
             rice: "Mɔɣu",
             soybeans: "Soya",
             groundnuts: "Suma",
             other: "Din",
+            cropsPlanted: "Puuni lahira ni yi chɛ kpeeni zaŋ pam?",
             income: "Mali Ni Yi Nya Kpeeni Zaŋ Pam (GHS)",
-            priorKnowledge: "Yi lahi saŋa insurance zaŋ?"
+            farmingInputExpenditure: "Puuni di mali kpeeni zaŋ pam (GHS)",
+            
+            // Page 6: Livestock
+            livestockQuestion: "Dapam lahira ni yi doo nya?",
+            cattle: "Naɣim",
+            goats: "Biya",
+            sheep: "Zuu",
+            poultry: "Naa",
+            
+            // Page 7: Farm Inputs
+            improvedInputsQuestion: "Puuni di nyɛlibu lahira ni yi sa kpeeni zaŋ pam? (Chɛ zaa)",
+            certifiedSeed: "Zaamnɛ nyɛlibu",
+            chemicalFertilizer: "Fertilizer",
+            pesticides: "Pesticides/Herbicides",
+            irrigation: "Koom di niŋa",
+            hasIrrigationAccess: "Yi nya koom di niŋa?",
+            
+            // Page 8: Shocks
+            shocksQuestion: "Lahira nyɛma lahira ni yi nya yiŋa 3 zaŋ pam? (Chɛ zaa)",
+            drought: "Koom kpɛrigu",
+            flood: "Koom nyini",
+            pestsDisease: "Ninsim lahira",
+            cropPriceFall: "Puuni mali kpibu",
+            estimatedLoss: "Mali ni yi ku yiŋa zaŋ pam (GHS)",
+            harvestLossPercentage: "Puuni ni yi ku kpeeni zaŋ pam (0-100%)",
+            
+            // Page 9: Savings & Credit
+            hasSavings: "Yi nya mali tum bi?",
+            savingsAmount: "Mali tum nimdi (GHS)",
+            borrowedMoney: "Yi bɔri mali yiŋa 12 zaŋ pam?",
+            borrowingSources: "Yi bɔri ni ka lahira? (Chɛ zaa):",
+            bank: "Bank",
+            microfinance: "Microfinance",
+            vsla: "VSLA/Mali tum kpamba",
+            familyFriends: "Doo bi/Yenima",
+            moneylender: "Mali bɔribu",
+            hasOffFarmIncome: "Yi nya puuni kpɛ yuli mali kpeeni zaŋ pam?",
+            offFarmAmount: "Puuni kpɛ yuli mali nimdi (GHS)",
+            
+            // Page 10: Insurance & Trust
+            priorKnowledge: "Yi lahi saŋa insurance zaŋ?",
+            purchasedInsurance: "Yi sa insurance bi zaŋ?",
+            trustInsuranceProvider: "Yi lahi insurance company lahiri? (1 = Kani, 5 = Pam)",
+            trustFarmerGroups: "Yi lahi puunima kpamba lahiri? (1-5)",
+            trustNGOs: "Yi lahi NGO lahiri? (1-5)",
+            distanceMarket: "Zaa ni yɛl market (minutes)",
+            distanceInsurer: "Zaa ni yɛl insurance company (km)",
+            usesMobileMoney: "Yi sa mobile money (MoMo)?",
+            farmerGroupMember: "Yi yɛl puunima kpamba bi?",
+            
+            // Navigation
+            back: "Ti Nyɛla",
+            continue: "Ti Dɔɣi",
+            continueRisk: "Ti Dɔɣi Risk Assessment",
+            yes: "Yɔɔ",
+            no: "Ayi",
+            select: "Chɛ..."
         },
+        
+        progress: {
+            step: "Kpeeni",
+            of: "ni",
+            page: "Yaɣa"
+        },
+
+        
+        
         risk: {
             title: "Yi Lahira Chɛŋa",
             scenario: "Ka yi chɛm ni ayi zuɣu:",
@@ -324,6 +550,7 @@ const TRANSLATIONS = {
             joint: "Bee nya",
             otherMember: "Din bi"
         },
+        
         empowerment: {
             title: "Chɛŋa Yi Doo Zaa",
             subtitle: "Ti pahi ka yi lahiri",
@@ -335,6 +562,7 @@ const TRANSLATIONS = {
             stronglyDisagree: "Mi ka lahiri kani",
             stronglyAgree: "Mi lahiri pam"
         },
+        
         game: {
             season: "Kpeeni",
             budget: "Yi Mali",
@@ -367,6 +595,7 @@ const TRANSLATIONS = {
             wifePlaying: "👩 O Paga Ayi",
             couplePlaying: "👫 Bee Nya Ayi"
         },
+        
         weather: {
             goodTitle: "Saŋa Nyɛlibu!",
             goodDesc: "Koom ŋmani. Yi puuni nya nyɛlibu!",
@@ -393,6 +622,7 @@ const TRANSLATIONS = {
             insuranceReturn: "Yi di {paid} GHS → Nya {received} GHS = {multiplier}x!",
             takeTime: "Nya lahira ni yi ti dɔɣi"
         },
+        
         seasons: {
             s1Name: "Puuni Kpeeni - March",
             s1Story: "Puuni kpeeni dɔɣi. Yi nya 500 GHS puuni di.",
@@ -404,6 +634,7 @@ const TRANSLATIONS = {
             s4Story: "⚠️ KPEENI ZAŊ PAM! Koom lahira gbɛma. Yi doo yuli kpeeni chɛŋa ŋɔ! Mali: 650 GHS.",
             finalWarning: "⚠️ KPEENI ZAŊ PAM! Chɛŋa ŋɔ yɛlni! ⚠️"
         },
+        
         knowledge: {
             title: "Ti Nya Ka Yi Lahi",
             subtitle: "Ti pahi saŋa insurance zaŋa",
@@ -416,6 +647,7 @@ const TRANSLATIONS = {
             false: "Bani",
             submit: "Ti Pahi"
         },
+        
         perception: {
             title: "Yi Lahi Bundle Zaa",
             subtitle: "Pahi yi lahi insurance ni puuni di bundle ni yi nya",
@@ -445,6 +677,7 @@ const TRANSLATIONS = {
             definitelyYes: "Yɛlni tiŋa",
             submit: "Ti Pahi"
         },
+        
         couple: {
             title: "Yi Yuɣu Zaŋ",
             subtitle: "Ni ka yi dɔɣi ayi bee, ti pahi zaŋa di",
@@ -461,6 +694,7 @@ const TRANSLATIONS = {
             rememberInfo: "Lahiri: Yi be chɛm chɛŋa bee. Pahi ni yi chɛ chɛŋa ni yi ti dɔɣi.",
             startSession: "Ti Dɔɣi Bee Ayi"
         },
+        
         results: {
             title: "Ayi Ti Pahi!",
             subtitle: "Yi chɛŋa lahira",
@@ -474,6 +708,7 @@ const TRANSLATIONS = {
             playAgain: "Ayi Din",
             startNew: "Dɔɣi Ayi Palli"
         },
+        
         common: {
             continue: "Ti Dɔɣi",
             loading: "Yi Zaŋa...",
@@ -483,7 +718,6 @@ const TRANSLATIONS = {
         }
     }
 };
-
 
 
 
@@ -703,6 +937,7 @@ async function apiCall(endpoint, method = 'GET', data = null) {
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
+            console.error('❌ Server error details:', errorData); // ✅ ADD THIS
             throw new Error(errorData.message || `Server error: ${response.status}`);
         }
         
@@ -710,12 +945,14 @@ async function apiCall(endpoint, method = 'GET', data = null) {
         console.log('✅ API Response:', result);
         
         if (!result.success) {
+            console.error('❌ API returned failure:', result); // ✅ ADD THIS
             throw new Error(result.message || 'Unknown error');
         }
         
         return result.data;
     } catch (error) {
         console.error('💥 API Error:', error.message);
+        console.error('💥 Full error:', error); // ✅ ADD THIS
         
         // If fetch fails due to network, switch to offline mode
         if (error.message.includes('Failed to fetch') || 
@@ -732,19 +969,38 @@ async function apiCall(endpoint, method = 'GET', data = null) {
 
 
 
+
+
+// ===== SCREEN MANAGEMENT =====
 // ===== SCREEN MANAGEMENT =====
 function showScreen(screenId) {
     console.log('Showing screen:', screenId);
+    
+    // Hide all screens
     document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
     });
+    
+    // Show target screen
     const targetScreen = document.getElementById(screenId);
     if (targetScreen) {
         targetScreen.classList.add('active');
         gameState.currentScreen = screenId;
-        window.scrollTo(0, 0);
+        
+        // Scroll to top - use setTimeout to ensure DOM is updated
+        setTimeout(() => {
+            window.scrollTo({
+                top: 0,
+                left: 0,
+                behavior: 'smooth'
+            });
+            
+            // Also scroll the screen itself to top
+            targetScreen.scrollTop = 0;
+        }, 100);
     }
 }
+
 
 function showLoading(show = true) {
     const overlay = document.getElementById('loadingOverlay');
@@ -763,6 +1019,7 @@ function generateHouseholdId() {
 }
 
 // ===== GAME FLOW =====
+// ===== START DEMOGRAPHICS =====
 function startDemographics() {
     console.log('Start Demographics clicked');
     
@@ -772,7 +1029,16 @@ function startDemographics() {
     }
     
     showScreen('demographicsScreen');
+    
+    // CRITICAL: Load communities AFTER screen is shown
+    setTimeout(() => {
+        loadCommunities();
+    }, 100);
 }
+
+
+
+
 
 // ===== TUTORIAL SYSTEM =====
 // ===== TUTORIAL SYSTEM - REVISED WITH LANGUAGE SUPPORT =====
@@ -2023,6 +2289,23 @@ function restartGame() {
     }
 }
 
+
+// Inside DOMContentLoaded, add this:
+
+// Add change listener for crops checkboxes
+document.addEventListener('change', function(e) {
+    if (e.target.name === 'crops') {
+        const cropsCheckboxes = document.querySelectorAll('input[name="crops"]');
+        const anyChecked = Array.from(cropsCheckboxes).some(cb => cb.checked);
+        const cropsError = document.getElementById('cropsError');
+        
+        if (cropsError) {
+            cropsError.style.display = anyChecked ? 'none' : 'block';
+        }
+    }
+});
+
+
 // ===== EVENT LISTENERS =====
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Weather Index Insurance Game Loaded - Ghana Edition - 4 SEASONS - ALL FIXES APPLIED');
@@ -2099,23 +2382,58 @@ window.showScreen = function(screenId) {
 
 
 
-    const demoForm = document.getElementById('demographicsForm');
+const demoForm = document.getElementById('demographicsForm');
 if (demoForm) {
     demoForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        // Only process if we're on the last page
+        if (currentDemoPage !== DEMOGRAPHICS_PAGES) {
+            console.log('Not on last page, skipping submit');
+            return;
+        }
+        
         showLoading();
         
         try {
             const formData = new FormData(e.target);
+            
+            // ===== COLLECT BASIC DATA =====
             const crops = Array.from(document.querySelectorAll('input[name="crops"]:checked'))
                 .map(cb => cb.value);
             
             const selectedRole = formData.get('role');
             const selectedGender = formData.get('gender');
+            const communityName = formData.get('communityName');
+            const enumeratorName = formData.get('enumeratorName');
             
-            // FIX 2: ENFORCE ROLE ORDER
+            // ===== VALIDATION =====
+            if (!enumeratorName || enumeratorName.trim() === '') {
+                showLoading(false);
+                alert('⚠️ Please enter your name as enumerator');
+                return;
+            }
+            
+            if (!communityName || communityName.trim() === '') {
+                showLoading(false);
+                alert('⚠️ Please select a community');
+                return;
+            }
+            
+            if (!selectedRole) {
+                showLoading(false);
+                alert('⚠️ Please select your role (Husband/Wife)');
+                return;
+            }
+            
+            if (!selectedGender) {
+                showLoading(false);
+                alert('⚠️ Please select your gender');
+                return;
+            }
+            
+            // FIX: ENFORCE ROLE ORDER
             if (gameState.firstRespondentRole) {
-                // Second partner playing - enforce opposite role
                 if (selectedRole === gameState.firstRespondentRole) {
                     showLoading(false);
                     alert(`⚠️ The ${gameState.firstRespondentRole} has already played! The second partner must be the ${gameState.firstRespondentRole === 'husband' ? 'wife' : 'husband'}.`);
@@ -2123,25 +2441,152 @@ if (demoForm) {
                 }
             }
             
-            gameState.demographics = {
-                householdId: gameState.householdId,
-                gender: selectedGender,
-                role: selectedRole,
-                age: parseInt(formData.get('age')),
-                education: parseInt(formData.get('education')),
-                yearsOfFarming: parseInt(formData.get('farmingYears')),
-                landCultivated: parseFloat(formData.get('landSize')),
-                mainCrops: crops,
-                lastSeasonIncome: parseFloat(formData.get('lastIncome')),
-                priorInsuranceKnowledge: formData.get('priorKnowledge') === '1',
-                language: gameState.language
+            // ===== COLLECT HOUSEHOLD ASSETS =====
+            const assets = {
+                radio: formData.get('asset_radio') === '1',
+                tv: formData.get('asset_tv') === '1',
+                refrigerator: formData.get('asset_refrigerator') === '1',
+                bicycle: formData.get('asset_bicycle') === '1',
+                motorbike: formData.get('asset_motorbike') === '1',
+                mobilePhone: formData.get('asset_mobilePhone') === '1',
+                generator: formData.get('asset_generator') === '1',
+                plough: formData.get('asset_plough') === '1'
             };
             
+            // ===== COLLECT LIVESTOCK =====
+            const livestock = {
+                cattle: parseInt(formData.get('livestock_cattle')) || 0,
+                goats: parseInt(formData.get('livestock_goats')) || 0,
+                sheep: parseInt(formData.get('livestock_sheep')) || 0,
+                poultry: parseInt(formData.get('livestock_poultry')) || 0
+            };
+            
+            // ===== COLLECT IMPROVED INPUTS =====
+            const improvedInputs = {
+                certifiedSeed: formData.get('input_certifiedSeed') === '1',
+                fertilizer: formData.get('input_fertilizer') === '1',
+                pesticides: formData.get('input_pesticides') === '1',
+                irrigation: formData.get('input_irrigation') === '1'
+            };
+            
+            // ===== COLLECT SHOCKS =====
+            const shocks = {
+                drought: formData.get('shock_drought') === '1',
+                flood: formData.get('shock_flood') === '1',
+                pestsDisease: formData.get('shock_pestsDisease') === '1',
+                cropPriceFall: formData.get('shock_cropPriceFall') === '1'
+            };
+            
+            // ===== COLLECT BORROWING SOURCES (if applicable) =====
+            const borrowSources = [];
+            if (formData.get('borrowedMoney') === '1') {
+                if (formData.get('borrowSource_bank')) borrowSources.push('bank');
+                if (formData.get('borrowSource_microfinance')) borrowSources.push('microfinance');
+                if (formData.get('borrowSource_vsla')) borrowSources.push('vsla');
+                if (formData.get('borrowSource_familyFriends')) borrowSources.push('familyFriends');
+                if (formData.get('borrowSource_moneylender')) borrowSources.push('moneylender');
+            }
+            
+            // ===== BUILD COMPLETE DEMOGRAPHICS OBJECT =====
+          // ===== BUILD COMPLETE DEMOGRAPHICS OBJECT =====
+gameState.demographics = {
+    // Required fields
+    householdId: gameState.householdId,
+    communityName: communityName.trim(),
+    enumeratorName: enumeratorName.trim(),
+    gender: selectedGender,
+    role: selectedRole,
+    language: gameState.language || 'english',
+    
+    // Basic demographics
+    age: parseInt(formData.get('age')) || 0,
+    education: parseInt(formData.get('education')) || 0,
+    
+    // Household composition
+    householdSize: parseInt(formData.get('householdSize')) || 1,
+    childrenUnder15: parseInt(formData.get('childrenUnder15')) || 0,
+    
+    // Assets
+    assets: assets,
+    
+    // Livestock
+    livestock: livestock,
+    
+    // Farming information
+    yearsOfFarming: parseInt(formData.get('farmingYears')) || 0,
+    landCultivated: parseFloat(formData.get('landSize')) || 0,
+    landAccessMethod: parseInt(formData.get('landAccessMethod')) || 1,
+    landAccessOther: formData.get('landAccessOther') || '',
+    mainCrops: crops.length > 0 ? crops : ['maize'],
+    numberOfCropsPlanted: parseInt(formData.get('numberOfCropsPlanted')) || 1,
+    lastSeasonIncome: parseFloat(formData.get('lastIncome')) || 0,
+    farmingInputExpenditure: parseFloat(formData.get('farmingInputExpenditure')) || 0,
+    
+    // Improved inputs
+    improvedInputs: improvedInputs,
+    hasIrrigationAccess: formData.get('hasIrrigationAccess') === '1',
+    
+    // Shocks
+    shocks: shocks,
+    estimatedLossLastYear: parseFloat(formData.get('estimatedLossLastYear')) || 0,
+    harvestLossPercentage: parseInt(formData.get('harvestLossPercentage')) || 0,
+    
+    // Savings & Credit
+    hasSavings: formData.get('hasSavings') === '1',
+    savingsAmount: parseFloat(formData.get('savingsAmount')) || 0,
+    borrowedMoney: formData.get('borrowedMoney') === '1',
+    borrowSources: borrowSources,
+    hasOffFarmIncome: formData.get('hasOffFarmIncome') === '1',
+    offFarmIncomeAmount: parseFloat(formData.get('offFarmIncomeAmount')) || 0,
+    
+    // Insurance experience
+    priorInsuranceKnowledge: formData.get('priorKnowledge') === '1',
+    purchasedInsuranceBefore: formData.get('purchasedInsuranceBefore') === '1',
+    insuranceType: formData.get('insuranceType') || '',
+    
+    // Trust indicators
+    trustFarmerGroup: parseInt(formData.get('trust_farmerGroup')) || 3,
+    trustNGO: parseInt(formData.get('trust_ngo')) || 3,
+    trustInsuranceProvider: parseInt(formData.get('trust_insuranceProvider')) || 3,
+    rainfallChangePerception: parseInt(formData.get('rainfallChangePerception')) || 3,
+    insurerPayoutTrust: parseInt(formData.get('insurerPayoutTrust')) || 3,
+    
+    // Additional research fields (not collected in form, defaults provided)
+    communityInsuranceDiscussion: false,
+    extensionVisits: false,
+    numberOfExtensionVisits: 0,
+    
+    // Social capital
+    memberOfFarmerGroup: formData.get('memberOfFarmerGroup') === '1',
+    farmerGroupName: formData.get('farmerGroupName') || '',
+    
+    // Access & Market
+    distanceToMarket: parseInt(formData.get('distanceToMarket')) || 0,
+    distanceToInsurer: parseInt(formData.get('distanceToInsurer')) || 0,
+    usesMobileMoney: formData.get('usesMobileMoney') === '1'
+};  // ✅ Object ends here with proper closing brace
+
+gameState.gender = selectedGender;
+gameState.role = selectedRole;
+
+console.log('✅ Demographics collected:', gameState.demographics);
+
+showLoading(false);
+
+
+
             gameState.gender = selectedGender;
             gameState.role = selectedRole;
             
+            console.log('✅ Demographics collected:', gameState.demographics);
+            
             showLoading(false);
+            
+            // Move to step 11 (Risk screen)
+            currentStep = 11;
+            updateGlobalProgress(currentStep, TOTAL_STEPS);
             showScreen('riskScreen');
+            
         } catch (error) {
             showLoading(false);
             console.error('Demographics form error:', error);
@@ -2152,27 +2597,77 @@ if (demoForm) {
 
 
 
-    const riskForm = document.getElementById('riskForm');
-    if (riskForm) {
-        riskForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showLoading();
+
+
+   const riskForm = document.getElementById('riskForm');
+if (riskForm) {
+    riskForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showLoading();
+        
+        try {
+            const formData = new FormData(e.target);
+            gameState.demographics.riskPreference = parseInt(formData.get('riskChoice'));
+            gameState.demographics.riskComfort = parseInt(formData.get('riskComfort'));
+            gameState.demographics.decisionMaker = parseInt(formData.get('decisionMaker'));
             
-            try {
-                const formData = new FormData(e.target);
-                gameState.demographics.riskPreference = parseInt(formData.get('riskChoice'));
-                gameState.demographics.riskComfort = parseInt(formData.get('riskComfort'));
-                gameState.demographics.decisionMaker = parseInt(formData.get('decisionMaker'));
-                
-                showLoading(false);
-                showScreen('empowermentScreen');
-            } catch (error) {
-                showLoading(false);
-                console.error('Risk form error:', error);
-                alert('Error: ' + error.message);
-            }
-        });
-    }
+            showLoading(false);
+            
+            // Move to step 12 (Empowerment) ✅ THIS IS CORRECT
+            currentStep = 12;
+            updateGlobalProgress(currentStep, TOTAL_STEPS);
+            showScreen('empowermentScreen');
+        } catch (error) {
+            showLoading(false);
+            console.error('Risk form error:', error);
+            alert('Error: ' + error.message);
+        }
+    });
+}
+
+
+
+
+
+    // ===== HOOK INTO EXISTING FORM SUBMISSIONS =====
+
+// Demographics form submission
+// const demoFormOriginal = document.getElementById('demographicsForm');
+// if (demoFormOriginal) {
+//     demoFormOriginal.addEventListener('submit', async (e) => {
+//         e.preventDefault();
+//         // ... existing demographics submission code ...
+        
+//         // After successful submission, go to Step 16 (Risk)
+//         showRiskScreen();
+//     });
+// }
+
+// // Risk form submission
+// const riskFormOriginal = document.getElementById('riskForm');
+// if (riskFormOriginal) {
+//     riskFormOriginal.addEventListener('submit', async (e) => {
+//         e.preventDefault();
+//         // ... existing risk submission code ...
+        
+//         // After successful submission, go to Step 17 (Empowerment)
+//         showEmpowermentScreen();
+//     });
+// }
+
+// // Empowerment form submission
+// const empFormOriginal = document.getElementById('empowermentForm');
+// if (empFormOriginal) {
+//     empFormOriginal.addEventListener('submit', async (e) => {
+//         e.preventDefault();
+//         // ... existing empowerment submission code ...
+        
+//         // After successful submission, go to Step 18 (Tutorial)
+//         showTutorialScreen();
+//     });
+// }
+
+
 
     // ===== EMPOWERMENT FORM HANDLER - FIXED =====
 // Replace the existing empowerment form handler in DOMContentLoaded
@@ -2526,7 +3021,6 @@ function handleSwipe() {
 // ===== LANGUAGE TOGGLE FUNCTION =====
 // ===== UPDATED updateLanguage FUNCTION =====
 // Replace the existing updateLanguage function with this complete version
-
 function updateLanguage(language) {
     console.log('🌍 Changing language to:', language);
     gameState.language = language;
@@ -2560,13 +3054,15 @@ function updateLanguage(language) {
     
     // Update specific screens with complex structures
     updateWelcomeScreenLang();
+    updateExtendedDemographicsLang();  // NEW
     updateDemographicsScreenLang();
     updateRiskScreenLang();
     updateEmpowermentScreenLang();
     updateKnowledgeScreenLang();
-    updatePerceptionScreenLang();      // NEW - Added
-    updateCoupleQuestionsLang();       // NEW - Added
+    updatePerceptionScreenLang();
+    updateCoupleQuestionsLang();
     updateResultsScreenLang();
+    updateProgressText();  // NEW
     
     // Refresh current screen if needed
     if (gameState.currentScreen === 'gameScreen') {
@@ -3039,6 +3535,78 @@ async function manualSync() {
     }
 }
 
+
+
+// ===== LOAD COMMUNITIES =====
+async function loadCommunities() {
+  try {
+    console.log('📋 Loading communities from database...');
+    console.log('📍 API URL:', `${API_BASE}/api/admin/communities`);
+    
+    const response = await fetch(`${API_BASE}/api/admin/communities`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const result = await response.json();
+    console.log('📦 Communities received:', result.data?.length || 0);
+    
+    if (result.success && result.data.length > 0) {
+      const select = document.getElementById('communityName');
+      
+      if (!select) {
+        console.error('❌ Could not find communityName select element!');
+        return;
+      }
+      
+      console.log('✅ Found select element, clearing and populating...');
+      
+      // Clear existing options
+      select.innerHTML = '<option value="">-- Select Community --</option>';
+      
+      // Sort and group by district
+      const sorted = result.data.sort((a, b) => {
+        if (a.district !== b.district) {
+          return a.district.localeCompare(b.district);
+        }
+        return a.communityName.localeCompare(b.communityName);
+      });
+      
+      let currentOptgroup = null;
+      let currentDistrict = '';
+      
+      sorted.forEach(community => {
+        if (community.district !== currentDistrict) {
+          currentDistrict = community.district;
+          currentOptgroup = document.createElement('optgroup');
+          currentOptgroup.label = community.district;
+          select.appendChild(currentOptgroup);
+        }
+        
+        const option = document.createElement('option');
+        option.value = community.communityName;
+        option.textContent = community.communityName;
+        option.setAttribute('data-treatment', community.treatmentGroup);
+        currentOptgroup.appendChild(option);
+      });
+      
+      console.log(`✅ Successfully loaded ${result.data.length} communities`);
+    } else {
+      console.warn('⚠️ No communities found in response');
+      alert('⚠️ No communities available. Please contact administrator.');
+    }
+  } catch (error) {
+    console.error('❌ Error loading communities:', error);
+    alert(`Error loading communities: ${error.message}. Please refresh the page.`);
+  }
+}
+
+
+
+
+
+
 function showToast(message, type = 'info') {
     console.log(`Toast [${type}]: ${message}`);
     
@@ -3108,7 +3676,636 @@ window.addEventListener('offline', updateConnectionStatus);
 updateConnectionStatus();
 
 
+// ===== MULTI-STEP DEMOGRAPHICS NAVIGATION =====
+// ===== MULTI-STEP DEMOGRAPHICS NAVIGATION =====
 
+// Total steps in the entire pre-game process
+const TOTAL_STEPS = 13; // 15 demographics + 1 risk + 1 empowerment + 1 tutorial
+const DEMOGRAPHICS_PAGES = 10;
+
+let currentStep = 1; // Global step counter (1-18)
+let currentDemoPage = 1; // Demographics page counter (1-15)
+
+
+function updateGlobalProgress(stepNumber, totalSteps) {
+    console.log(`📊 Progress: Step ${stepNumber} of ${totalSteps}`);
+    
+    const percentage = (stepNumber / totalSteps) * 100;
+    
+    // Update all progress bars on current screen
+    const progressBars = document.querySelectorAll('.progress-fill');
+    progressBars.forEach(bar => {
+        bar.style.width = `${percentage}%`;
+    });
+    
+    // Update all progress texts
+    const progressTexts = document.querySelectorAll('.progress-text');
+    progressTexts.forEach(text => {
+        const lang = gameState.language || 'english';
+        const stepWord = t('progress.step');
+        const ofWord = t('progress.of');
+        text.textContent = `${stepWord} ${stepNumber} ${ofWord} ${totalSteps}`;
+    });
+}
+
+// ===== UPDATE ALL PROGRESS BARS =====
+function updateGlobalProgress(stepNumber, totalSteps = TOTAL_STEPS) {
+    const percentage = (stepNumber / totalSteps) * 100;
+    
+    // Update all progress bars on current screen
+    const progressBars = document.querySelectorAll('.progress-fill');
+    progressBars.forEach(bar => {
+        bar.style.width = `${percentage}%`;
+    });
+    
+    // Update all progress texts
+    const progressTexts = document.querySelectorAll('.progress-text');
+    progressTexts.forEach(text => {
+        text.textContent = `Step ${stepNumber} of ${totalSteps}`;
+    });
+}
+
+// ===== DEMOGRAPHICS MULTI-PAGE NAVIGATION =====
+function showDemoPage(pageNum) {
+    console.log(`📄 Showing demo page ${pageNum} of ${DEMOGRAPHICS_PAGES}`);
+    
+    // Validate page number
+    if (pageNum < 1 || pageNum > DEMOGRAPHICS_PAGES) {
+        console.error(`Invalid page number: ${pageNum}`);
+        return;
+    }
+    
+    // Hide all demo pages
+    document.querySelectorAll('.demo-page').forEach(page => {
+        page.classList.remove('active');
+    });
+    
+    // Show current page
+    const currentPage = document.getElementById(`demoPage${pageNum}`);
+    if (currentPage) {
+        currentPage.classList.add('active');
+    } else {
+        console.error(`❌ Page demoPage${pageNum} not found!`);
+        return;
+    }
+    
+    // Update global step (demographics is steps 1-10)
+    currentStep = pageNum;
+    updateGlobalProgress(currentStep, TOTAL_STEPS);
+    
+    // Show/hide navigation buttons
+    const prevBtn = document.getElementById('demoPrevBtn');
+    const nextBtn = document.getElementById('demoNextBtn');
+    const submitBtn = document.getElementById('demoSubmitBtn');
+    
+    if (prevBtn) {
+        prevBtn.style.display = pageNum === 1 ? 'none' : 'flex';
+    }
+    
+    if (nextBtn && submitBtn) {
+        if (pageNum === DEMOGRAPHICS_PAGES) {
+            nextBtn.style.display = 'none';
+            submitBtn.style.display = 'flex';
+        } else {
+            nextBtn.style.display = 'flex';
+            submitBtn.style.display = 'none';
+        }
+    }
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function validateCurrentDemoPage() {
+    const currentPage = document.getElementById(`demoPage${currentDemoPage}`);
+    if (!currentPage) return true;
+    
+    let allValid = true;
+    let firstInvalidField = null;
+    
+    // ===== SPECIAL: Validate crops checkboxes if on page 5 =====
+    if (currentDemoPage === 5) {
+        const cropsCheckboxes = currentPage.querySelectorAll('input[name="crops"]');
+        const anyChecked = Array.from(cropsCheckboxes).some(cb => cb.checked);
+        const cropsError = document.getElementById('cropsError');
+        
+        if (!anyChecked) {
+            allValid = false;
+            if (cropsError) {
+                cropsError.style.display = 'block';
+            }
+            
+            // Scroll to crops section
+            const cropsGroup = document.getElementById('cropsCheckboxGroup');
+            if (cropsGroup && !firstInvalidField) {
+                firstInvalidField = cropsGroup;
+            }
+        } else {
+            if (cropsError) {
+                cropsError.style.display = 'none';
+            }
+        }
+    }
+    
+    // Get all required fields on current page
+    const requiredFields = currentPage.querySelectorAll('[required]');
+    
+    requiredFields.forEach(field => {
+        if (field.type === 'checkbox' || field.type === 'radio') {
+            // For checkbox/radio groups, check if at least one is checked
+            const name = field.name;
+            const group = currentPage.querySelectorAll(`[name="${name}"]`);
+            const anyChecked = Array.from(group).some(input => input.checked);
+            
+            if (!anyChecked) {
+                allValid = false;
+                if (!firstInvalidField) {
+                    firstInvalidField = field;
+                }
+            }
+        } else {
+            // Regular input validation
+            if (!field.checkValidity()) {
+                allValid = false;
+                if (!firstInvalidField) {
+                    firstInvalidField = field;
+                }
+            }
+        }
+    });
+    
+    if (!allValid && firstInvalidField) {
+        // Scroll to first invalid field
+        firstInvalidField.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+        });
+        
+        // Focus it after scrolling
+        setTimeout(() => {
+            firstInvalidField.focus();
+            if (firstInvalidField.reportValidity) {
+                firstInvalidField.reportValidity();
+            }
+        }, 300);
+    }
+    
+    return allValid;
+}
+
+
+// Add navigation button listeners in DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎮 Game initialized');
+    console.log(`📋 Total steps: ${TOTAL_STEPS}`);
+    console.log(`📄 Demographics pages: ${DEMOGRAPHICS_PAGES}`);
+    
+    // Demographics Next Button
+    const nextBtn = document.getElementById('demoNextBtn');
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function() {
+            console.log(`▶️ Next clicked. Current page: ${currentDemoPage}`);
+            
+            if (validateCurrentDemoPage()) {
+                if (currentDemoPage < DEMOGRAPHICS_PAGES) {
+                    currentDemoPage++;
+                    showDemoPage(currentDemoPage);
+                } else {
+                    console.log('Already on last page');
+                }
+            }
+        });
+    }
+    
+    // Demographics Previous Button
+    const prevBtn = document.getElementById('demoPrevBtn');
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function() {
+            console.log(`◀️ Previous clicked. Current page: ${currentDemoPage}`);
+            
+            if (currentDemoPage > 1) {
+                currentDemoPage--;
+                showDemoPage(currentDemoPage);
+            }
+        });
+    }
+    
+    // Initialize demographics to page 1
+    showDemoPage(1);
+    
+    // ... rest of your DOMContentLoaded code
+});
+
+
+
+// ===== UPDATE PROGRESS WHEN MOVING TO OTHER SCREENS =====
+
+// When showing Risk screen (Step 16)
+// When showing Risk screen (Step 11)
+function showRiskScreen() {
+    currentStep = 11;
+    updateGlobalProgress(currentStep, TOTAL_STEPS);
+    showScreen('riskScreen');
+}
+
+// When showing Empowerment screen (Step 12)
+function showEmpowermentScreen() {
+    currentStep = 12;
+    updateGlobalProgress(currentStep, TOTAL_STEPS);
+    showScreen('empowermentScreen');
+}
+
+// When showing Tutorial screen (Step 13)
+function showTutorialScreen() {
+    currentStep = 13;
+    updateGlobalProgress(currentStep, TOTAL_STEPS);
+    showScreen('tutorialScreen');
+    initializeTutorial();
+}
+
+// When showing Empowerment screen (Step 17)
+function showEmpowermentScreen() {
+    currentStep = 17;
+    updateGlobalProgress(currentStep);
+    showScreen('empowermentScreen');
+}
+
+// When showing Tutorial screen (Step 18)
+function showTutorialScreen() {
+    currentStep = 18;
+    updateGlobalProgress(currentStep);
+    showScreen('tutorialScreen');
+    initializeTutorial();
+}
+
+
+
+
+
+function validateCurrentDemoPage() {
+    const currentPage = document.getElementById(`demoPage${currentDemoPage}`);
+    if (!currentPage) return true;
+    
+    // Get all required fields on current page
+    const requiredFields = currentPage.querySelectorAll('[required]');
+    let allValid = true;
+    
+    requiredFields.forEach(field => {
+        if (field.type === 'checkbox') {
+            // For checkbox groups with required, check if at least one is checked
+            const checkboxGroup = currentPage.querySelectorAll(`[name="${field.name}"]`);
+            const anyChecked = Array.from(checkboxGroup).some(cb => cb.checked);
+            if (!anyChecked) {
+                allValid = false;
+                field.setCustomValidity('Please select at least one option');
+            } else {
+                field.setCustomValidity('');
+            }
+        } else if (field.type === 'radio') {
+            // For radio groups, check if one is selected
+            const radioGroup = currentPage.querySelectorAll(`[name="${field.name}"]`);
+            const anyChecked = Array.from(radioGroup).some(radio => radio.checked);
+            if (!anyChecked) {
+                allValid = false;
+            }
+        } else {
+            // Regular input validation
+            if (!field.checkValidity()) {
+                allValid = false;
+                field.reportValidity();
+            }
+        }
+    });
+    
+    if (!allValid) {
+        // Find first invalid field and focus it
+        const firstInvalid = Array.from(requiredFields).find(field => !field.checkValidity());
+        if (firstInvalid) {
+            firstInvalid.focus();
+            firstInvalid.reportValidity();
+        }
+    }
+    
+    return allValid;
+}
+
+
+
+
+// Add navigation button listeners
+document.addEventListener('DOMContentLoaded', function() {
+    const nextBtn = document.getElementById('demoNextBtn');
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function() {
+            if (validateCurrentDemoPage()) {
+                currentDemoPage++;
+                showDemoPage(currentDemoPage);
+            }
+        });
+    }
+    
+    const prevBtn = document.getElementById('demoPrevBtn');
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function() {
+            if (currentDemoPage > 1) {
+                currentDemoPage--;
+                showDemoPage(currentDemoPage);
+            }
+        });
+    }
+    
+    // Initialize to page 1
+    showDemoPage(1);
+    
+    // Show/hide conditional fields
+    const hasSavingsRadios = document.querySelectorAll('[name="hasSavings"]');
+    hasSavingsRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const group = document.getElementById('savingsAmountGroup');
+            if (group) {
+                group.style.display = this.value === '1' ? 'block' : 'none';
+            }
+        });
+    });
+    
+    const borrowedMoneyRadios = document.querySelectorAll('[name="borrowedMoney"]');
+    borrowedMoneyRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const group = document.getElementById('borrowingSourcesGroup');
+            if (group) {
+                group.style.display = this.value === '1' ? 'block' : 'none';
+            }
+        });
+    });
+    
+    const hasOffFarmRadios = document.querySelectorAll('[name="hasOffFarmIncome"]');
+    hasOffFarmRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const group = document.getElementById('offFarmIncomeGroup');
+            if (group) {
+                group.style.display = this.value === '1' ? 'block' : 'none';
+            }
+        });
+    });
+});
+
+
+
+function updatePerceptionScreenLang() {
+    const title = document.querySelector('#perceptionScreen h2');
+    if (title) {
+        title.innerHTML = `<i class="fas fa-comments"></i> ${t('perception.title')}`;
+    }
+    
+    const subtitle = document.querySelector('#perceptionScreen .subtitle');
+    if (subtitle) subtitle.textContent = t('perception.subtitle');
+    
+    // Update questions - they're hardcoded in HTML, so we need to update them
+    const questions = document.querySelectorAll('#perceptionScreen .question-item > p');
+    const qKeys = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8'];
+    questions.forEach((q, i) => {
+        if (qKeys[i]) {
+            const strong = q.querySelector('strong');
+            if (strong) {
+                strong.textContent = `${i + 1}. ${t(`perception.${qKeys[i]}`)}`;
+            }
+        }
+    });
+    
+    // Update scale labels for Likert scales
+    document.querySelectorAll('#perceptionScreen .scale-labels').forEach((container, idx) => {
+        const spans = container.querySelectorAll('span');
+        if (spans.length >= 2) {
+            // Different scales for different questions
+            if (idx === 0) { // Q1
+                spans[0].textContent = t('perception.notAtAll');
+                spans[1].textContent = t('perception.veryMuch');
+            } else if (idx === 1) { // Q2
+                spans[0].textContent = t('perception.dontUnderstand');
+                spans[1].textContent = t('perception.understandCompletely');
+            } else if (idx === 3) { // Q4
+                spans[0].textContent = t('perception.veryUnlikely');
+                spans[1].textContent = t('perception.veryLikely');
+            } else if (idx === 4) { // Q5
+                spans[0].textContent = t('perception.veryUnfair');
+                spans[1].textContent = t('perception.veryFair');
+            } else if (idx === 5) { // Q6
+                spans[0].textContent = t('perception.dontTrust');
+                spans[1].textContent = t('perception.trustCompletely');
+            } else if (idx === 6) { // Q7
+                spans[0].textContent = t('perception.notValuable');
+                spans[1].textContent = t('perception.extremelyValuable');
+            } else if (idx === 7) { // Q8
+                spans[0].textContent = t('perception.definitelyNot');
+                spans[1].textContent = t('perception.definitelyYes');
+            }
+        }
+    });
+    
+    // Update Yes/No radio for Q3
+    const willingnessRadios = document.querySelectorAll('input[name="willingnessToPay"]');
+    willingnessRadios.forEach(radio => {
+        const label = radio.closest('label');
+        if (label) {
+            const text = radio.value === 'yes' ? t('perception.yes') : t('perception.no');
+            label.innerHTML = '';
+            label.appendChild(radio);
+            label.appendChild(document.createTextNode(' ' + text));
+        }
+    });
+    
+    // Update submit button
+    const submitBtn = document.querySelector('#perceptionForm .btn-primary span');
+    if (submitBtn) submitBtn.textContent = t('perception.submit');
+}
+
+function updateCoupleQuestionsLang() {
+    const title = document.querySelector('#couplePreQuestionsScreen h2');
+    if (title) {
+        title.innerHTML = `<i class="fas fa-heart"></i> ${t('couple.title')}`;
+    }
+    
+    const subtitle = document.querySelector('#couplePreQuestionsScreen .subtitle');
+    if (subtitle) subtitle.textContent = t('couple.subtitle');
+    
+    // Update marriage duration label
+    const marriageLabel = document.querySelector('label[style*="fas fa-ring"]');
+    if (marriageLabel) {
+        const icon = marriageLabel.querySelector('i');
+        marriageLabel.innerHTML = '';
+        marriageLabel.appendChild(icon);
+        marriageLabel.appendChild(document.createTextNode(' ' + t('couple.marriageDuration')));
+    }
+    
+    // Update marriage duration options
+    updateSelectLang('marriageDuration', [
+        { value: '', text: t('common.select') },
+        { value: '1', text: t('couple.lessThan1') },
+        { value: '2', text: t('couple.years12') },
+        { value: '3', text: t('couple.years35') },
+        { value: '4', text: t('couple.years610') },
+        { value: '5', text: t('couple.years1115') },
+        { value: '6', text: t('couple.years1620') },
+        { value: '7', text: t('couple.moreThan20') }
+    ]);
+    
+    // Update children label
+    const childrenLabel = document.querySelector('label[style*="fas fa-baby"]');
+    if (childrenLabel) {
+        const icon = childrenLabel.querySelector('i');
+        childrenLabel.innerHTML = '';
+        childrenLabel.appendChild(icon);
+        childrenLabel.appendChild(document.createTextNode(' ' + t('couple.numberOfChildren')));
+    }
+    
+    // Update remember info text
+    const infoBox = document.querySelector('#couplePreQuestionsScreen div[style*="E3F2FD"] p');
+    if (infoBox) {
+        const icon = infoBox.querySelector('i');
+        infoBox.innerHTML = '';
+        infoBox.appendChild(icon);
+        infoBox.appendChild(document.createTextNode(' '));
+        const strong = document.createElement('strong');
+        strong.textContent = t('couple.rememberInfo').split(':')[0] + ':';
+        infoBox.appendChild(strong);
+        infoBox.appendChild(document.createTextNode(' ' + t('couple.rememberInfo').split(':')[1]));
+    }
+    
+    // Update start button
+    const startBtn = document.querySelector('#couplePreQuestionsForm .btn-primary span');
+    if (startBtn) startBtn.textContent = t('couple.startSession');
+}
+
+function updateExtendedDemographicsLang() {
+    // Update page titles
+    const pageTitles = {
+        1: 'demographicsExtended.basicInfo',
+        2: 'demographicsExtended.educationHousehold',
+        3: 'demographicsExtended.householdAssets',
+        4: 'demographicsExtended.farmingExperience',
+        5: 'demographicsExtended.cropsIncome',
+        6: 'demographicsExtended.livestock',
+        7: 'demographicsExtended.farmInputs',
+        8: 'demographicsExtended.shocksLosses',
+        9: 'demographicsExtended.savingsCredit',
+        10: 'demographicsExtended.insuranceTrust'
+    };
+    
+    Object.keys(pageTitles).forEach(pageNum => {
+        const pageTitle = document.querySelector(`#demoPage${pageNum} h3`);
+        if (pageTitle) {
+            const icon = pageTitle.querySelector('i');
+            const iconHTML = icon ? icon.outerHTML : '';
+            pageTitle.innerHTML = iconHTML + ' ' + t(pageTitles[pageNum]);
+        }
+    });
+    
+    // Update all labels with specific translations
+    updateLabelByText('Enumerator Name', t('demographicsExtended.enumeratorName'));
+    updateLabelByText('Community Name', t('demographicsExtended.communityName'));
+    updateLabelByText('Household size', t('demographicsExtended.householdSize'));
+    updateLabelByText('Number of children under 15', t('demographicsExtended.childrenUnder15'));
+    
+    // Update asset checkboxes
+    updateCheckboxLabel('asset_radio', t('demographicsExtended.radio'));
+    updateCheckboxLabel('asset_tv', t('demographicsExtended.tv'));
+    updateCheckboxLabel('asset_refrigerator', t('demographicsExtended.refrigerator'));
+    updateCheckboxLabel('asset_bicycle', t('demographicsExtended.bicycle'));
+    updateCheckboxLabel('asset_motorbike', t('demographicsExtended.motorbike'));
+    updateCheckboxLabel('asset_mobilePhone', t('demographicsExtended.mobilePhone'));
+    updateCheckboxLabel('asset_generator', t('demographicsExtended.generator'));
+    updateCheckboxLabel('asset_plough', t('demographicsExtended.plough'));
+    
+    // Update navigation buttons
+    const prevBtn = document.getElementById('demoPrevBtn');
+    if (prevBtn) {
+        const span = prevBtn.querySelector('span');
+        if (span) span.textContent = t('demographicsExtended.back');
+    }
+    
+    const nextBtn = document.getElementById('demoNextBtn');
+    if (nextBtn) {
+        const span = nextBtn.querySelector('span');
+        if (span) span.textContent = t('demographicsExtended.continueNext');
+    }
+    
+    const submitBtn = document.getElementById('demoSubmitBtn');
+    if (submitBtn) {
+        const span = submitBtn.querySelector('span');
+        if (span) span.textContent = t('demographicsExtended.continueRisk');
+    }
+}
+
+// Helper function to update label by its text content
+function updateLabelByText(searchText, newText) {
+    const labels = document.querySelectorAll('label');
+    labels.forEach(label => {
+        if (label.textContent.includes(searchText) && !label.querySelector('input') && !label.querySelector('select')) {
+            const icon = label.querySelector('i');
+            const required = label.querySelector('span[style*="red"]');
+            label.innerHTML = '';
+            if (icon) label.appendChild(icon);
+            label.appendChild(document.createTextNode(' ' + newText + ' '));
+            if (required) label.appendChild(required);
+        }
+    });
+}
+
+// Helper function to update checkbox labels
+function updateCheckboxLabel(inputName, newText) {
+    const input = document.querySelector(`input[name="${inputName}"]`);
+    if (input) {
+        const label = input.closest('label');
+        if (label) {
+            const icon = label.querySelector('i');
+            label.innerHTML = '';
+            label.appendChild(input);
+            if (icon) label.appendChild(document.createTextNode(' ' + icon.textContent + ' '));
+            label.appendChild(document.createTextNode(newText));
+        }
+    }
+}
+
+
+function updateProgressText() {
+    const progressTexts = document.querySelectorAll('.progress-text');
+    progressTexts.forEach(text => {
+        // Extract numbers from existing text
+        const match = text.textContent.match(/(\d+)\s*(?:of|\/)\s*(\d+)/);
+        if (match) {
+            const [, current, total] = match;
+            text.textContent = `${t('progress.step')} ${current} ${t('progress.of')} ${total}`;
+        }
+    });
+}
+
+
+// ===== BACK NAVIGATION FUNCTIONS =====
+function goBackToDemographics() {
+    if (confirm('Go back to demographics? Current progress will be saved.')) {
+        currentDemoPage = DEMOGRAPHICS_PAGES; // Go to last page
+        currentStep = DEMOGRAPHICS_PAGES;
+        updateGlobalProgress(currentStep, TOTAL_STEPS);
+        showScreen('demographicsScreen');
+        showDemoPage(currentDemoPage);
+    }
+}
+
+function goBackToRisk() {
+    if (confirm('Go back to risk assessment?')) {
+        currentStep = 11;
+        updateGlobalProgress(currentStep, TOTAL_STEPS);
+        showScreen('riskScreen');
+    }
+}
+
+function goBackToEmpowerment() {
+    if (confirm('Go back to empowerment assessment?')) {
+        currentStep = 12;
+        updateGlobalProgress(currentStep, TOTAL_STEPS);
+        showScreen('empowermentScreen');
+    }
+}
 
 
 

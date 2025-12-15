@@ -9,7 +9,8 @@ const {
   KnowledgeTest, 
   CoupleDecision, 
   GameSession,
-  Perception 
+  Perception,
+    CommunityAssignment
 } = require('../models/Game');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs').promises;
@@ -36,6 +37,7 @@ const createRespondent = async (req, res) => {
     
     console.log('📥 Received respondent data:', respondentData);
     
+    // Validate required fields
     if (!respondentData.householdId) {
       return res.status(400).json({
         success: false,
@@ -43,27 +45,43 @@ const createRespondent = async (req, res) => {
       });
     }
     
-    if (!respondentData.gender) {
+    if (!respondentData.communityName) {
       return res.status(400).json({
         success: false,
-        message: 'gender is required'
+        message: 'communityName is required - enumerator must select community'
       });
     }
     
-    if (!respondentData.role) {
+    if (!respondentData.gender || !respondentData.role) {
       return res.status(400).json({
         success: false,
-        message: 'role is required'
+        message: 'gender and role are required'
       });
     }
     
+    // Get treatment from community
+    const { CommunityAssignment } = require('../models/Game');
+    const communityAssignment = await CommunityAssignment.findOne({ 
+      communityName: respondentData.communityName 
+    });
+    
+    if (!communityAssignment) {
+      return res.status(400).json({
+        success: false,
+        message: `Community "${respondentData.communityName}" not found in assignments. Please select a valid community.`
+      });
+    }
+    
+    // Assign treatment based on community
+    respondentData.treatmentGroup = communityAssignment.treatmentGroup;
+    
+    console.log(`✅ Community: ${respondentData.communityName}`);
+    console.log(`✅ Auto-assigned treatment: ${respondentData.treatmentGroup}`);
+    
+    // ✅ Generate respondentId if not provided
     if (!respondentData.respondentId) {
       respondentData.respondentId = `R-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
-    
-    respondentData.treatmentGroup = await assignTreatmentGroup(respondentData.householdId);
-    
-    console.log(`✅ Assigned treatment: ${respondentData.treatmentGroup} to household ${respondentData.householdId}`);
     
     const respondent = new Respondent(respondentData);
     await respondent.save();
@@ -94,6 +112,10 @@ const createRespondent = async (req, res) => {
     });
   }
 };
+
+
+
+
 
 const getRespondent = async (req, res) => {
   try {

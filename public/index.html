@@ -273,6 +273,95 @@
         .btn-secondary:hover {
             background: linear-gradient(135deg, #616161, #424242) !important;
         }
+
+
+    .demo-page {
+        display: none;
+    }
+    .demo-page.active {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .btn-secondary {
+        background: linear-gradient(135deg, #757575, #616161) !important;
+    }
+    .btn-secondary:hover {
+        background: linear-gradient(135deg, #616161, #424242) !important;
+    }
+
+
+    /* Back Button Styling */
+.screen-back-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.screen-back-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateX(-5px);
+}
+
+.screen-back-btn i {
+    font-size: 18px;
+}
+
+@media (max-width: 768px) {
+    .screen-back-btn {
+        top: 10px;
+        left: 10px;
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+}
+
+
+/* Checkbox validation error styling */
+.form-group .checkbox-group.error {
+    border: 2px solid #D32F2F;
+    padding: 15px;
+    border-radius: 8px;
+    background: #FFEBEE;
+}
+
+#cropsError {
+    animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+/* Focus state for validation errors */
+input:invalid:focus,
+select:invalid:focus {
+    border-color: #D32F2F;
+    box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+}
+
+
+
     </style>
 </head>
 <body>
@@ -356,122 +445,540 @@
         </div>
 
         <!-- Demographics Screen -->
-        <div id="demographicsScreen" class="screen">
-            <div class="form-container">
-                <div class="progress-header">
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 25%"></div>
-                    </div>
-                    <span class="progress-text">Step 1 of 4</span>
+        <!-- Demographics Screen - EXTENDED VERSION -->
+<!-- Demographics Screen - MULTI-STEP VERSION -->
+<!-- Demographics Screen - 10-STEP VERSION (SHORTER PAGES) -->
+<div id="demographicsScreen" class="screen">
+    <div class="form-container" style="max-width: 800px;">
+        <div class="progress-header">
+    <div class="progress-bar">
+        <div class="progress-fill" id="demoProgressBar" style="width: 7.7%"></div>
+    </div>
+    <span class="progress-text" id="demoProgressText">Step 1 of 13</span>
+</div>
+
+
+        <h2 data-translate="demographics.title">Tell Us About Yourself</h2>
+        
+        <form id="demographicsForm" class="game-form">
+            
+            <!-- PAGE 1: Basic Info (5 fields) -->
+            <div class="demo-page active" id="demoPage1">
+                <h3 style="color: #2E7D32; margin-bottom: 20px;">
+                    <i class="fas fa-user-circle"></i> Basic Information
+                </h3>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-user-tie"></i> Enumerator Name <span style="color: red;">*</span></label>
+                    <select id="enumeratorName" name="enumeratorName" required>
+                        <option value="">Select Enumerator...</option>
+                        <option value="Latifatu Abdul Salam">Latifatu Abdul Salam</option>
+                        <option value="Salifu Nantogma">Salifu Nantogma</option>
+                        <option value="Mohammed Abdul-Jalil">Mohammed Abdul-Jalil</option>
+                        <option value="Osman Abdul Razak">Osman Abdul Razak</option>
+                        <option value="Issah Abdul Rahaman">Issah Abdul Rahaman</option>
+                        <option value="Luckuman Abukari">Luckuman Abukari</option>
+                        <option value="Musah Abdulai">Musah Abdulai</option>
+                        <option value="Abdulai Mariam">Abdulai Mariam</option>
+                        <option value="Alhassan Baako Fuseini">Alhassan Baako Fuseini</option>
+                        <option value="Mohammed Shahadu">Mohammed Shahadu</option>
+                    </select>
                 </div>
 
-                <h2 data-translate="demographics.title">Tell Us About Yourself</h2>
-                
-                <form id="demographicsForm" class="game-form">
-                    
-                    <!-- Role Guidance for Second Partner -->
-                    <div id="roleGuidance" style="display: none; background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 20px; border-radius: 12px; margin-bottom: 25px; border-left: 5px solid #2196F3;">
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            <i class="fas fa-info-circle" style="font-size: 36px; color: #1976D2;"></i>
-                            <div>
-                                <h3 style="margin: 0 0 8px 0; color: #1976D2; font-size: 20px;">
-                                    Second Partner's Turn
-                                </h3>
-                                <p id="roleGuidanceText" style="margin: 0; font-size: 16px; line-height: 1.6; color: #0D47A1;">
-                                    <!-- Populated by JavaScript -->
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="form-group">
+                    <label><i class="fas fa-map-marker-alt"></i> Community Name <span style="color: red;">*</span></label>
+                    <select id="communityName" name="communityName" required>
+                        <option value="">Loading communities...</option>
+                    </select>
+                </div>
 
-                    <div class="form-group">
-                        <label data-translate="demographics.gender">Gender</label>
-                        <select id="gender" name="gender" required>
-                            <option value="">Select...</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                        </select>
-                    </div>
+                <div class="form-group">
+                    <label>Gender <span style="color: red;">*</span></label>
+                    <select name="gender" required>
+                        <option value="">Select...</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
 
-                    <div class="form-group">
-                        <label data-translate="demographics.role">Role in Household</label>
-                        <select id="role" name="role" required>
-                            <option value="">Select...</option>
-                            <option value="husband">Husband</option>
-                            <option value="wife">Wife</option>
-                        </select>
-                    </div>
+                <div class="form-group">
+                    <label>Role in Household <span style="color: red;">*</span></label>
+                    <select name="role" id="role" required>
+                        <option value="">Select...</option>
+                        <option value="husband">Husband</option>
+                        <option value="wife">Wife</option>
+                    </select>
+                </div>
 
-                    <div class="form-group">
-                        <label data-translate="demographics.age">Age (years)</label>
-                        <input type="number" name="age" id="age" required min="18" max="100">
-                    </div>
-
-                    <div class="form-group">
-                        <label data-translate="demographics.education">Highest Education Level</label>
-                        <select id="education" name="education" required>
-                            <option value="">Select...</option>
-                            <option value="0">No schooling</option>
-                            <option value="1">Primary</option>
-                            <option value="2">Junior High School (JHS)</option>
-                            <option value="3">Senior High School (SHS)</option>
-                            <option value="4">Tertiary/Technical</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label data-translate="demographics.farmingYears">Years of Farming Experience</label>
-                        <input type="number" name="farmingYears" id="farmingYears" required min="0" max="80">
-                    </div>
-
-                    <div class="form-group">
-                        <label data-translate="demographics.land">Land Cultivated (acres)</label>
-                        <input type="number" name="landSize" id="landSize" required min="0" step="0.1">
-                    </div>
-
-                    <div class="form-group">
-                        <label data-translate="demographics.crops">Main Crops (select all that apply)</label>
-                        <div class="checkbox-group">
-                            <label><input type="checkbox" name="crops" value="maize"> Maize</label>
-                            <label><input type="checkbox" name="crops" value="rice"> Rice</label>
-                            <label><input type="checkbox" name="crops" value="soybeans"> Soybeans</label>
-                            <label><input type="checkbox" name="crops" value="groundnuts"> Groundnuts</label>
-                            <label><input type="checkbox" name="crops" value="other"> Other</label>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label data-translate="demographics.income">Last Season Income (GHS)</label>
-                        <input type="number" name="lastIncome" id="lastIncome" required min="0">
-                    </div>
-
-                    <div class="form-group">
-                        <label data-translate="demographics.priorKnowledge">
-                            Have you heard about weather index insurance before?
-                        </label>
-                        <div class="radio-group">
-                            <label><input type="radio" name="priorKnowledge" value="1" required> Yes</label>
-                            <label><input type="radio" name="priorKnowledge" value="0"> No</label>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn-primary btn-large">
-                        <span data-translate="common.continue">Continue</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </form>
+                <div class="form-group">
+                    <label>Age (years) <span style="color: red;">*</span></label>
+                    <input type="number" name="age" required min="18" max="100">
+                </div>
             </div>
+
+            <!-- PAGE 2: Education & Household (3 fields) -->
+            <div class="demo-page" id="demoPage2">
+                <h3 style="color: #2E7D32; margin-bottom: 20px;">
+                    <i class="fas fa-graduation-cap"></i> Education & Household
+                </h3>
+                
+                <div class="form-group">
+                    <label>Highest Education Level <span style="color: red;">*</span></label>
+                    <select name="education" required>
+                        <option value="">Select...</option>
+                        <option value="0">No schooling</option>
+                        <option value="1">Primary</option>
+                        <option value="2">Junior High School (JHS)</option>
+                        <option value="3">Senior High School (SHS)</option>
+                        <option value="4">Tertiary/Technical</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Household size (all members) <span style="color: red;">*</span></label>
+                    <input type="number" name="householdSize" required min="1" max="50">
+                </div>
+
+                <div class="form-group">
+                    <label>Number of children under 15 <span style="color: red;">*</span></label>
+                    <input type="number" name="childrenUnder15" required min="0" max="30">
+                </div>
+            </div>
+
+            <!-- PAGE 3: Household Assets (8 checkboxes) -->
+            <div class="demo-page" id="demoPage3">
+                <h3 style="color: #2E7D32; margin-bottom: 20px;">
+                    <i class="fas fa-home"></i> Household Assets
+                </h3>
+                
+                <div class="form-group">
+                    <label>What assets does your household own? (Select all that apply)</label>
+                    <div class="checkbox-group" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                            <input type="checkbox" name="asset_radio" value="1"> 
+                            <i class="fas fa-broadcast-tower"></i> Radio
+                        </label>
+                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                            <input type="checkbox" name="asset_tv" value="1"> 
+                            <i class="fas fa-tv"></i> TV
+                        </label>
+                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                            <input type="checkbox" name="asset_refrigerator" value="1"> 
+                            <i class="fas fa-snowflake"></i> Refrigerator
+                        </label>
+                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                            <input type="checkbox" name="asset_bicycle" value="1"> 
+                            <i class="fas fa-bicycle"></i> Bicycle
+                        </label>
+                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                            <input type="checkbox" name="asset_motorbike" value="1"> 
+                            <i class="fas fa-motorcycle"></i> Motorbike
+                        </label>
+                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                            <input type="checkbox" name="asset_mobilePhone" value="1"> 
+                            <i class="fas fa-mobile-alt"></i> Mobile phone
+                        </label>
+                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                            <input type="checkbox" name="asset_generator" value="1"> 
+                            <i class="fas fa-plug"></i> Generator
+                        </label>
+                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                            <input type="checkbox" name="asset_plough" value="1"> 
+                            <i class="fas fa-tractor"></i> Plough
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 4: Farming Experience (3 fields) -->
+            <div class="demo-page" id="demoPage4">
+                <h3 style="color: #2E7D32; margin-bottom: 20px;">
+                    <i class="fas fa-seedling"></i> Farming Experience
+                </h3>
+                
+                <div class="form-group">
+                    <label>Years of Farming Experience <span style="color: red;">*</span></label>
+                    <input type="number" name="farmingYears" required min="0" max="80">
+                </div>
+
+                <div class="form-group">
+                    <label>Land Cultivated (acres) <span style="color: red;">*</span></label>
+                    <input type="number" name="landSize" required min="0" step="0.1">
+                </div>
+
+                <div class="form-group">
+                    <label>How do you access your farmland? <span style="color: red;">*</span></label>
+                    <select name="landAccessMethod" required>
+                        <option value="">Select...</option>
+                        <option value="1">Own land</option>
+                        <option value="2">Rent/Lease</option>
+                        <option value="3">Borrowed/Family land</option>
+                        <option value="4">Sharecropping</option>
+                        <option value="5">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- PAGE 5: Crops & Income (4 fields) -->
+           <!-- PAGE 5: Crops & Income (4 fields) -->
+<div class="demo-page" id="demoPage5">
+    <h3 style="color: #2E7D32; margin-bottom: 20px;">
+        <i class="fas fa-leaf"></i> Crops & Income
+    </h3>
+    
+    <div class="form-group">
+        <label>Main Crops (select all that apply) <span style="color: red;">*</span></label>
+        <div class="checkbox-group" id="cropsCheckboxGroup" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+            <label><input type="checkbox" name="crops" value="maize"> 🌽 Maize</label>
+            <label><input type="checkbox" name="crops" value="rice"> 🍚 Rice</label>
+            <label><input type="checkbox" name="crops" value="soybeans"> 🫘 Soybeans</label>
+            <label><input type="checkbox" name="crops" value="groundnuts"> 🥜 Groundnuts</label>
+            <label><input type="checkbox" name="crops" value="other"> ➕ Other</label>
         </div>
+        <div id="cropsError" style="display: none; color: #D32F2F; margin-top: 8px; font-size: 14px; font-weight: 600;">
+            ⚠️ Please select at least one crop
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>How many different crops did you plant last season? <span style="color: red;">*</span></label>
+        <input type="number" name="numberOfCropsPlanted" required min="1" max="10">
+    </div>
+
+    <div class="form-group">
+        <label>Last Season Income (GHS) <span style="color: red;">*</span></label>
+        <input type="number" name="lastIncome" required min="0">
+    </div>
+
+    <div class="form-group">
+        <label>Farming inputs expenditure last season (GHS) <span style="color: red;">*</span></label>
+        <input type="number" name="farmingInputExpenditure" required min="0">
+    </div>
+</div>
+
+
+
+            <!-- PAGE 6: Livestock (4 fields) -->
+            <div class="demo-page" id="demoPage6">
+                <h3 style="color: #2E7D32; margin-bottom: 20px;">
+                    <i class="fas fa-cow"></i> Livestock
+                </h3>
+                
+                <div class="form-group">
+                    <label>How many livestock does your household own?</label>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
+                        <div style="background: #f5f5f5; padding: 20px; border-radius: 10px;">
+                            <label style="font-size: 16px; font-weight: 600; display: block; margin-bottom: 10px;">
+                                🐄 Cattle:
+                            </label>
+                            <input type="number" name="livestock_cattle" min="0" value="0" style="width: 100%;">
+                        </div>
+                        <div style="background: #f5f5f5; padding: 20px; border-radius: 10px;">
+                            <label style="font-size: 16px; font-weight: 600; display: block; margin-bottom: 10px;">
+                                🐐 Goats:
+                            </label>
+                            <input type="number" name="livestock_goats" min="0" value="0" style="width: 100%;">
+                        </div>
+                        <div style="background: #f5f5f5; padding: 20px; border-radius: 10px;">
+                            <label style="font-size: 16px; font-weight: 600; display: block; margin-bottom: 10px;">
+                                🐑 Sheep:
+                            </label>
+                            <input type="number" name="livestock_sheep" min="0" value="0" style="width: 100%;">
+                        </div>
+                        <div style="background: #f5f5f5; padding: 20px; border-radius: 10px;">
+                            <label style="font-size: 16px; font-weight: 600; display: block; margin-bottom: 10px;">
+                                🐔 Poultry:
+                            </label>
+                            <input type="number" name="livestock_poultry" min="0" value="0" style="width: 100%;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 7: Farm Inputs & Technology (4 fields) -->
+            <div class="demo-page" id="demoPage7">
+                <h3 style="color: #2E7D32; margin-bottom: 20px;">
+                    <i class="fas fa-tools"></i> Farm Inputs & Technology
+                </h3>
+                
+                <div class="form-group">
+                    <label>Which improved inputs did you use last season? (Select all)</label>
+                    <div class="checkbox-group" style="display: grid; gap: 10px;">
+                        <label style="padding: 12px; background: #f5f5f5; border-radius: 8px;">
+                            <input type="checkbox" name="input_certifiedSeed" value="1"> 
+                            🌱 Certified/Improved seed
+                        </label>
+                        <label style="padding: 12px; background: #f5f5f5; border-radius: 8px;">
+                            <input type="checkbox" name="input_fertilizer" value="1"> 
+                            🧪 Chemical fertilizer
+                        </label>
+                        <label style="padding: 12px; background: #f5f5f5; border-radius: 8px;">
+                            <input type="checkbox" name="input_pesticides" value="1"> 
+                            🐛 Pesticides/Herbicides
+                        </label>
+                        <label style="padding: 12px; background: #f5f5f5; border-radius: 8px;">
+                            <input type="checkbox" name="input_irrigation" value="1"> 
+                            💧 Irrigation
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Do you have access to irrigation? <span style="color: red;">*</span></label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="hasIrrigationAccess" value="0" required> No</label>
+                        <label><input type="radio" name="hasIrrigationAccess" value="1"> Yes</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 8: Shocks & Losses (4 fields) -->
+            <div class="demo-page" id="demoPage8">
+                <h3 style="color: #2E7D32; margin-bottom: 20px;">
+                    <i class="fas fa-exclamation-triangle"></i> Shocks & Losses
+                </h3>
+                
+                <div class="form-group">
+                    <label>What shocks have you experienced in the past 3 years? (Select all)</label>
+                    <div class="checkbox-group" style="display: grid; gap: 10px;">
+                        <label style="padding: 12px; background: #fff3cd; border-radius: 8px;">
+                            <input type="checkbox" name="shock_drought" value="1"> 
+                            🌵 Drought
+                        </label>
+                        <label style="padding: 12px; background: #cfe2ff; border-radius: 8px;">
+                            <input type="checkbox" name="shock_flood" value="1"> 
+                            🌊 Flood
+                        </label>
+                        <label style="padding: 12px; background: #d1e7dd; border-radius: 8px;">
+                            <input type="checkbox" name="shock_pestsDisease" value="1"> 
+                            🐛 Pests/Disease
+                        </label>
+                        <label style="padding: 12px; background: #f8d7da; border-radius: 8px;">
+                            <input type="checkbox" name="shock_cropPriceFall" value="1"> 
+                            📉 Crop price fall
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Estimated total loss from shocks last year (GHS)</label>
+                    <input type="number" name="estimatedLossLastYear" min="0" value="0">
+                </div>
+
+                <div class="form-group">
+                    <label>Harvest loss percentage last season (0-100%) <span style="color: red;">*</span></label>
+                    <input type="number" name="harvestLossPercentage" required min="0" max="100" value="0">
+                </div>
+            </div>
+
+            <!-- PAGE 9: Savings & Credit (5 fields) -->
+            <div class="demo-page" id="demoPage9">
+                <h3 style="color: #2E7D32; margin-bottom: 20px;">
+                    <i class="fas fa-piggy-bank"></i> Savings & Credit
+                </h3>
+                
+                <div class="form-group">
+                    <label>Do you currently have any savings? <span style="color: red;">*</span></label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="hasSavings" value="0" required> No</label>
+                        <label><input type="radio" name="hasSavings" value="1"> Yes</label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="savingsAmountGroup" style="display: none;">
+                    <label>Estimated savings amount (GHS)</label>
+                    <input type="number" name="savingsAmount" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label>Did you borrow money in past 12 months? <span style="color: red;">*</span></label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="borrowedMoney" value="0" required> No</label>
+                        <label><input type="radio" name="borrowedMoney" value="1"> Yes</label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="borrowingSourcesGroup" style="display: none;">
+                    <label>Where did you borrow from? (Select all):</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="borrowSource_bank"> 🏦 Bank</label>
+                        <label><input type="checkbox" name="borrowSource_microfinance"> 💼 Microfinance</label>
+                        <label><input type="checkbox" name="borrowSource_vsla"> 👥 VSLA/Savings group</label>
+                        <label><input type="checkbox" name="borrowSource_familyFriends"> 👪 Family/Friends</label>
+                        <label><input type="checkbox" name="borrowSource_moneylender"> 💰 Moneylender</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Any off-farm income last season? <span style="color: red;">*</span></label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="hasOffFarmIncome" value="0" required> No</label>
+                        <label><input type="radio" name="hasOffFarmIncome" value="1"> Yes</label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="offFarmIncomeGroup" style="display: none;">
+                    <label>Off-farm income amount (GHS)</label>
+                    <input type="number" name="offFarmIncomeAmount" min="0">
+                </div>
+            </div>
+
+            <!-- PAGE 10: Insurance & Trust (5 fields) -->
+            <!-- PAGE 10: Insurance & Trust (7 fields) -->
+<div class="demo-page" id="demoPage10">
+    <h3 style="color: #2E7D32; margin-bottom: 20px;">
+        <i class="fas fa-shield-alt"></i> Insurance & Trust
+    </h3>
+    
+    <div class="form-group">
+        <label>Have you heard about weather index insurance before? <span style="color: red;">*</span></label>
+        <div class="radio-group">
+            <label><input type="radio" name="priorKnowledge" value="1" required> Yes</label>
+            <label><input type="radio" name="priorKnowledge" value="0"> No</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Have you purchased any type of insurance before? <span style="color: red;">*</span></label>
+        <div class="radio-group">
+            <label><input type="radio" name="purchasedInsuranceBefore" value="0" required> No</label>
+            <label><input type="radio" name="purchasedInsuranceBefore" value="1"> Yes</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>How much do you trust insurance providers? (1 = Not at all, 5 = Fully) <span style="color: red;">*</span></label>
+        <div class="rating-scale">
+            <label><input type="radio" name="trust_insuranceProvider" value="1" required> 1</label>
+            <label><input type="radio" name="trust_insuranceProvider" value="2"> 2</label>
+            <label><input type="radio" name="trust_insuranceProvider" value="3"> 3</label>
+            <label><input type="radio" name="trust_insuranceProvider" value="4"> 4</label>
+            <label><input type="radio" name="trust_insuranceProvider" value="5"> 5</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>How much do you trust farmer groups/cooperatives? (1-5) <span style="color: red;">*</span></label>
+        <div class="rating-scale">
+            <label><input type="radio" name="trust_farmerGroup" value="1" required> 1</label>
+            <label><input type="radio" name="trust_farmerGroup" value="2"> 2</label>
+            <label><input type="radio" name="trust_farmerGroup" value="3"> 3</label>
+            <label><input type="radio" name="trust_farmerGroup" value="4"> 4</label>
+            <label><input type="radio" name="trust_farmerGroup" value="5"> 5</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>How much do you trust NGOs? (1-5) <span style="color: red;">*</span></label>
+        <div class="rating-scale">
+            <label><input type="radio" name="trust_ngo" value="1" required> 1</label>
+            <label><input type="radio" name="trust_ngo" value="2"> 2</label>
+            <label><input type="radio" name="trust_ngo" value="3"> 3</label>
+            <label><input type="radio" name="trust_ngo" value="4"> 4</label>
+            <label><input type="radio" name="trust_ngo" value="5"> 5</label>
+        </div>
+    </div>
+
+    <!-- ✅ ADD THIS QUESTION -->
+    <div class="form-group">
+        <label>Do you think rainfall patterns have changed in recent years? (1 = Not at all, 5 = Very much) <span style="color: red;">*</span></label>
+        <div class="rating-scale">
+            <label><input type="radio" name="rainfallChangePerception" value="1" required> 1</label>
+            <label><input type="radio" name="rainfallChangePerception" value="2"> 2</label>
+            <label><input type="radio" name="rainfallChangePerception" value="3"> 3</label>
+            <label><input type="radio" name="rainfallChangePerception" value="4"> 4</label>
+            <label><input type="radio" name="rainfallChangePerception" value="5"> 5</label>
+        </div>
+    </div>
+
+    <!-- ✅ ADD THIS QUESTION -->
+    <div class="form-group">
+        <label>How much do you trust that insurance companies will pay out when needed? (1 = Not at all, 5 = Fully) <span style="color: red;">*</span></label>
+        <div class="rating-scale">
+            <label><input type="radio" name="insurerPayoutTrust" value="1" required> 1</label>
+            <label><input type="radio" name="insurerPayoutTrust" value="2"> 2</label>
+            <label><input type="radio" name="insurerPayoutTrust" value="3"> 3</label>
+            <label><input type="radio" name="insurerPayoutTrust" value="4"> 4</label>
+            <label><input type="radio" name="insurerPayoutTrust" value="5"> 5</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Distance to nearest market (minutes walking) <span style="color: red;">*</span></label>
+        <input type="number" name="distanceToMarket" required min="0">
+    </div>
+
+    <div class="form-group">
+        <label>Distance to nearest insurance provider (km) <span style="color: red;">*</span></label>
+        <input type="number" name="distanceToInsurer" required min="0" step="0.1">
+    </div>
+
+    <div class="form-group">
+        <label>Do you use mobile money (MoMo)? <span style="color: red;">*</span></label>
+        <div class="radio-group">
+            <label><input type="radio" name="usesMobileMoney" value="0" required> No</label>
+            <label><input type="radio" name="usesMobileMoney" value="1"> Yes</label>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Are you a member of any farmer group? <span style="color: red;">*</span></label>
+        <div class="radio-group">
+            <label><input type="radio" name="memberOfFarmerGroup" value="0" required> No</label>
+            <label><input type="radio" name="memberOfFarmerGroup" value="1"> Yes</label>
+        </div>
+    </div>
+</div>
+
+
+
+            <!-- Navigation Buttons -->
+            <div class="demo-nav-buttons" style="display: flex; justify-content: space-between; margin-top: 30px; gap: 15px;">
+                <button type="button" id="demoPrevBtn" class="btn-secondary btn-large" style="flex: 1; display: none;">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back</span>
+                </button>
+                <button type="button" id="demoNextBtn" class="btn-primary btn-large" style="flex: 2;">
+                    <span>Continue</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+                <button type="submit" id="demoSubmitBtn" class="btn-primary btn-large" style="flex: 2; display: none;">
+                    <span>Continue to Risk Assessment</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+
+
+            <!-- <button type="submit" class="btn-primary btn-large">
+                <span data-translate="common.continue">Continue</span>
+                <i class="fas fa-arrow-right"></i>
+            </button> -->
+        </form>
+    </div>
+</div>
+
+
 
         <!-- Risk Assessment Screen -->
-        <div id="riskScreen" class="screen">
-            <div class="form-container">
-                <div class="progress-header">
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 50%"></div>
-                    </div>
-                    <span class="progress-text">Step 2 of 4</span>
-                </div>
+       <div id="riskScreen" class="screen">
+    <div class="form-container">
+        <button class="screen-back-btn" onclick="goBackToDemographics()">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back</span>
+        </button>
+
+  <div class="progress-header">
+    <div class="progress-bar">
+        <div class="progress-fill" style="width: 84.6%"></div>
+    </div>
+    <span class="progress-text">Step 11 of 13</span>
+</div>
 
                 <h2 data-translate="risk.title">Understanding Your Risk Preferences</h2>
                 
@@ -535,14 +1042,19 @@
         </div>
 
         <!-- Empowerment Assessment -->
-        <div id="empowermentScreen" class="screen">
-            <div class="form-container">
-                <div class="progress-header">
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 75%"></div>
-                    </div>
-                    <span class="progress-text">Step 3 of 4</span>
-                </div>
+      <div id="empowermentScreen" class="screen">
+    <div class="form-container">
+        <button class="screen-back-btn" onclick="goBackToRisk()">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back</span>
+        </button>
+
+               <div class="progress-header">
+    <div class="progress-bar">
+        <div class="progress-fill" style="width: 92.3%"></div>
+    </div>
+    <span class="progress-text">Step 12 of 13</span>
+</div>
 
                 <h2 data-translate="empowerment.title">Decision Making in Your Household</h2>
                 <p class="subtitle" data-translate="empowerment.subtitle">
@@ -636,8 +1148,13 @@
         </div>
 
         <!-- Enhanced Interactive Tutorial Screen -->
-        <div id="tutorialScreen" class="screen">
-            <div class="tutorial-container-enhanced">
+     <div id="tutorialScreen" class="screen">
+    <div class="tutorial-container-enhanced">
+        <button class="screen-back-btn" onclick="goBackToEmpowerment()">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back</span>
+        </button>
+        
                 
                 <!-- Skip Button -->
                 <button class="skip-tutorial-btn" onclick="skipTutorial()">
