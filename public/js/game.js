@@ -3538,35 +3538,42 @@ async function manualSync() {
 
 
 // ===== LOAD COMMUNITIES =====
+// ===== LOAD COMMUNITIES WITH OFFLINE SUPPORT =====
 async function loadCommunities() {
   try {
-    console.log('📋 Loading communities from database...');
-    console.log('📍 API URL:', `${API_BASE}/api/admin/communities`);
+    console.log('📋 Loading communities...');
     
-    const response = await fetch(`${API_BASE}/api/admin/communities`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const select = document.getElementById('communityName');
+    if (!select) {
+      console.error('❌ Could not find communityName select element!');
+      return;
     }
     
-    const result = await response.json();
-    console.log('📦 Communities received:', result.data?.length || 0);
+    // Show loading state
+    select.innerHTML = '<option value="">Loading communities...</option>';
+    select.disabled = true;
     
-    if (result.success && result.data.length > 0) {
-      const select = document.getElementById('communityName');
+    let communities = [];
+    
+    try {
+      // Try to fetch from API (works both online and offline via apiCall)
+      const response = await apiCall('/admin/communities');
+      communities = response || [];
+      console.log(`✅ Loaded ${communities.length} communities`);
+    } catch (error) {
+      console.warn('⚠️ Could not load communities from API:', error.message);
       
-      if (!select) {
-        console.error('❌ Could not find communityName select element!');
-        return;
-      }
-      
-      console.log('✅ Found select element, clearing and populating...');
-      
-      // Clear existing options
+      // Fallback: Use hardcoded list for offline mode
+      communities = getDefaultCommunities();
+      console.log(`📋 Using default communities list (${communities.length} communities)`);
+    }
+    
+    // Populate the select
+    if (communities.length > 0) {
       select.innerHTML = '<option value="">-- Select Community --</option>';
       
       // Sort and group by district
-      const sorted = result.data.sort((a, b) => {
+      const sorted = communities.sort((a, b) => {
         if (a.district !== b.district) {
           return a.district.localeCompare(b.district);
         }
@@ -3591,15 +3598,64 @@ async function loadCommunities() {
         currentOptgroup.appendChild(option);
       });
       
-      console.log(`✅ Successfully loaded ${result.data.length} communities`);
+      console.log(`✅ Successfully populated ${communities.length} communities`);
     } else {
-      console.warn('⚠️ No communities found in response');
-      alert('⚠️ No communities available. Please contact administrator.');
+      select.innerHTML = '<option value="">No communities available</option>';
+      console.warn('⚠️ No communities available');
     }
+    
+    select.disabled = false;
+    
   } catch (error) {
     console.error('❌ Error loading communities:', error);
-    alert(`Error loading communities: ${error.message}. Please refresh the page.`);
+    const select = document.getElementById('communityName');
+    if (select) {
+      select.innerHTML = '<option value="">Error loading communities</option>';
+      select.disabled = false;
+    }
   }
+}
+
+// ===== DEFAULT COMMUNITIES FOR OFFLINE MODE =====
+function getDefaultCommunities() {
+  // This is your complete list of 30 communities
+  return [
+    // CONTROL GROUP (10 communities)
+    { communityName: 'Kpalsabogu', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
+    { communityName: 'Nyankpala', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
+    { communityName: 'Wantugu', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
+    { communityName: 'Tuunayili', district: 'Kumbungu', treatmentGroup: 'control', targetHouseholds: 10 },
+    { communityName: 'Kpalguni', district: 'Kumbungu', treatmentGroup: 'control', targetHouseholds: 10 },
+    { communityName: 'Kumbuyili', district: 'Kumbungu', treatmentGroup: 'control', targetHouseholds: 10 },
+    { communityName: 'Zantani', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
+    { communityName: 'Kpanshegu', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
+    { communityName: 'Nabogo', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
+    { communityName: 'Tampion', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
+    
+    // FERTILIZER BUNDLE GROUP (10 communities)
+    { communityName: 'Voggu', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+    { communityName: 'Kpendua', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+    { communityName: 'Gbullung', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+    { communityName: 'Zangbalun', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+    { communityName: 'Gbulung', district: 'Kumbungu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+    { communityName: 'Kasuliyili', district: 'Kumbungu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+    { communityName: 'Kpanvo', district: 'Kumbungu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+    { communityName: 'Nanton', district: 'Gushegu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+    { communityName: 'Kpatinga', district: 'Gushegu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+    { communityName: 'Nakpanduri', district: 'Gushegu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+    
+    // SEEDLING BUNDLE GROUP (10 communities)
+    { communityName: 'Lingbunga', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+    { communityName: 'Kpalbusi', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+    { communityName: 'Wayamba', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+    { communityName: 'Yoggu', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+    { communityName: 'Tindan', district: 'Kumbungu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+    { communityName: 'Gbulahagu', district: 'Kumbungu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+    { communityName: 'Kpalguni II', district: 'Kumbungu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+    { communityName: 'Zakpalsi', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+    { communityName: 'Kpachi', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+    { communityName: 'Gushegu', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 }
+  ];
 }
 
 
