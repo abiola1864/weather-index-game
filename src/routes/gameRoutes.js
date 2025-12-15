@@ -43,6 +43,7 @@ router.get('/translations/:language', gameController.getTranslations);
 
 
 // GET communities list (for dropdown)
+// GET communities list (add this if it's not there)
 router.get('/communities', async (req, res) => {
   try {
     console.log('📋 Fetching communities list...');
@@ -99,6 +100,7 @@ router.get('/communities', async (req, res) => {
     });
   }
 });
+
 
 
 

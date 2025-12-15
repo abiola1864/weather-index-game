@@ -3,8 +3,10 @@
 // FIXED: Removed Font Awesome from cache
 // ===============================================
 // ===== SERVICE WORKER FOR OFFLINE SUPPORT =====
-const CACHE_VERSION = 'v10';  // ✅ INCREMENT THIS EVERY TIME YOU UPDATE FILES
+const CACHE_VERSION = `v-${Date.now()}`;
 const CACHE_NAME = `weather-game-${CACHE_VERSION}`;
+
+
 
 const urlsToCache = [
     '/',
