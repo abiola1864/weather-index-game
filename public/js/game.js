@@ -3541,6 +3541,7 @@ async function manualSync() {
 // ===== LOAD COMMUNITIES WITH OFFLINE SUPPORT =====
 
 // ===== LOAD COMMUNITIES WITH OFFLINE SUPPORT =====
+
 async function loadCommunities() {
   try {
     console.log('📋 Loading communities...');
@@ -3558,14 +3559,20 @@ async function loadCommunities() {
     let communities = [];
     
     try {
-      // ✅ Use apiCall instead of fetch - handles offline automatically
+      // Try to fetch from API (works both online and offline via apiCall)
       const response = await apiCall('/admin/communities');
       communities = response || [];
-      console.log(`✅ Loaded ${communities.length} communities`);
+      
+      // ✅ FIX: If no communities returned, throw error to trigger fallback
+      if (!communities || communities.length === 0) {
+        throw new Error('No communities returned from API');
+      }
+      
+      console.log(`✅ Loaded ${communities.length} communities from API`);
     } catch (error) {
       console.warn('⚠️ Could not load communities from API:', error.message);
       
-      // Fallback: Use hardcoded list for offline mode
+      // ✅ Fallback: Use hardcoded list
       communities = getDefaultCommunities();
       console.log(`📋 Using default communities list (${communities.length} communities)`);
     }
@@ -3602,14 +3609,14 @@ async function loadCommunities() {
       
       console.log(`✅ Successfully populated ${communities.length} communities`);
     } else {
-      select.innerHTML = '<option value="">No communities available</option>';
-      console.warn('⚠️ No communities available');
+      select.innerHTML = '<option value="">Error: No communities available</option>';
+      console.error('❌ No communities available even after fallback!');
     }
     
     select.disabled = false;
     
   } catch (error) {
-    console.error('❌ Error loading communities:', error);
+    console.error('❌ Critical error loading communities:', error);
     const select = document.getElementById('communityName');
     if (select) {
       select.innerHTML = '<option value="">Error loading communities</option>';
