@@ -3559,20 +3559,17 @@ async function loadCommunities() {
     let communities = [];
     
     try {
-      // Try to fetch from API (works both online and offline via apiCall)
-      const response = await apiCall('/admin/communities');
+      // Try to fetch from API (works both online and offline)
+      const response = await apiCall('/communities'); // ✅ Changed from /admin/communities
       communities = response || [];
       
-      // ✅ FIX: If no communities returned, throw error to trigger fallback
-      if (!communities || communities.length === 0) {
+      if (communities && communities.length > 0) {
+        console.log(`✅ Loaded ${communities.length} communities from API`);
+      } else {
         throw new Error('No communities returned from API');
       }
-      
-      console.log(`✅ Loaded ${communities.length} communities from API`);
     } catch (error) {
-      console.warn('⚠️ Could not load communities from API:', error.message);
-      
-      // ✅ Fallback: Use hardcoded list
+      console.warn('⚠️ Could not load from API, using fallback:', error.message);
       communities = getDefaultCommunities();
       console.log(`📋 Using default communities list (${communities.length} communities)`);
     }
@@ -3610,7 +3607,7 @@ async function loadCommunities() {
       console.log(`✅ Successfully populated ${communities.length} communities`);
     } else {
       select.innerHTML = '<option value="">Error: No communities available</option>';
-      console.error('❌ No communities available even after fallback!');
+      console.error('❌ No communities available!');
     }
     
     select.disabled = false;
@@ -3624,49 +3621,6 @@ async function loadCommunities() {
     }
   }
 }
-
-// ===== DEFAULT COMMUNITIES FOR OFFLINE MODE =====
-function getDefaultCommunities() {
-  return [
-    // CONTROL GROUP (10 communities)
-    { communityName: 'Kpalsabogu', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
-    { communityName: 'Nyankpala', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
-    { communityName: 'Wantugu', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
-    { communityName: 'Tuunayili', district: 'Kumbungu', treatmentGroup: 'control', targetHouseholds: 10 },
-    { communityName: 'Kpalguni', district: 'Kumbungu', treatmentGroup: 'control', targetHouseholds: 10 },
-    { communityName: 'Kumbuyili', district: 'Kumbungu', treatmentGroup: 'control', targetHouseholds: 10 },
-    { communityName: 'Zantani', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
-    { communityName: 'Kpanshegu', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
-    { communityName: 'Nabogo', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
-    { communityName: 'Tampion', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
-    
-    // FERTILIZER BUNDLE GROUP (10 communities)
-    { communityName: 'Voggu', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-    { communityName: 'Kpendua', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-    { communityName: 'Gbullung', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-    { communityName: 'Zangbalun', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-    { communityName: 'Gbulung', district: 'Kumbungu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-    { communityName: 'Kasuliyili', district: 'Kumbungu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-    { communityName: 'Kpanvo', district: 'Kumbungu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-    { communityName: 'Nanton', district: 'Gushegu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-    { communityName: 'Kpatinga', district: 'Gushegu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-    { communityName: 'Nakpanduri', district: 'Gushegu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-    
-    // SEEDLING BUNDLE GROUP (10 communities)
-    { communityName: 'Lingbunga', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-    { communityName: 'Kpalbusi', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-    { communityName: 'Wayamba', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-    { communityName: 'Yoggu', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-    { communityName: 'Tindan', district: 'Kumbungu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-    { communityName: 'Gbulahagu', district: 'Kumbungu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-    { communityName: 'Kpalguni II', district: 'Kumbungu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-    { communityName: 'Zakpalsi', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-    { communityName: 'Kpachi', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-    { communityName: 'Gushegu', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 }
-  ];
-}
-
-
 
 
 
