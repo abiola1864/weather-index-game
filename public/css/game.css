@@ -193,13 +193,13 @@ p {
 /* ===== CONTAINER & SCREENS ===== */
 .app-container {
     width: 100%;
-    min-height: 100vh;
+    min-height: 0vh;
     position: relative;
 }
 
 .screen {
     display: none;
-    min-height: 100vh;
+    min-height: 0vh;
     padding: var(--spacing-xl) var(--spacing-lg);
     animation: fadeIn 0.4s ease;
 }
