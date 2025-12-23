@@ -619,6 +619,10 @@ select:invalid:focus {
                 </div>
             </div>
 
+
+
+
+
             <!-- PAGE 5: Crops & Income (4 fields) -->
            <!-- PAGE 5: Crops & Income (4 fields) -->
 <div class="demo-page" id="demoPage5">
@@ -1706,6 +1710,33 @@ select:invalid:focus {
         } else {
             console.warn('⚠️ Service Workers not supported in this browser');
         }
+
+
+
+
+        // Force scroll to top on any screen change
+        window.addEventListener('load', function() {
+            window.scrollTo(0, 0);
+        });
+        
+        // Reset scroll whenever DOM changes
+        const observer = new MutationObserver(function() {
+            if (document.querySelector('.screen.active')) {
+                window.scrollTo(0, 0);
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
+            }
+        });
+        
+        observer.observe(document.body, {
+            attributes: true,
+            subtree: true,
+            attributeFilter: ['class']
+        });
+
+
+
+
     </script>
 
 

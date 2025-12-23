@@ -2,15 +2,19 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 const { CommunityAssignment } = require('../models/Game');
 
+// ===== ACTUAL STUDY COMMUNITIES (30 communities across 3 districts) =====
 const communities = {
-  'Savelugu Municipal': [
-    'Duko', 'Kanshegu', 'Nyoglo', 'Libga', 'Zaazi', 'Moglaa', 'Langa', 
-    'Yilikpani', 'Savelugu', 'Tarikpaa', 'Gushei', 'Naabogu', 'Pong-Tamale',
-    'Kpong', 'Dipali', 'Diare', 'Gbanga', 'Tigla', 'Dinga', 'Kadia'
+  'Tolon': [
+    'Kpalsabogu', 'Nyankpala', 'Wantugu', 'Voggu', 'Kpendua', 
+    'Gbullung', 'Zangbalun', 'Lingbunga', 'Kpalbusi', 'Wayamba', 'Yoggu'
   ],
-  'Nanton District': [
-    'Zoggu', 'Zokuga', 'Nyolugu', 'Jegun', 'Tigu', 'Nyarigiyili',
-    'Nanton-Kurugu', 'Damdu', 'Sindigu', 'Sandu'
+  'Kumbungu': [
+    'Tuunayili', 'Kpalguni', 'Kumbuyili', 'Gbulung', 'Kasuliyili', 
+    'Kpanvo', 'Tindan', 'Gbulahagu', 'Kpalguni II'
+  ],
+  'Gushegu': [
+    'Zantani', 'Kpanshegu', 'Nabogo', 'Tampion', 'Nanton', 
+    'Kpatinga', 'Nakpanduri', 'Zakpalsi', 'Kpachi', 'Gushegu'
   ]
 };
 

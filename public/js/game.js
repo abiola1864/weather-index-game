@@ -974,32 +974,64 @@ async function apiCall(endpoint, method = 'GET', data = null) {
 // ===== SCREEN MANAGEMENT =====
 // ===== SCREEN MANAGEMENT =====
 function showScreen(screenId) {
-    console.log('Showing screen:', screenId);
+    console.log('🖥️ showScreen called:', screenId);
+    
+    // AGGRESSIVE SCROLL RESET - Multiple methods
+    window.scrollTo({top: 0, left: 0, behavior: 'instant'});
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.pageYOffset = 0;
     
     // Hide all screens
-    document.querySelectorAll('.screen').forEach(screen => {
+    const allScreens = document.querySelectorAll('.screen');
+    console.log('📺 Total screens:', allScreens.length);
+    
+    allScreens.forEach(screen => {
         screen.classList.remove('active');
+        screen.scrollTop = 0; // Reset scroll of each screen
     });
     
     // Show target screen
     const targetScreen = document.getElementById(screenId);
+    
     if (targetScreen) {
+        // Reset target screen scroll before showing
+        targetScreen.scrollTop = 0;
+        targetScreen.style.overflow = 'auto';
+        
         targetScreen.classList.add('active');
         gameState.currentScreen = screenId;
+        console.log('✅ Screen activated:', screenId);
         
-        // Scroll to top - use setTimeout to ensure DOM is updated
+        // Force multiple scroll resets with different timing
         setTimeout(() => {
-            window.scrollTo({
-                top: 0,
-                left: 0,
-                behavior: 'smooth'
-            });
-            
-            // Also scroll the screen itself to top
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
             targetScreen.scrollTop = 0;
-        }, 100);
+        }, 0);
+        
+        requestAnimationFrame(() => {
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+            targetScreen.scrollTop = 0;
+        });
+        
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+            targetScreen.scrollTop = 0;
+        }, 50);
+        
+    } else {
+        console.error('❌ SCREEN NOT FOUND:', screenId);
+        console.log('Available screens:', Array.from(allScreens).map(s => s.id));
     }
 }
+
+
 
 
 function showLoading(show = true) {
@@ -1643,6 +1675,8 @@ function updateAllocation() {
     const total = insurance + inputs + education + consumption;
     const remaining = budget - total;
     
+    console.log(`💰 Allocation update: Budget=${budget}, Total=${total}, Remaining=${remaining}`);
+    
     document.getElementById('totalSpent').textContent = total + ' GHS';
     document.getElementById('remaining').textContent = remaining + ' GHS';
     
@@ -1672,18 +1706,23 @@ function updateAllocation() {
     if (remaining < 0) {
         remainingEl.style.color = 'var(--danger)';
         submitBtn.disabled = true;
+        console.log('❌ Over budget - button disabled');
     } else if (remaining > 0) {
         remainingEl.style.color = 'var(--info)';
         submitBtn.disabled = true;
+        console.log('❌ Under budget - button disabled');
     } else if (needsInputChoice) {
         // Only block submission if they bought insurance but didn't choose input
         remainingEl.style.color = 'var(--warning)';
         submitBtn.disabled = true;
+        console.log('❌ Input choice needed - button disabled');
     } else {
         remainingEl.style.color = 'var(--success)';
         submitBtn.disabled = false;
+        console.log('✅ Budget matched - button enabled');
     }
 }
+
 
 
 
@@ -1702,8 +1741,12 @@ function generateWeatherEvent() {
 
 
 
+// ===== FIX 1: INCREASE HARVEST RETURNS =====
+// Find the calculateOutcomes function (around line 1815) and replace it:
+
 function calculateOutcomes(seasonData, weather) {
-    const baseHarvest = seasonData.budget * 0.8;
+    // ✅ CHANGED: Increased from 0.8 to 1.1 for better farmer returns
+    const baseHarvest = seasonData.budget * 1.1;  // Changed from 0.8 to 1.1
     const inputBoost = seasonData.inputSpend * 1.5;
     seasonData.harvestOutcome = Math.round((baseHarvest + inputBoost) * weather.harvestMultiplier);
     
@@ -1716,6 +1759,7 @@ function calculateOutcomes(seasonData, weather) {
     
     seasonData.endTime = new Date();
 }
+
 
 
 
@@ -1911,6 +1955,7 @@ function updateNextRoundButtonText() {
 
 // ===== SECOND PARTNER & COUPLE FLOW =====
 function showSecondPartnerPrompt() {
+    console.log('👫 Showing second partner prompt');
     const promptScreen = document.getElementById('secondPartnerScreen');
     const messageEl = promptScreen.querySelector('.prompt-message');
     if (messageEl) {
@@ -1949,6 +1994,7 @@ function showSecondPartnerPrompt() {
             <span>Start ${partnerRole} Session</span>
             <i class="fas fa-arrow-right"></i>
         `;
+        // No event listener needed here - event delegation handles it!
     }
     
     showScreen('secondPartnerScreen');
@@ -1956,23 +2002,83 @@ function showSecondPartnerPrompt() {
 
 
 
-// ===== START SECOND PARTNER - FIXED =====
-// Replace the existing startSecondPartner() function
+
 
 function startSecondPartner() {
     console.log('🔄 Starting second partner...');
+    
+    // ===== SEPARATE HOUSEHOLD VS INDIVIDUAL DATA =====
+    
+    // HOUSEHOLD DATA (shared by both partners) - from pages 2-10
+    const householdData = {
+        householdId: gameState.householdId,
+        communityName: gameState.demographics.communityName,
+        enumeratorName: gameState.demographics.enumeratorName,
+        householdSize: gameState.demographics.householdSize,
+        childrenUnder15: gameState.demographics.childrenUnder15,
+        
+        // Assets (Page 3)
+        assets: gameState.demographics.assets,
+        
+        // Livestock (Page 6)
+        livestock: gameState.demographics.livestock,
+        
+        // Farm details (Pages 4-5)
+        yearsOfFarming: gameState.demographics.yearsOfFarming,
+        landCultivated: gameState.demographics.landCultivated,
+        landAccessMethod: gameState.demographics.landAccessMethod,
+        landAccessOther: gameState.demographics.landAccessOther,
+        mainCrops: gameState.demographics.mainCrops,
+        numberOfCropsPlanted: gameState.demographics.numberOfCropsPlanted,
+        lastSeasonIncome: gameState.demographics.lastSeasonIncome,
+        farmingInputExpenditure: gameState.demographics.farmingInputExpenditure,
+        
+        // Farm inputs (Page 7)
+        improvedInputs: gameState.demographics.improvedInputs,
+        hasIrrigationAccess: gameState.demographics.hasIrrigationAccess,
+        
+        // Shocks (Page 8)
+        shocks: gameState.demographics.shocks,
+        estimatedLossLastYear: gameState.demographics.estimatedLossLastYear,
+        harvestLossPercentage: gameState.demographics.harvestLossPercentage,
+        
+        // Savings & Credit (Page 9)
+        hasSavings: gameState.demographics.hasSavings,
+        savingsAmount: gameState.demographics.savingsAmount,
+        borrowedMoney: gameState.demographics.borrowedMoney,
+        borrowSources: gameState.demographics.borrowSources,
+        hasOffFarmIncome: gameState.demographics.hasOffFarmIncome,
+        offFarmIncomeAmount: gameState.demographics.offFarmIncomeAmount,
+        
+        // Community access (Page 10)
+        memberOfFarmerGroup: gameState.demographics.memberOfFarmerGroup,
+        farmerGroupName: gameState.demographics.farmerGroupName,
+        distanceToMarket: gameState.demographics.distanceToMarket,
+        distanceToInsurer: gameState.demographics.distanceToInsurer,
+        usesMobileMoney: gameState.demographics.usesMobileMoney
+    };
+    
+    // NOTE: Individual fields NOT included:
+    // - gender, role, age (Page 1)
+    // - education (Page 2)
+    // - priorInsuranceKnowledge, purchasedInsuranceBefore (Page 10)
+    // - trust scores: trustInsuranceProvider, trustFarmerGroup, trustNGO (Page 10)
+    // - rainfallChangePerception, insurerPayoutTrust (Page 10)
     
     // Save first partner's complete state
     const savedState = {
         householdId: gameState.householdId,
         treatmentGroup: gameState.treatmentGroup,
-        firstRespondentId: gameState.respondentId, // Current becomes first
+        firstRespondentId: gameState.respondentId,
         firstRole: gameState.role,
         firstGender: gameState.gender,
-        firstSessionType: gameState.sessionType
+        firstSessionType: gameState.sessionType,
+        householdData: householdData // Only household data, NOT individual data
     };
     
-    console.log('💾 Saving first partner state:', savedState);
+    console.log('💾 Saving first partner state');
+    console.log('📊 Household data fields:', Object.keys(householdData).length);
+    console.log('📊 Individual fields excluded: gender, role, age, education, trust scores');
     
     // Store first partner info before resetting
     if (!gameState.firstRespondentId) {
@@ -1994,7 +2100,9 @@ function startSecondPartner() {
         console.warn('⚠️ Could not save to localStorage:', e);
     }
     
-    // CRITICAL: Reset ONLY second partner's data, keep household info
+    // ===== RESET FOR SECOND PARTNER =====
+    
+    // Keep tracking variables
     const householdId = gameState.householdId;
     const treatmentGroup = gameState.treatmentGroup;
     const firstRespondentId = gameState.firstRespondentId;
@@ -2004,15 +2112,17 @@ function startSecondPartner() {
     // Reset individual session data
     gameState.respondentId = null;
     gameState.sessionId = null;
-    gameState.demographics = {};
+    gameState.demographics = { ...householdData }; // ONLY household data, NO individual fields
     gameState.empowermentScores = {};
     gameState.seasonData = [];
     gameState.currentSeason = 1;
+    
+    // Individual fields - MUST be blank for second partner
     gameState.gender = null;
     gameState.role = null;
     gameState.sessionType = null;
     
-    // RESTORE household and first partner tracking
+    // Restore household tracking
     gameState.householdId = householdId;
     gameState.treatmentGroup = treatmentGroup;
     gameState.firstRespondentId = firstRespondentId;
@@ -2024,13 +2134,341 @@ function startSecondPartner() {
     console.log('📋 First partner role:', gameState.firstRespondentRole);
     console.log('📋 Household ID:', gameState.householdId);
     console.log('📋 Treatment group:', gameState.treatmentGroup);
+    console.log('✅ Individual fields cleared (gender, role, age, education, trust)');
     
-    // Clear any form data
+    // Clear all form fields
     const forms = document.querySelectorAll('form');
     forms.forEach(form => form.reset());
     
+    // Reset to page 1
+    currentDemoPage = 1;
+    currentStep = 1;
+    updateGlobalProgress(1, 13);
+    
     showScreen('demographicsScreen');
+    
+    // Set up form for second partner
+    setTimeout(() => {
+        showDemoPage(1);
+        
+        // ===== ONLY PRE-FILL HOUSEHOLD IDENTIFIER FIELDS =====
+        
+        // PAGE 1: Community & Enumerator (DISABLE - household identifiers)
+        const communitySelect = document.getElementById('communityName');
+        const enumeratorSelect = document.getElementById('enumeratorName');
+        
+        if (communitySelect) {
+            communitySelect.value = householdData.communityName || '';
+            communitySelect.disabled = true;
+            communitySelect.style.opacity = '0.6';
+            communitySelect.style.background = '#f5f5f5';
+            communitySelect.style.cursor = 'not-allowed';
+        }
+        
+        if (enumeratorSelect) {
+            enumeratorSelect.value = householdData.enumeratorName || '';
+            enumeratorSelect.disabled = true;
+            enumeratorSelect.style.opacity = '0.6';
+            enumeratorSelect.style.background = '#f5f5f5';
+            enumeratorSelect.style.cursor = 'not-allowed';
+        }
+        
+        // ⚠️ CRITICAL: Do NOT pre-fill individual fields
+        // Gender, Role, Age, Education are left BLANK for second partner to fill
+        
+        console.log('✅ Form setup complete:');
+        console.log('  - Community: Pre-filled & disabled');
+        console.log('  - Enumerator: Pre-filled & disabled');
+        console.log('  - Gender: BLANK (second partner must fill)');
+        console.log('  - Role: BLANK (second partner must fill)');
+        console.log('  - Age: BLANK (second partner must fill)');
+        console.log('  - Education: BLANK (second partner must fill)');
+        console.log('  - Trust scores: BLANK (second partner must fill)');
+        
+        // Add informative notice for second partner
+        const page1 = document.getElementById('demoPage1');
+        if (page1 && !document.getElementById('secondPartnerNotice')) {
+            const noticeDiv = document.createElement('div');
+            noticeDiv.id = 'secondPartnerNotice';
+            noticeDiv.style.cssText = `
+                background: linear-gradient(135deg, #FFF9C4, #FFF59D);
+                padding: 20px;
+                border-radius: 12px;
+                margin-bottom: 25px;
+                border-left: 6px solid #FFA726;
+                box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
+            `;
+            noticeDiv.innerHTML = `
+                <p style="margin: 0 0 15px 0; font-size: 18px; font-weight: 700; color: #F57C00;">
+                    <i class="fas fa-user-circle" style="margin-right: 10px;"></i>
+                    Second Partner - Please Enter YOUR Personal Information
+                </p>
+                <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 12px;">
+                    <p style="margin: 0 0 8px 0; font-weight: 600; color: #2E7D32;">
+                        ✅ Already saved (you don't need to fill these again):
+                    </p>
+                    <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #555;">
+                        Community, Enumerator, Household size, Children, Assets, Livestock, Farm size, Crops, Income, Shocks, Savings, Market distance
+                    </p>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 8px;">
+                    <p style="margin: 0 0 8px 0; font-weight: 600; color: #F57C00;">
+                        📝 You MUST fill out (your personal information):
+                    </p>
+                    <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #555;">
+                        Your role (husband/wife), gender, age, education level, and all trust/perception questions on page 10
+                    </p>
+                </div>
+            `;
+            page1.insertBefore(noticeDiv, page1.firstChild);
+        }
+        
+        // Update role selection guidance
+        updateSecondPartnerGuidance();
+        
+        console.log('✅ Second partner demographics form ready');
+        console.log('✅ Using SAME 10-page form as first partner');
+        
+    }, 200);
 }
+
+
+
+
+
+// ===== START SECOND PARTNER - FIXED =====
+// Replace the existing startSecondPartner() function
+
+// ===== START SECOND PARTNER - FIXED STEP COUNTER =====
+// ===== START SECOND PARTNER - WITH HOUSEHOLD DATA COPY =====
+// ===== START SECOND PARTNER - FIXED =====
+// Replace the existing startSecondPartner() function (around line 2124)
+
+// ===== START SECOND PARTNER - FIXED =====
+setTimeout(() => {
+    showDemoPage(1); // Start at page 1 but with pre-filled data
+    
+    // ✅ CRITICAL: Add hidden fields for ALL household data that will be disabled
+    const form = document.getElementById('demographicsForm');
+    if (form) {
+        // Remove any existing hidden fields first
+        const existingHidden = form.querySelectorAll('input[data-second-partner-hidden]');
+        existingHidden.forEach(field => field.remove());
+        
+        // Create hidden fields for ALL data from first partner
+        const hiddenFieldsData = {
+            'enumeratorName': householdData.enumeratorName,
+            'communityName': householdData.communityName,
+            'householdSize': householdData.householdSize,
+            'childrenUnder15': householdData.childrenUnder15,
+            'farmingYears': householdData.yearsOfFarming,
+            'landSize': householdData.landCultivated,
+            'landAccessMethod': householdData.landAccessMethod,
+            'landAccessOther': householdData.landAccessOther || '',
+            'numberOfCropsPlanted': householdData.numberOfCropsPlanted,
+            'lastIncome': householdData.lastSeasonIncome,
+            'farmingInputExpenditure': householdData.farmingInputExpenditure,
+            'hasIrrigationAccess': householdData.hasIrrigationAccess ? '1' : '0',
+            'estimatedLossLastYear': householdData.estimatedLossLastYear,
+            'harvestLossPercentage': householdData.harvestLossPercentage,
+            'hasSavings': householdData.hasSavings ? '1' : '0',
+            'savingsAmount': householdData.savingsAmount || 0,
+            'borrowedMoney': householdData.borrowedMoney ? '1' : '0',
+            'hasOffFarmIncome': householdData.hasOffFarmIncome ? '1' : '0',
+            'offFarmIncomeAmount': householdData.offFarmIncomeAmount || 0,
+            'memberOfFarmerGroup': householdData.memberOfFarmerGroup ? '1' : '0',
+            'farmerGroupName': householdData.farmerGroupName || '',
+            'distanceToMarket': householdData.distanceToMarket,
+            'distanceToInsurer': householdData.distanceToInsurer,
+            'usesMobileMoney': householdData.usesMobileMoney ? '1' : '0'
+        };
+        
+        // Add all hidden fields
+        Object.entries(hiddenFieldsData).forEach(([name, value]) => {
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = name;
+            hidden.value = value;
+            hidden.setAttribute('data-second-partner-hidden', 'true');
+            form.appendChild(hidden);
+        });
+        
+        // Add hidden fields for crops (checkboxes)
+        if (householdData.mainCrops && Array.isArray(householdData.mainCrops)) {
+            householdData.mainCrops.forEach(crop => {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'crops';
+                hidden.value = crop;
+                hidden.setAttribute('data-second-partner-hidden', 'true');
+                form.appendChild(hidden);
+            });
+        }
+        
+        // Add hidden fields for assets (checkboxes)
+        if (householdData.assets) {
+            Object.entries(householdData.assets).forEach(([asset, has]) => {
+                if (has) {
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = `asset_${asset}`;
+                    hidden.value = '1';
+                    hidden.setAttribute('data-second-partner-hidden', 'true');
+                    form.appendChild(hidden);
+                }
+            });
+        }
+        
+        // Add hidden fields for livestock
+        if (householdData.livestock) {
+            Object.entries(householdData.livestock).forEach(([animal, count]) => {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = `livestock_${animal}`;
+                hidden.value = count;
+                hidden.setAttribute('data-second-partner-hidden', 'true');
+                form.appendChild(hidden);
+            });
+        }
+        
+        // Add hidden fields for improved inputs
+        if (householdData.improvedInputs) {
+            Object.entries(householdData.improvedInputs).forEach(([input, used]) => {
+                if (used) {
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = `input_${input}`;
+                    hidden.value = '1';
+                    hidden.setAttribute('data-second-partner-hidden', 'true');
+                    form.appendChild(hidden);
+                }
+            });
+        }
+        
+        // Add hidden fields for shocks
+        if (householdData.shocks) {
+            Object.entries(householdData.shocks).forEach(([shock, experienced]) => {
+                if (experienced) {
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.name = `shock_${shock}`;
+                    hidden.value = '1';
+                    hidden.setAttribute('data-second-partner-hidden', 'true');
+                    form.appendChild(hidden);
+                }
+            });
+        }
+        
+        // Add hidden fields for borrow sources
+        if (householdData.borrowSources && Array.isArray(householdData.borrowSources)) {
+            householdData.borrowSources.forEach(source => {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = `borrowSource_${source}`;
+                hidden.value = '1';
+                hidden.setAttribute('data-second-partner-hidden', 'true');
+                form.appendChild(hidden);
+            });
+        }
+        
+        console.log('✅ Added hidden fields for all household data');
+    }
+    
+    // Disable and visually indicate pre-filled fields on page 1
+    const communitySelect = document.getElementById('communityName');
+    const enumeratorInput = document.getElementById('enumeratorName');
+    
+    if (communitySelect) {
+        communitySelect.value = householdData.communityName;
+        communitySelect.disabled = true;
+        communitySelect.style.opacity = '0.6';
+        communitySelect.style.background = '#f5f5f5';
+        communitySelect.style.cursor = 'not-allowed';
+    }
+    
+    if (enumeratorInput) {
+        enumeratorInput.value = householdData.enumeratorName;
+        enumeratorInput.disabled = true;
+        enumeratorInput.style.opacity = '0.6';
+        enumeratorInput.style.background = '#f5f5f5';
+        enumeratorInput.style.cursor = 'not-allowed';
+    }
+    
+    // Add notice for second partner
+    const page1 = document.getElementById('demoPage1');
+    if (page1 && !document.getElementById('secondPartnerNotice')) {
+        const noticeDiv = document.createElement('div');
+        noticeDiv.id = 'secondPartnerNotice';
+        noticeDiv.style.cssText = `
+            background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border-left: 6px solid #2196F3;
+        `;
+        noticeDiv.innerHTML = `
+            <p style="margin: 0 0 10px 0; font-size: 18px; font-weight: 700; color: #1565C0;">
+                <i class="fas fa-user-friends" style="margin-right: 10px;"></i>
+                Second Partner Information
+            </p>
+            <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #424242;">
+                <strong>Community and Enumerator</strong> are pre-filled from the first partner.
+                <br>Please fill in <strong>your personal details</strong> (role, gender, age).
+            </p>
+        `;
+        page1.insertBefore(noticeDiv, page1.firstChild);
+    }
+    
+    // Pre-select opposite role and add guidance
+    const roleSelect = document.getElementById('role');
+    if (roleSelect && gameState.firstRespondentRole) {
+        const oppositeRole = gameState.firstRespondentRole === 'husband' ? 'wife' : 'husband';
+        
+        // Add visual guidance
+        const roleFormGroup = roleSelect.closest('.form-group');
+        if (roleFormGroup && !document.getElementById('secondPartnerGuidance')) {
+            const guidanceDiv = document.createElement('div');
+            guidanceDiv.id = 'secondPartnerGuidance';
+            guidanceDiv.style.cssText = `
+                background: #FFF9C4;
+                padding: 15px;
+                border-radius: 8px;
+                margin-top: 10px;
+                border-left: 4px solid #FFA726;
+            `;
+            guidanceDiv.innerHTML = `
+                <p style="margin: 0; font-size: 14px;">
+                    <i class="fas fa-info-circle" style="color: #F57C00; margin-right: 8px;"></i>
+                    <strong>Note:</strong> The ${gameState.firstRespondentRole} already played. 
+                    Please select "${oppositeRole}" below.
+                </p>
+            `;
+            roleFormGroup.appendChild(guidanceDiv);
+        }
+        
+        // Disable first partner's role
+        const options = roleSelect.querySelectorAll('option');
+        options.forEach(option => {
+            if (option.value === gameState.firstRespondentRole) {
+                option.disabled = true;
+                if (!option.textContent.includes('Already played')) {
+                    option.textContent = option.textContent + ' (Already played)';
+                }
+            }
+        });
+        
+        // Pre-select opposite role
+        roleSelect.value = oppositeRole;
+    }
+    
+    console.log('✅ Demographics screen prepared for second partner with hidden fields');
+}, 200);
+
+
+
+
+
+
 
 
 
@@ -2131,6 +2569,8 @@ async function startCoupleSession() {
 // ===== FUNCTION: SHOW RESULTS - SIMPLIFIED DETECTION LOGIC =====
 // Replace showResults() with this clearer version
 
+
+
 async function showResults() {
     try {
         showLoading();
@@ -2141,6 +2581,7 @@ async function showResults() {
         console.log('First respondentId:', gameState.firstRespondentId);
         console.log('Second respondentId:', gameState.secondRespondentId);
         console.log('Session type:', gameState.sessionType);
+        console.log('Role:', gameState.role);
         
         const session = await apiCall(`/session/${gameState.sessionId}`);
         const knowledge = await apiCall(`/knowledge/${gameState.respondentId}`);
@@ -2175,7 +2616,7 @@ async function showResults() {
         showLoading(false);
         showScreen('resultsScreen');
         
-        // ===== SIMPLIFIED DETECTION LOGIC =====
+        // ===== FIXED DETECTION LOGIC =====
         
         // CASE 1: Couple session completed - GAME OVER
         if (gameState.sessionType === 'couple_joint') {
@@ -2190,9 +2631,14 @@ async function showResults() {
             return;
         }
         
-        // CASE 2: This is the FIRST partner (no firstRespondentId set yet)
+        // ✅ FIX: Check if firstRespondentId EXISTS first
         if (!gameState.firstRespondentId) {
-            console.log('✅ CASE: FIRST PARTNER completed (no firstRespondentId)');
+            // No first partner set yet - this MUST be the first partner
+            console.log('✅ CASE: FIRST PARTNER completed (no firstRespondentId set)');
+            
+            // Set first partner info
+            gameState.firstRespondentId = gameState.respondentId;
+            gameState.firstRespondentRole = gameState.role;
             
             const partnerName = gameState.role === 'husband' ? 'Husband' : 'Wife';
             if (resultsTitle) resultsTitle.textContent = 'First Partner Complete!';
@@ -2204,7 +2650,7 @@ async function showResults() {
             return;
         }
         
-        // CASE 3: This is STILL the first partner (respondentId matches firstRespondentId)
+        // CASE 2: This respondent matches the first partner (shouldn't happen but handle it)
         if (gameState.respondentId === gameState.firstRespondentId) {
             console.log('✅ CASE: FIRST PARTNER completed (ID matches)');
             
@@ -2218,26 +2664,21 @@ async function showResults() {
             return;
         }
         
-        // CASE 4: This is the SECOND partner (different respondentId from first)
-        if (gameState.respondentId !== gameState.firstRespondentId) {
-            console.log('✅ CASE: SECOND PARTNER completed');
-            
-            const partnerName = gameState.role === 'husband' ? 'Husband' : 'Wife';
-            if (resultsTitle) resultsTitle.textContent = 'Second Partner Complete!';
-            if (resultsSubtitle) resultsSubtitle.textContent = `Here's how the ${partnerName.toLowerCase()} performed`;
-            if (restartBtn) restartBtn.style.display = 'none';
-            
-            // Mark second partner
-            if (!gameState.secondRespondentId) {
-                gameState.secondRespondentId = gameState.respondentId;
-            }
-            
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            showCouplePrompt();
-            return;
+        // CASE 3: First partner exists AND current ID is different - this is second partner
+        console.log('✅ CASE: SECOND PARTNER completed');
+        
+        // Mark second partner
+        if (!gameState.secondRespondentId) {
+            gameState.secondRespondentId = gameState.respondentId;
         }
         
-        console.log('⚠️ WARNING: Fell through all cases');
+        const partnerName = gameState.role === 'husband' ? 'Husband' : 'Wife';
+        if (resultsTitle) resultsTitle.textContent = 'Second Partner Complete!';
+        if (resultsSubtitle) resultsSubtitle.textContent = `Here's how the ${partnerName.toLowerCase()} performed`;
+        if (restartBtn) restartBtn.style.display = 'none';
+        
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        showCouplePrompt();
         
     } catch (error) {
         showLoading(false);
@@ -2245,6 +2686,8 @@ async function showResults() {
         alert('Error loading results: ' + error.message);
     }
 }
+
+
 
 
 
@@ -2307,141 +2750,107 @@ document.addEventListener('change', function(e) {
 
 
 // ===== EVENT LISTENERS =====
+// ===== CONSOLIDATED DOMContentLoaded - SINGLE BLOCK =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Weather Index Insurance Game Loaded - Ghana Edition - 4 SEASONS - ALL FIXES APPLIED');
+    console.log('🎮 Weather Index Insurance Game Loaded');
+    console.log(`📋 Total steps: ${TOTAL_STEPS}`);
+    console.log(`📄 Demographics pages: ${DEMOGRAPHICS_PAGES}`);
 
+    // ===== WELCOME SCREEN =====
     const startBtn = document.getElementById('startBtn');
-    if (startBtn) startBtn.addEventListener('click', startDemographics);
-
-    const tutorialPrevBtn = document.getElementById('tutorialPrevBtn');
-    if (tutorialPrevBtn) tutorialPrevBtn.addEventListener('click', previousTutorialCard);
-    
-    const tutorialNextBtn = document.getElementById('tutorialNextBtn');
-    if (tutorialNextBtn) tutorialNextBtn.addEventListener('click', nextTutorialCard);
-    
-    const tutorialFinishBtn = document.getElementById('tutorialFinishBtn');
-    if (tutorialFinishBtn) tutorialFinishBtn.addEventListener('click', startGameAfterTutorial);
-
-    const cardStack = document.getElementById('tutorialCardStack');
-    if (cardStack) {
-        cardStack.addEventListener('touchstart', handleTouchStart, false);
-        cardStack.addEventListener('touchend', handleTouchEnd, false);
+    if (startBtn) {
+        startBtn.addEventListener('click', startDemographics);
+        console.log('✅ Start button listener registered');
     }
 
-    const nextSeasonBtn = document.getElementById('nextRoundBtn');
-    if (nextSeasonBtn) {
-        nextSeasonBtn.addEventListener('click', nextSeason);
-        nextSeasonBtn.innerHTML = '<span>Continue to Next Season</span><i class="fas fa-arrow-right"></i>';
-    }
-
-    const restartBtn = document.getElementById('restartBtn');
-    if (restartBtn) restartBtn.addEventListener('click', restartGame);
-
-    ['insuranceSpend', 'inputSpend', 'educationSpend', 'consumptionSpend'].forEach(inputId => {
-        const input = document.getElementById(inputId);
-        if (input) input.addEventListener('input', updateAllocation);
-    });
-
-
-
-    // Show role guidance for second partner
-const updateRoleGuidance = () => {
-    if (gameState.firstRespondentRole) {
-        const roleGuidance = document.getElementById('roleGuidance');
-        const roleGuidanceText = document.getElementById('roleGuidanceText');
-        const roleSelect = document.getElementById('role');
-        
-        if (roleGuidance && roleGuidanceText && roleSelect) {
-            roleGuidance.style.display = 'block';
+    // ===== DEMOGRAPHICS NAVIGATION =====
+    const nextBtn = document.getElementById('demoNextBtn');
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function() {
+            console.log(`▶️ Next clicked. Current page: ${currentDemoPage}`);
             
-            const oppositeRole = gameState.firstRespondentRole === 'husband' ? 'wife' : 'husband';
-            roleGuidanceText.textContent = `The ${gameState.firstRespondentRole} has already completed their individual play. Please select "${oppositeRole}" below.`;
-            
-            const options = roleSelect.querySelectorAll('option');
-            options.forEach(option => {
-                if (option.value === gameState.firstRespondentRole) {
-                    option.disabled = true;
-                    option.textContent = option.textContent + ' (Already played)';
+            if (validateCurrentDemoPage()) {
+                if (currentDemoPage < DEMOGRAPHICS_PAGES) {
+                    currentDemoPage++;
+                    showDemoPage(currentDemoPage);
+                } else {
+                    console.log('Already on last page');
                 }
-            });
+            }
+        });
+        console.log('✅ Next button listener registered');
+    }
+    
+    const prevBtn = document.getElementById('demoPrevBtn');
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function() {
+            console.log(`◀️ Previous clicked. Current page: ${currentDemoPage}`);
             
-            roleSelect.value = oppositeRole;
-        }
+            if (currentDemoPage > 1) {
+                currentDemoPage--;
+                showDemoPage(currentDemoPage);
+            }
+        });
+        console.log('✅ Previous button listener registered');
     }
-};
+    
+    // Initialize demographics to page 1
+    showDemoPage(1);
 
-// Hook into showScreen to update guidance when demographics shown
-const originalShowScreen = window.showScreen || showScreen;
-window.showScreen = function(screenId) {
-    originalShowScreen(screenId);
-    if (screenId === 'demographicsScreen') {
-        setTimeout(updateRoleGuidance, 100);
-    }
-};
-
-
-
-
+    // ===== DEMOGRAPHICS FORM SUBMISSION (PARTNER 1) =====
+   // ===== DEMOGRAPHICS FORM SUBMISSION (PARTNER 1) =====
 const demoForm = document.getElementById('demographicsForm');
 if (demoForm) {
+    console.log('✅ Demographics form found');
+    
     demoForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // Only process if we're on the last page
+        console.log('📝 FORM SUBMIT TRIGGERED');
+        console.log('Current page:', currentDemoPage, '/', DEMOGRAPHICS_PAGES);
+        
+        // CRITICAL: Only process if on last page
         if (currentDemoPage !== DEMOGRAPHICS_PAGES) {
-            console.log('Not on last page, skipping submit');
+            console.log('⚠️ Not on last page - skipping');
             return;
         }
         
+        // Validate before proceeding
+        if (!validateCurrentDemoPage()) {
+            console.log('❌ Validation failed');
+            alert('Please fill in all required fields on this page.');
+            return;
+        }
+        
+        console.log('✅ Starting submission process...');
         showLoading();
         
         try {
             const formData = new FormData(e.target);
             
-            // ===== COLLECT BASIC DATA =====
+            // Basic validation
+            const enumeratorName = formData.get('enumeratorName');
+            const communityName = formData.get('communityName');
+            const selectedRole = formData.get('role');
+            const selectedGender = formData.get('gender');
+            
+            if (!enumeratorName?.trim() || !communityName?.trim() || !selectedRole || !selectedGender) {
+                throw new Error('Missing required basic information');
+            }
+            
+            // Collect crops
             const crops = Array.from(document.querySelectorAll('input[name="crops"]:checked'))
                 .map(cb => cb.value);
             
-            const selectedRole = formData.get('role');
-            const selectedGender = formData.get('gender');
-            const communityName = formData.get('communityName');
-            const enumeratorName = formData.get('enumeratorName');
-            
-            // ===== VALIDATION =====
-            if (!enumeratorName || enumeratorName.trim() === '') {
+            if (crops.length === 0) {
                 showLoading(false);
-                alert('⚠️ Please enter your name as enumerator');
+                alert('⚠️ Please select at least one crop on Page 5');
+                currentDemoPage = 5;
+                showDemoPage(5);
                 return;
             }
             
-            if (!communityName || communityName.trim() === '') {
-                showLoading(false);
-                alert('⚠️ Please select a community');
-                return;
-            }
-            
-            if (!selectedRole) {
-                showLoading(false);
-                alert('⚠️ Please select your role (Husband/Wife)');
-                return;
-            }
-            
-            if (!selectedGender) {
-                showLoading(false);
-                alert('⚠️ Please select your gender');
-                return;
-            }
-            
-            // FIX: ENFORCE ROLE ORDER
-            if (gameState.firstRespondentRole) {
-                if (selectedRole === gameState.firstRespondentRole) {
-                    showLoading(false);
-                    alert(`⚠️ The ${gameState.firstRespondentRole} has already played! The second partner must be the ${gameState.firstRespondentRole === 'husband' ? 'wife' : 'husband'}.`);
-                    return;
-                }
-            }
-            
-            // ===== COLLECT HOUSEHOLD ASSETS =====
+            // Collect assets
             const assets = {
                 radio: formData.get('asset_radio') === '1',
                 tv: formData.get('asset_tv') === '1',
@@ -2453,7 +2862,6 @@ if (demoForm) {
                 plough: formData.get('asset_plough') === '1'
             };
             
-            // ===== COLLECT LIVESTOCK =====
             const livestock = {
                 cattle: parseInt(formData.get('livestock_cattle')) || 0,
                 goats: parseInt(formData.get('livestock_goats')) || 0,
@@ -2461,7 +2869,6 @@ if (demoForm) {
                 poultry: parseInt(formData.get('livestock_poultry')) || 0
             };
             
-            // ===== COLLECT IMPROVED INPUTS =====
             const improvedInputs = {
                 certifiedSeed: formData.get('input_certifiedSeed') === '1',
                 fertilizer: formData.get('input_fertilizer') === '1',
@@ -2469,7 +2876,6 @@ if (demoForm) {
                 irrigation: formData.get('input_irrigation') === '1'
             };
             
-            // ===== COLLECT SHOCKS =====
             const shocks = {
                 drought: formData.get('shock_drought') === '1',
                 flood: formData.get('shock_flood') === '1',
@@ -2477,7 +2883,6 @@ if (demoForm) {
                 cropPriceFall: formData.get('shock_cropPriceFall') === '1'
             };
             
-            // ===== COLLECT BORROWING SOURCES (if applicable) =====
             const borrowSources = [];
             if (formData.get('borrowedMoney') === '1') {
                 if (formData.get('borrowSource_bank')) borrowSources.push('bank');
@@ -2487,442 +2892,228 @@ if (demoForm) {
                 if (formData.get('borrowSource_moneylender')) borrowSources.push('moneylender');
             }
             
-            // ===== BUILD COMPLETE DEMOGRAPHICS OBJECT =====
-          // ===== BUILD COMPLETE DEMOGRAPHICS OBJECT =====
-gameState.demographics = {
-    // Required fields
-    householdId: gameState.householdId,
-    communityName: communityName.trim(),
-    enumeratorName: enumeratorName.trim(),
-    gender: selectedGender,
-    role: selectedRole,
-    language: gameState.language || 'english',
-    
-    // Basic demographics
-    age: parseInt(formData.get('age')) || 0,
-    education: parseInt(formData.get('education')) || 0,
-    
-    // Household composition
-    householdSize: parseInt(formData.get('householdSize')) || 1,
-    childrenUnder15: parseInt(formData.get('childrenUnder15')) || 0,
-    
-    // Assets
-    assets: assets,
-    
-    // Livestock
-    livestock: livestock,
-    
-    // Farming information
-    yearsOfFarming: parseInt(formData.get('farmingYears')) || 0,
-    landCultivated: parseFloat(formData.get('landSize')) || 0,
-    landAccessMethod: parseInt(formData.get('landAccessMethod')) || 1,
-    landAccessOther: formData.get('landAccessOther') || '',
-    mainCrops: crops.length > 0 ? crops : ['maize'],
-    numberOfCropsPlanted: parseInt(formData.get('numberOfCropsPlanted')) || 1,
-    lastSeasonIncome: parseFloat(formData.get('lastIncome')) || 0,
-    farmingInputExpenditure: parseFloat(formData.get('farmingInputExpenditure')) || 0,
-    
-    // Improved inputs
-    improvedInputs: improvedInputs,
-    hasIrrigationAccess: formData.get('hasIrrigationAccess') === '1',
-    
-    // Shocks
-    shocks: shocks,
-    estimatedLossLastYear: parseFloat(formData.get('estimatedLossLastYear')) || 0,
-    harvestLossPercentage: parseInt(formData.get('harvestLossPercentage')) || 0,
-    
-    // Savings & Credit
-    hasSavings: formData.get('hasSavings') === '1',
-    savingsAmount: parseFloat(formData.get('savingsAmount')) || 0,
-    borrowedMoney: formData.get('borrowedMoney') === '1',
-    borrowSources: borrowSources,
-    hasOffFarmIncome: formData.get('hasOffFarmIncome') === '1',
-    offFarmIncomeAmount: parseFloat(formData.get('offFarmIncomeAmount')) || 0,
-    
-    // Insurance experience
-    priorInsuranceKnowledge: formData.get('priorKnowledge') === '1',
-    purchasedInsuranceBefore: formData.get('purchasedInsuranceBefore') === '1',
-    insuranceType: formData.get('insuranceType') || '',
-    
-    // Trust indicators
-    trustFarmerGroup: parseInt(formData.get('trust_farmerGroup')) || 3,
-    trustNGO: parseInt(formData.get('trust_ngo')) || 3,
-    trustInsuranceProvider: parseInt(formData.get('trust_insuranceProvider')) || 3,
-    rainfallChangePerception: parseInt(formData.get('rainfallChangePerception')) || 3,
-    insurerPayoutTrust: parseInt(formData.get('insurerPayoutTrust')) || 3,
-    
-    // Additional research fields (not collected in form, defaults provided)
-    communityInsuranceDiscussion: false,
-    extensionVisits: false,
-    numberOfExtensionVisits: 0,
-    
-    // Social capital
-    memberOfFarmerGroup: formData.get('memberOfFarmerGroup') === '1',
-    farmerGroupName: formData.get('farmerGroupName') || '',
-    
-    // Access & Market
-    distanceToMarket: parseInt(formData.get('distanceToMarket')) || 0,
-    distanceToInsurer: parseInt(formData.get('distanceToInsurer')) || 0,
-    usesMobileMoney: formData.get('usesMobileMoney') === '1'
-};  // ✅ Object ends here with proper closing brace
-
-gameState.gender = selectedGender;
-gameState.role = selectedRole;
-
-console.log('✅ Demographics collected:', gameState.demographics);
-
-showLoading(false);
-
-
-
+            // Build demographics object
+            gameState.demographics = {
+                householdId: gameState.householdId,
+                communityName: communityName.trim(),
+                enumeratorName: enumeratorName.trim(),
+                gender: selectedGender,
+                role: selectedRole,
+                language: gameState.language || 'english',
+                
+                age: parseInt(formData.get('age')) || 18,
+                education: parseInt(formData.get('education')) || 0,
+                householdSize: parseInt(formData.get('householdSize')) || 1,
+                childrenUnder15: parseInt(formData.get('childrenUnder15')) || 0,
+                
+                assets: assets,
+                livestock: livestock,
+                
+                yearsOfFarming: parseInt(formData.get('farmingYears')) || 0,
+                landCultivated: parseFloat(formData.get('landSize')) || 0,
+                landAccessMethod: parseInt(formData.get('landAccessMethod')) || 1,
+                landAccessOther: formData.get('landAccessOther') || '',
+                mainCrops: crops,
+                numberOfCropsPlanted: parseInt(formData.get('numberOfCropsPlanted')) || 1,
+                lastSeasonIncome: parseFloat(formData.get('lastIncome')) || 0,
+                farmingInputExpenditure: parseFloat(formData.get('farmingInputExpenditure')) || 0,
+                
+                improvedInputs: improvedInputs,
+                hasIrrigationAccess: formData.get('hasIrrigationAccess') === '1',
+                
+                shocks: shocks,
+                estimatedLossLastYear: parseFloat(formData.get('estimatedLossLastYear')) || 0,
+                harvestLossPercentage: parseInt(formData.get('harvestLossPercentage')) || 0,
+                
+                hasSavings: formData.get('hasSavings') === '1',
+                savingsAmount: parseFloat(formData.get('savingsAmount')) || 0,
+                borrowedMoney: formData.get('borrowedMoney') === '1',
+                borrowSources: borrowSources,
+                hasOffFarmIncome: formData.get('hasOffFarmIncome') === '1',
+                offFarmIncomeAmount: parseFloat(formData.get('offFarmIncomeAmount')) || 0,
+                
+                priorInsuranceKnowledge: formData.get('priorKnowledge') === '1',
+                purchasedInsuranceBefore: formData.get('purchasedInsuranceBefore') === '1',
+                insuranceType: formData.get('insuranceType') || '',
+                
+                trustFarmerGroup: parseInt(formData.get('trust_farmerGroup')) || 3,
+                trustNGO: parseInt(formData.get('trust_ngo')) || 3,
+                trustInsuranceProvider: parseInt(formData.get('trust_insuranceProvider')) || 3,
+                rainfallChangePerception: parseInt(formData.get('rainfallChangePerception')) || 3,
+                insurerPayoutTrust: parseInt(formData.get('insurerPayoutTrust')) || 3,
+                
+                communityInsuranceDiscussion: false,
+                extensionVisits: false,
+                numberOfExtensionVisits: 0,
+                
+                memberOfFarmerGroup: formData.get('memberOfFarmerGroup') === '1',
+                farmerGroupName: formData.get('farmerGroupName') || '',
+                
+                distanceToMarket: parseInt(formData.get('distanceToMarket')) || 0,
+                distanceToInsurer: parseInt(formData.get('distanceToInsurer')) || 0,
+                usesMobileMoney: formData.get('usesMobileMoney') === '1'
+            };
+            
             gameState.gender = selectedGender;
             gameState.role = selectedRole;
             
-            console.log('✅ Demographics collected:', gameState.demographics);
+            console.log('✅ Demographics collected successfully!');
+            console.log('📊 Role:', selectedRole, '| Gender:', selectedGender);
+            console.log('📊 Crops:', crops);
             
             showLoading(false);
             
-            // Move to step 11 (Risk screen)
+            // Move to Risk Assessment (Step 11)
             currentStep = 11;
             updateGlobalProgress(currentStep, TOTAL_STEPS);
-            showScreen('riskScreen');
+            
+            console.log('🎯 Moving to Risk Assessment...');
+            
+            setTimeout(() => {
+                showScreen('riskScreen');
+                console.log('✅ TRANSITIONED TO RISK SCREEN');
+            }, 100);
             
         } catch (error) {
             showLoading(false);
-            console.error('Demographics form error:', error);
-            alert('Error: ' + error.message);
+            console.error('❌ ERROR:', error.message);
+            console.error('Stack:', error.stack);
+            alert('Error submitting demographics: ' + error.message);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     });
+    
+    console.log('✅ Demographics form submission handler registered');
 }
 
 
 
+    // ===== CONDITIONAL FIELD VISIBILITY =====
+    const hasSavingsRadios = document.querySelectorAll('[name="hasSavings"]');
+    hasSavingsRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const group = document.getElementById('savingsAmountGroup');
+            if (group) {
+                group.style.display = this.value === '1' ? 'block' : 'none';
+            }
+        });
+    });
+    
+    const borrowedMoneyRadios = document.querySelectorAll('[name="borrowedMoney"]');
+    borrowedMoneyRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const group = document.getElementById('borrowingSourcesGroup');
+            if (group) {
+                group.style.display = this.value === '1' ? 'block' : 'none';
+            }
+        });
+    });
+    
+    const hasOffFarmRadios = document.querySelectorAll('[name="hasOffFarmIncome"]');
+    hasOffFarmRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const group = document.getElementById('offFarmIncomeGroup');
+            if (group) {
+                group.style.display = this.value === '1' ? 'block' : 'none';
+            }
+        });
+    });
 
-
-   const riskForm = document.getElementById('riskForm');
-if (riskForm) {
-    riskForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        showLoading();
-        
-        try {
-            const formData = new FormData(e.target);
-            gameState.demographics.riskPreference = parseInt(formData.get('riskChoice'));
-            gameState.demographics.riskComfort = parseInt(formData.get('riskComfort'));
-            gameState.demographics.decisionMaker = parseInt(formData.get('decisionMaker'));
+    // ===== CROPS CHECKBOX VALIDATION =====
+    document.addEventListener('change', function(e) {
+        if (e.target.name === 'crops') {
+            const cropsCheckboxes = document.querySelectorAll('input[name="crops"]');
+            const anyChecked = Array.from(cropsCheckboxes).some(cb => cb.checked);
+            const cropsError = document.getElementById('cropsError');
             
-            showLoading(false);
-            
-            // Move to step 12 (Empowerment) ✅ THIS IS CORRECT
-            currentStep = 12;
-            updateGlobalProgress(currentStep, TOTAL_STEPS);
-            showScreen('empowermentScreen');
-        } catch (error) {
-            showLoading(false);
-            console.error('Risk form error:', error);
-            alert('Error: ' + error.message);
+            if (cropsError) {
+                cropsError.style.display = anyChecked ? 'none' : 'block';
+            }
         }
     });
-}
 
-
-
-
-
-    // ===== HOOK INTO EXISTING FORM SUBMISSIONS =====
-
-// Demographics form submission
-// const demoFormOriginal = document.getElementById('demographicsForm');
-// if (demoFormOriginal) {
-//     demoFormOriginal.addEventListener('submit', async (e) => {
-//         e.preventDefault();
-//         // ... existing demographics submission code ...
-        
-//         // After successful submission, go to Step 16 (Risk)
-//         showRiskScreen();
-//     });
-// }
-
-// // Risk form submission
-// const riskFormOriginal = document.getElementById('riskForm');
-// if (riskFormOriginal) {
-//     riskFormOriginal.addEventListener('submit', async (e) => {
-//         e.preventDefault();
-//         // ... existing risk submission code ...
-        
-//         // After successful submission, go to Step 17 (Empowerment)
-//         showEmpowermentScreen();
-//     });
-// }
-
-// // Empowerment form submission
-// const empFormOriginal = document.getElementById('empowermentForm');
-// if (empFormOriginal) {
-//     empFormOriginal.addEventListener('submit', async (e) => {
-//         e.preventDefault();
-//         // ... existing empowerment submission code ...
-        
-//         // After successful submission, go to Step 18 (Tutorial)
-//         showTutorialScreen();
-//     });
-// }
-
-
-
-    // ===== EMPOWERMENT FORM HANDLER - FIXED =====
-// Replace the existing empowerment form handler in DOMContentLoaded
-
-const empForm = document.getElementById('empowermentForm');
-if (empForm) {
-    empForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        showLoading();
-        
-        try {
-            const formData = new FormData(e.target);
-            gameState.empowermentScores = {
-                cropDecisions: parseInt(formData.get('q1')),
-                moneyDecisions: parseInt(formData.get('q2')),
-                inputDecisions: parseInt(formData.get('q3')),
-                opinionConsidered: parseInt(formData.get('q4')),
-                confidenceExpressing: parseInt(formData.get('q5'))
-            };
-            
-            const respondentData = {
-                ...gameState.demographics,
-                empowermentScores: gameState.empowermentScores
-            };
-            
-            // Create respondent
-            const respondent = await apiCall('/respondent/create', 'POST', respondentData);
-            gameState.respondentId = respondent._id;
-            
-            if (gameState.treatmentGroup && respondent.treatmentGroup !== gameState.treatmentGroup) {
-                console.error('⚠️ WARNING: Treatment group mismatch!');
-            }
-            gameState.treatmentGroup = respondent.treatmentGroup;
-            
-            console.log(`✅ Respondent created: ${respondent._id}, Treatment: ${respondent.treatmentGroup}`);
-            
-            // CRITICAL FIX: Determine if this is first partner and set IDs
-            const isFirstPartner = !gameState.firstRespondentId;
-            
-            if (isFirstPartner) {
-                // This is the FIRST partner
-                gameState.firstRespondentId = respondent._id;
-                gameState.firstRespondentRole = gameState.role;
-                gameState.firstRespondentData = {
-                    role: gameState.role,
-                    gender: gameState.gender,
-                    treatmentGroup: gameState.treatmentGroup
-                };
-                
-                console.log('🎯 FIRST PARTNER registered:', {
-                    id: gameState.firstRespondentId,
-                    role: gameState.firstRespondentRole
-                });
-            } else {
-                // This is the SECOND partner
-                gameState.secondRespondentId = respondent._id;
-                
-                console.log('🎯 SECOND PARTNER registered:', {
-                    id: gameState.secondRespondentId,
-                    role: gameState.role
-                });
-            }
-            
-            // Set session type based on role
-            if (gameState.role === 'husband') {
-                gameState.sessionType = 'individual_husband';
-            } else if (gameState.role === 'wife') {
-                gameState.sessionType = 'individual_wife';
-            }
-            
-            console.log('📋 Session type set to:', gameState.sessionType);
-            
-            // Create session
-            const session = await apiCall('/session/start', 'POST', { 
-                respondentId: gameState.respondentId,
-                sessionType: gameState.sessionType
-            });
-            gameState.sessionId = session.sessionId;
-            
-            console.log('✅ Session created:', session.sessionId);
-            
-            showLoading(false);
-            showScreen('tutorialScreen');
-            initializeTutorial();
-        } catch (error) {
-            showLoading(false);
-            console.error('Empowerment form error:', error);
-            alert('Error: ' + error.message);
-        }
-    });
-}
-    const couplePreForm = document.getElementById('couplePreQuestionsForm');
-    if (couplePreForm) {
-        couplePreForm.addEventListener('submit', async (e) => {
+    // ===== RISK FORM =====
+    const riskForm = document.getElementById('riskForm');
+    if (riskForm) {
+        riskForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             showLoading();
             
             try {
                 const formData = new FormData(e.target);
-                const coupleData = {
-                    householdId: gameState.householdId,
-                    marriageDuration: parseInt(formData.get('marriageDuration')),
-                    numberOfChildren: parseInt(formData.get('numberOfChildren'))
-                };
-                
-                await apiCall('/couple/info', 'POST', coupleData);
-                
-                gameState.coupleInfo.marriageDuration = coupleData.marriageDuration;
-                gameState.coupleInfo.numberOfChildren = coupleData.numberOfChildren;
+                gameState.demographics.riskPreference = parseInt(formData.get('riskChoice'));
+                gameState.demographics.riskComfort = parseInt(formData.get('riskComfort'));
+                gameState.demographics.decisionMaker = parseInt(formData.get('decisionMaker'));
                 
                 showLoading(false);
-                startCoupleSession();
+                
+                currentStep = 12;
+                updateGlobalProgress(currentStep, TOTAL_STEPS);
+                showScreen('empowermentScreen');
             } catch (error) {
                 showLoading(false);
-                console.error('Couple pre-questions error:', error);
+                console.error('Risk form error:', error);
                 alert('Error: ' + error.message);
             }
         });
+        console.log('✅ Risk form handler registered');
     }
 
-    // FIX: Perception form handler for couple session
-    const perceptionForm = document.getElementById('perceptionForm');
-    if (perceptionForm) {
-        perceptionForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showLoading();
-            
-            try {
-                const formData = new FormData(e.target);
-                const perceptionData = {
-                    sessionId: gameState.sessionId,
-                    respondentId: gameState.respondentId,
-                    householdId: gameState.householdId,
-                    bundleInfluence: parseInt(formData.get('bundleInfluence')),
-                    insuranceUnderstanding: parseInt(formData.get('insuranceUnderstanding')),
-                    willingnessToPay: formData.get('willingnessToPay') === 'yes',
-                    recommendToOthers: parseInt(formData.get('recommendToOthers')),
-                    perceivedFairness: parseInt(formData.get('perceivedFairness')),
-                    trustInPayout: parseInt(formData.get('trustInPayout')),
-                    bundleValuePerception: parseInt(formData.get('bundleValuePerception')),
-                    futureUseLikelihood: parseInt(formData.get('futureUseLikelihood'))
-                };
-                
-                await apiCall('/perception/submit', 'POST', perceptionData);
-                await apiCall(`/session/${gameState.sessionId}/complete`, 'PUT');
-                
-                console.log('✅ Perception data saved, session completed');
-                
-                showLoading(false);
-                showResults();
-            } catch (error) {
-                showLoading(false);
-                console.error('Perception form error:', error);
-                alert('Error: ' + error.message);
-            }
-        });
+    
+    // ===== TUTORIAL =====
+    const tutorialPrevBtn = document.getElementById('tutorialPrevBtn');
+    if (tutorialPrevBtn) {
+        tutorialPrevBtn.addEventListener('click', previousTutorialCard);
+    }
+    
+    const tutorialNextBtn = document.getElementById('tutorialNextBtn');
+    if (tutorialNextBtn) {
+        tutorialNextBtn.addEventListener('click', nextTutorialCard);
+    }
+    
+    const tutorialFinishBtn = document.getElementById('tutorialFinishBtn');
+    if (tutorialFinishBtn) {
+        tutorialFinishBtn.addEventListener('click', startGameAfterTutorial);
     }
 
+    const cardStack = document.getElementById('tutorialCardStack');
+    if (cardStack) {
+        cardStack.addEventListener('touchstart', handleTouchStart, false);
+        cardStack.addEventListener('touchend', handleTouchEnd, false);
+    }
 
-
-    // ===== SAVE GAME ROUND - UPDATED DATA =====
-
-// ===== ALLOCATION FORM - FIX INPUT CHOICE TYPE =====
-const allocForm = document.getElementById('allocationForm');
-if (allocForm) {
-    allocForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        showLoading();
-        
-        try {
-            const budget = parseInt(document.getElementById('totalBudget').textContent);
-            const bundleCheckbox = document.getElementById('bundleAccepted');
-            const bundleAccepted = bundleCheckbox ? bundleCheckbox.checked : false;
-            
-            // FIX 4: Only get inputChoiceType if insurance was purchased
-            let inputChoiceType = '';
-            if (bundleAccepted) {
-                const inputChoiceElement = document.getElementById('inputChoiceType');
-                inputChoiceType = inputChoiceElement ? inputChoiceElement.value : '';
-            }
-            
-            // Determine bundle product
-            let bundleProduct = 'none';
-            if (bundleAccepted) {
-                if (gameState.treatmentGroup === 'control') {
-                    bundleProduct = inputChoiceType; // 'seeds' or 'fertilizer'
-                } else if (gameState.treatmentGroup === 'fertilizer_bundle') {
-                    bundleProduct = 'fertilizer';
-                } else if (gameState.treatmentGroup === 'seedling_bundle') {
-                    bundleProduct = 'seeds';
-                }
-            }
-            
-            const seasonData = {
-                respondentId: gameState.respondentId,
-                sessionId: gameState.sessionId,
-                roundNumber: gameState.currentSeason,
-                budget: budget,
-                insuranceSpend: parseInt(document.getElementById('insuranceSpend').value) || 0,
-                inputSpend: parseInt(document.getElementById('inputSpend').value) || 0,
-                educationSpend: parseInt(document.getElementById('educationSpend').value) || 0,
-                consumptionSpend: parseInt(document.getElementById('consumptionSpend').value) || 0,
-                decisionContext: gameState.sessionType,
-                isPracticeRound: false,
-                bundleAccepted: bundleAccepted,
-                bundleProduct: bundleProduct,
-                inputChoiceType: inputChoiceType, // Only set if insurance purchased
-                startTime: new Date(),
-                weatherShock: { occurred: false, type: 'normal', severity: 'none' },
-                harvestOutcome: 0,
-                payoutReceived: 0
-            };
-            
-            const weather = generateWeatherEvent();
-            
-            let severity = 'none';
-            if (weather.type === 'drought') {
-                severity = weather.harvestMultiplier < 0.5 ? 'severe' : 'mild';
-            } else if (weather.type === 'flood') {
-                severity = 'moderate';
-            }
-            
-            seasonData.weatherShock = {
-                occurred: weather.type !== 'normal',
-                type: weather.type,
-                severity: severity
-            };
-            
-            calculateOutcomes(seasonData, weather);
-            await apiCall('/round/save', 'POST', seasonData);
-            gameState.seasonData.push(seasonData);
-            
-            showLoading(false);
-            showWeatherOutcome(seasonData, weather);
-        } catch (error) {
-            showLoading(false);
-            console.error('Allocation form error:', error);
-            alert('Error: ' + error.message);
-        }
+    // ===== GAME ALLOCATION INPUTS =====
+    ['insuranceSpend', 'inputSpend', 'educationSpend', 'consumptionSpend'].forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) input.addEventListener('input', updateAllocation);
     });
-}
 
+    // ===== NEXT SEASON BUTTON =====
+    const nextSeasonBtn = document.getElementById('nextRoundBtn');
+    if (nextSeasonBtn) {
+        nextSeasonBtn.addEventListener('click', nextSeason);
+        nextSeasonBtn.innerHTML = '<span>Continue to Next Season</span><i class="fas fa-arrow-right"></i>';
+    }
 
+    // ===== RESTART BUTTON =====
+    const restartBtn = document.getElementById('restartBtn');
+    if (restartBtn) {
+        restartBtn.addEventListener('click', restartGame);
+    }
 
-   
+    // ===== ALLOCATION FORM =====
+  
 
-// ===== KNOWLEDGE FORM HANDLER - FIXED =====
-// Replace the existing knowledge form handler in DOMContentLoaded section
+    // ===== KNOWLEDGE FORM =====
+// ===== FIX 2: CORRECT KNOWLEDGE TEST SUBMISSION =====
+// Find the knowledge form handler (around line 4430) and replace it:
 
+// ===== KNOWLEDGE FORM =====
 const knowledgeForm = document.getElementById('knowledgeForm');
 if (knowledgeForm) {
     knowledgeForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // Prevent double submission
         if (isSubmittingKnowledge) {
             console.log('⚠️ Already submitting knowledge test');
             return;
@@ -2933,9 +3124,11 @@ if (knowledgeForm) {
         
         try {
             const formData = new FormData(e.target);
+            
+            // ✅ CORRECT FORMAT: Use proper field names expected by server
             const testData = {
                 respondentId: gameState.respondentId,
-                sessionId: gameState.sessionId,
+                sessionId: gameState.sessionId,  // ✅ ADDED: Required by server
                 q1_indexBased: formData.get('q1') === 'true',
                 q2_areaWide: formData.get('q2') === 'true',
                 q3_profitGuarantee: formData.get('q3') === 'false',
@@ -2943,50 +3136,83 @@ if (knowledgeForm) {
                 q5_basisRisk: formData.get('q5') === 'true'
             };
             
-            console.log('📝 Submitting knowledge test for respondent:', gameState.respondentId);
-            console.log('📝 Session type:', gameState.sessionType);
+            console.log('📝 Submitting knowledge test:', testData);
             
             await apiCall('/knowledge/submit', 'POST', testData);
+            
+            // ✅ ADDED: Mark session as complete
             await apiCall(`/session/${gameState.sessionId}/complete`, 'PUT');
             
             console.log('✅ Knowledge test submitted and session completed');
             
-            // IMPORTANT: Don't reset isSubmittingKnowledge here - let showResults handle it
             showLoading(false);
             
             // Show results - this will determine next step
             await showResults();
             
-            // Reset flag after showResults completes
-            isSubmittingKnowledge = false;
-            
         } catch (error) {
             showLoading(false);
             isSubmittingKnowledge = false;
-            console.error('Knowledge form error:', error);
-            alert('Error: ' + error.message);
+            console.error('❌ Knowledge form error:', error);
+            alert('Error submitting knowledge test: ' + error.message);
+        } finally {
+            isSubmittingKnowledge = false;
         }
     });
+    console.log('✅ Knowledge form handler registered');
 }
 
-
-     const startSecondBtn = document.getElementById('startSecondPartnerBtn');
-    if (startSecondBtn) {
-        startSecondBtn.addEventListener('click', startSecondPartner);
-        console.log('✅ Second partner button listener registered');
-    } else {
-        console.warn('⚠️ Second partner button not found');
+    // ===== COUPLE PRE-QUESTIONS =====
+    const couplePreForm = document.getElementById('couplePreQuestionsForm');
+    if (couplePreForm) {
+        couplePreForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // ... your existing couple pre-questions handler
+        });
     }
+
+    // ===== PERCEPTION FORM =====
+    const perceptionForm = document.getElementById('perceptionForm');
+    if (perceptionForm) {
+        perceptionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // ... your existing perception form handler
+        });
+    }
+
+    // ===== SECOND PARTNER BUTTONS =====
+    // const startSecondBtn = document.getElementById('startSecondPartnerBtn');
+    // if (startSecondBtn) {
+    //     startSecondBtn.addEventListener('click', startSecondPartner);
+    //     console.log('✅ Second partner button listener registered');
+    // }
     
-
-
     const startCouplePromptBtn = document.getElementById('startCouplePromptBtn');
     if (startCouplePromptBtn) {
         startCouplePromptBtn.addEventListener('click', startCouplePreQuestions);
     }
 
+    // ===== LANGUAGE TOGGLE =====
+    const langBtn = document.getElementById('languageBtn');
+    if (langBtn) {
+        langBtn.addEventListener('click', () => {
+            const newLang = gameState.language === 'english' ? 'dagbani' : 'english';
+            updateLanguage(newLang);
+        });
+        console.log('✅ Language toggle button listener registered');
+    }
 
+    // ===== CONNECTION STATUS =====
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
+    updateConnectionStatus();
+
+    console.log('✅ All event listeners registered');
+    console.log('🎮 Game ready!');
 });
+
+
+
 
 // ===== TOUCH SWIPE HANDLERS =====
 function handleTouchStart(e) {
@@ -3704,6 +3930,18 @@ let currentStep = 1; // Global step counter (1-18)
 let currentDemoPage = 1; // Demographics page counter (1-15)
 
 
+// In risk form handler:
+const SECOND_PARTNER_TOTAL_STEPS = 4; // demographics, risk, empowerment, tutorial
+
+// Update progress based on partner
+const totalSteps = gameState.isSecondPartner ? SECOND_PARTNER_TOTAL_STEPS : TOTAL_STEPS;
+const nextStep = gameState.isSecondPartner ? 3 : 12;
+
+currentStep = nextStep;
+updateGlobalProgress(currentStep, totalSteps);
+
+
+
 function updateGlobalProgress(stepNumber, totalSteps) {
     console.log(`📊 Progress: Step ${stepNumber} of ${totalSteps}`);
     
@@ -3752,18 +3990,25 @@ function showDemoPage(pageNum) {
         return;
     }
     
+    // FIRST: Scroll to top immediately
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    
     // Hide all demo pages
     document.querySelectorAll('.demo-page').forEach(page => {
         page.classList.remove('active');
     });
     
     // Show current page
-    const currentPage = document.getElementById(`demoPage${pageNum}`);
+      const currentPage = document.getElementById(`demoPage${pageNum}`);
     if (currentPage) {
         currentPage.classList.add('active');
-    } else {
-        console.error(`❌ Page demoPage${pageNum} not found!`);
-        return;
+        
+        // ✅ ADD THIS: Show guidance for second partner on page 1
+        if (pageNum === 1 && gameState.firstRespondentId) {
+            updateSecondPartnerGuidance();
+        }
     }
     
     // Update global step (demographics is steps 1-10)
@@ -3783,41 +4028,55 @@ function showDemoPage(pageNum) {
         if (pageNum === DEMOGRAPHICS_PAGES) {
             nextBtn.style.display = 'none';
             submitBtn.style.display = 'flex';
+            console.log('✅ Submit button now visible on page', pageNum);
         } else {
             nextBtn.style.display = 'flex';
             submitBtn.style.display = 'none';
         }
     }
     
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Force scroll to top again after DOM update
+    requestAnimationFrame(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    });
 }
+
+
+
+
+
 
 function validateCurrentDemoPage() {
     const currentPage = document.getElementById(`demoPage${currentDemoPage}`);
-    if (!currentPage) return true;
+    if (!currentPage) {
+        console.warn('⚠️ Current page not found:', currentDemoPage);
+        return true;
+    }
     
     let allValid = true;
     let firstInvalidField = null;
     
-    // ===== SPECIAL: Validate crops checkboxes if on page 5 =====
+    console.log(`🔍 Validating page ${currentDemoPage}...`);
+    
+    // SPECIAL: Validate crops checkboxes on page 5
     if (currentDemoPage === 5) {
         const cropsCheckboxes = currentPage.querySelectorAll('input[name="crops"]');
         const anyChecked = Array.from(cropsCheckboxes).some(cb => cb.checked);
         const cropsError = document.getElementById('cropsError');
         
         if (!anyChecked) {
+            console.warn('❌ No crops selected');
             allValid = false;
             if (cropsError) {
                 cropsError.style.display = 'block';
             }
-            
-            // Scroll to crops section
-            const cropsGroup = document.getElementById('cropsCheckboxGroup');
-            if (cropsGroup && !firstInvalidField) {
-                firstInvalidField = cropsGroup;
+            if (!firstInvalidField) {
+                firstInvalidField = document.getElementById('cropsCheckboxGroup');
             }
         } else {
+            console.log('✅ Crops validated');
             if (cropsError) {
                 cropsError.style.display = 'none';
             }
@@ -3826,6 +4085,7 @@ function validateCurrentDemoPage() {
     
     // Get all required fields on current page
     const requiredFields = currentPage.querySelectorAll('[required]');
+    console.log(`📋 Found ${requiredFields.length} required fields on page ${currentDemoPage}`);
     
     requiredFields.forEach(field => {
         if (field.type === 'checkbox' || field.type === 'radio') {
@@ -3835,6 +4095,7 @@ function validateCurrentDemoPage() {
             const anyChecked = Array.from(group).some(input => input.checked);
             
             if (!anyChecked) {
+                console.warn('❌ No option selected for:', name);
                 allValid = false;
                 if (!firstInvalidField) {
                     firstInvalidField = field;
@@ -3843,6 +4104,7 @@ function validateCurrentDemoPage() {
         } else {
             // Regular input validation
             if (!field.checkValidity()) {
+                console.warn('❌ Invalid field:', field.name, '| Value:', field.value);
                 allValid = false;
                 if (!firstInvalidField) {
                     firstInvalidField = field;
@@ -3852,32 +4114,43 @@ function validateCurrentDemoPage() {
     });
     
     if (!allValid && firstInvalidField) {
-        // Scroll to first invalid field
+        console.log('⚠️ Validation failed - scrolling to first invalid field');
         firstInvalidField.scrollIntoView({ 
             behavior: 'smooth', 
             block: 'center' 
         });
         
-        // Focus it after scrolling
         setTimeout(() => {
             firstInvalidField.focus();
             if (firstInvalidField.reportValidity) {
                 firstInvalidField.reportValidity();
             }
         }, 300);
+    } else {
+        console.log('✅ Page validation passed');
     }
     
     return allValid;
 }
 
 
+
+
 // Add navigation button listeners in DOMContentLoaded
+// ===== EVENT LISTENERS =====
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎮 Game initialized');
+    console.log('🎮 Weather Index Insurance Game Loaded');
     console.log(`📋 Total steps: ${TOTAL_STEPS}`);
     console.log(`📄 Demographics pages: ${DEMOGRAPHICS_PAGES}`);
-    
-    // Demographics Next Button
+
+    // ===== WELCOME SCREEN =====
+    const startBtn = document.getElementById('startBtn');
+    if (startBtn) {
+        startBtn.addEventListener('click', startDemographics);
+        console.log('✅ Start button listener registered');
+    }
+
+    // ===== DEMOGRAPHICS NAVIGATION =====
     const nextBtn = document.getElementById('demoNextBtn');
     if (nextBtn) {
         nextBtn.addEventListener('click', function() {
@@ -3892,9 +4165,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+        console.log('✅ Next button listener registered');
     }
     
-    // Demographics Previous Button
     const prevBtn = document.getElementById('demoPrevBtn');
     if (prevBtn) {
         prevBtn.addEventListener('click', function() {
@@ -3905,13 +4178,765 @@ document.addEventListener('DOMContentLoaded', function() {
                 showDemoPage(currentDemoPage);
             }
         });
+        console.log('✅ Previous button listener registered');
+    }
+    
+    // ===== DEMOGRAPHICS SUBMIT BUTTON =====
+    const submitBtn = document.getElementById('demoSubmitBtn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function(e) {
+            console.log('🔘 SUBMIT BUTTON CLICKED!');
+            console.log('Current page:', currentDemoPage);
+            console.log('Total pages:', DEMOGRAPHICS_PAGES);
+            
+            e.preventDefault();
+            
+            // Only proceed if on last page
+            if (currentDemoPage !== DEMOGRAPHICS_PAGES) {
+                console.log('⚠️ Not on last page, ignoring click');
+                return;
+            }
+            
+            // Validate current page
+            if (!validateCurrentDemoPage()) {
+                console.log('❌ Validation failed');
+                alert('Please fill in all required fields on this page.');
+                return;
+            }
+            
+            console.log('✅ Validation passed, triggering form submission...');
+            
+            // Trigger the form submission
+            const form = document.getElementById('demographicsForm');
+            if (form) {
+                console.log('📋 Form found, dispatching submit event...');
+                const submitEvent = new Event('submit', {
+                    bubbles: true,
+                    cancelable: true
+                });
+                form.dispatchEvent(submitEvent);
+            } else {
+                console.error('❌ Form not found!');
+                alert('Error: Demographics form not found. Please refresh the page.');
+            }
+        });
+        console.log('✅ Submit button listener registered');
+    } else {
+        console.error('❌ Submit button NOT found in DOM');
     }
     
     // Initialize demographics to page 1
     showDemoPage(1);
+
+    // ===== DEMOGRAPHICS FORM SUBMISSION (PARTNER 1) =====
+    const demoForm = document.getElementById('demographicsForm');
+    if (demoForm) {
+        console.log('✅ Demographics form found');
+        
+        demoForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            console.log('📝 FORM SUBMIT TRIGGERED');
+            console.log('Current page:', currentDemoPage, '/', DEMOGRAPHICS_PAGES);
+            
+            // CRITICAL: Only process if on last page
+            if (currentDemoPage !== DEMOGRAPHICS_PAGES) {
+                console.log('⚠️ Not on last page - skipping');
+                return;
+            }
+            
+            console.log('📝 Processing demographics submission (Partner 1)...');
+            showLoading();
+            
+            try {
+                const formData = new FormData(e.target);
+                
+                // ===== BASIC VALIDATION =====
+                const enumeratorName = formData.get('enumeratorName');
+                const communityName = formData.get('communityName');
+                const selectedRole = formData.get('role');
+                const selectedGender = formData.get('gender');
+                
+               if (!enumeratorName?.trim()) {
+    console.error('❌ Missing enumerator name');
+    console.log('📋 Available form data:', Array.from(formData.entries()));
+    throw new Error('Please enter enumerator name');
+}
+
+if (!communityName?.trim()) {
+    console.error('❌ Missing community name');
+    throw new Error('Please select a community');
+}
+
+if (!selectedRole) {
+    throw new Error('Please select your role (Husband/Wife)');
+}
+
+if (!selectedGender) {
+    throw new Error('Please select your gender');
+}
+                
+                // ===== COLLECT DATA =====
+                const crops = Array.from(document.querySelectorAll('input[name="crops"]:checked'))
+                    .map(cb => cb.value);
+                
+                console.log('🌾 Selected crops:', crops);
+                
+                if (crops.length === 0) {
+                    showLoading(false);
+                    alert('Please select at least one crop on Page 5 (Crops & Income)');
+                    currentDemoPage = 5;
+                    showDemoPage(5);
+                    return;
+                }
+                
+                const assets = {
+                    radio: formData.get('asset_radio') === '1',
+                    tv: formData.get('asset_tv') === '1',
+                    refrigerator: formData.get('asset_refrigerator') === '1',
+                    bicycle: formData.get('asset_bicycle') === '1',
+                    motorbike: formData.get('asset_motorbike') === '1',
+                    mobilePhone: formData.get('asset_mobilePhone') === '1',
+                    generator: formData.get('asset_generator') === '1',
+                    plough: formData.get('asset_plough') === '1'
+                };
+                
+                const livestock = {
+                    cattle: parseInt(formData.get('livestock_cattle')) || 0,
+                    goats: parseInt(formData.get('livestock_goats')) || 0,
+                    sheep: parseInt(formData.get('livestock_sheep')) || 0,
+                    poultry: parseInt(formData.get('livestock_poultry')) || 0
+                };
+                
+                const improvedInputs = {
+                    certifiedSeed: formData.get('input_certifiedSeed') === '1',
+                    fertilizer: formData.get('input_fertilizer') === '1',
+                    pesticides: formData.get('input_pesticides') === '1',
+                    irrigation: formData.get('input_irrigation') === '1'
+                };
+                
+                const shocks = {
+                    drought: formData.get('shock_drought') === '1',
+                    flood: formData.get('shock_flood') === '1',
+                    pestsDisease: formData.get('shock_pestsDisease') === '1',
+                    cropPriceFall: formData.get('shock_cropPriceFall') === '1'
+                };
+                
+                const borrowSources = [];
+                if (formData.get('borrowedMoney') === '1') {
+                    if (formData.get('borrowSource_bank')) borrowSources.push('bank');
+                    if (formData.get('borrowSource_microfinance')) borrowSources.push('microfinance');
+                    if (formData.get('borrowSource_vsla')) borrowSources.push('vsla');
+                    if (formData.get('borrowSource_familyFriends')) borrowSources.push('familyFriends');
+                    if (formData.get('borrowSource_moneylender')) borrowSources.push('moneylender');
+                }
+                
+                // ===== BUILD DEMOGRAPHICS OBJECT =====
+                gameState.demographics = {
+                    householdId: gameState.householdId,
+                    communityName: communityName.trim(),
+                    enumeratorName: enumeratorName.trim(),
+                    gender: selectedGender,
+                    role: selectedRole,
+                    language: gameState.language || 'english',
+                    
+                    age: parseInt(formData.get('age')) || 18,
+                    education: parseInt(formData.get('education')) || 0,
+                    householdSize: parseInt(formData.get('householdSize')) || 1,
+                    childrenUnder15: parseInt(formData.get('childrenUnder15')) || 0,
+                    
+                    assets: assets,
+                    livestock: livestock,
+                    
+                    yearsOfFarming: parseInt(formData.get('farmingYears')) || 0,
+                    landCultivated: parseFloat(formData.get('landSize')) || 0,
+                    landAccessMethod: parseInt(formData.get('landAccessMethod')) || 1,
+                    landAccessOther: formData.get('landAccessOther') || '',
+                    mainCrops: crops,
+                    numberOfCropsPlanted: parseInt(formData.get('numberOfCropsPlanted')) || 1,
+                    lastSeasonIncome: parseFloat(formData.get('lastIncome')) || 0,
+                    farmingInputExpenditure: parseFloat(formData.get('farmingInputExpenditure')) || 0,
+                    
+                    improvedInputs: improvedInputs,
+                    hasIrrigationAccess: formData.get('hasIrrigationAccess') === '1',
+                    
+                    shocks: shocks,
+                    estimatedLossLastYear: parseFloat(formData.get('estimatedLossLastYear')) || 0,
+                    harvestLossPercentage: parseInt(formData.get('harvestLossPercentage')) || 0,
+                    
+                    hasSavings: formData.get('hasSavings') === '1',
+                    savingsAmount: parseFloat(formData.get('savingsAmount')) || 0,
+                    borrowedMoney: formData.get('borrowedMoney') === '1',
+                    borrowSources: borrowSources,
+                    hasOffFarmIncome: formData.get('hasOffFarmIncome') === '1',
+                    offFarmIncomeAmount: parseFloat(formData.get('offFarmIncomeAmount')) || 0,
+                    
+                    priorInsuranceKnowledge: formData.get('priorKnowledge') === '1',
+                    purchasedInsuranceBefore: formData.get('purchasedInsuranceBefore') === '1',
+                    insuranceType: formData.get('insuranceType') || '',
+                    
+                    trustFarmerGroup: parseInt(formData.get('trust_farmerGroup')) || 3,
+                    trustNGO: parseInt(formData.get('trust_ngo')) || 3,
+                    trustInsuranceProvider: parseInt(formData.get('trust_insuranceProvider')) || 3,
+                    rainfallChangePerception: parseInt(formData.get('rainfallChangePerception')) || 3,
+                    insurerPayoutTrust: parseInt(formData.get('insurerPayoutTrust')) || 3,
+                    
+                    communityInsuranceDiscussion: false,
+                    extensionVisits: false,
+                    numberOfExtensionVisits: 0,
+                    
+                    memberOfFarmerGroup: formData.get('memberOfFarmerGroup') === '1',
+                    farmerGroupName: formData.get('farmerGroupName') || '',
+                    
+                    distanceToMarket: parseInt(formData.get('distanceToMarket')) || 0,
+                    distanceToInsurer: parseInt(formData.get('distanceToInsurer')) || 0,
+                    usesMobileMoney: formData.get('usesMobileMoney') === '1'
+                };
+                
+                gameState.gender = selectedGender;
+                gameState.role = selectedRole;
+                
+                console.log('✅ Demographics collected successfully');
+                console.log('📋 Moving to Risk Assessment (Step 11 of 13)');
+                
+                showLoading(false);
+                
+                // Move to step 11 (Risk screen)
+                currentStep = 11;
+                updateGlobalProgress(currentStep, TOTAL_STEPS);
+                
+                // Verify risk screen exists before transitioning
+                const riskScreen = document.getElementById('riskScreen');
+                if (!riskScreen) {
+                    console.error('❌ CRITICAL: Risk screen not found in DOM!');
+                    alert('Error: Risk screen is missing from the page. Please refresh and try again.');
+                    return;
+                }
+                
+                console.log('✅ Risk screen found, initiating transition...');
+                
+                // Small delay to ensure UI updates
+                setTimeout(() => {
+                    showScreen('riskScreen');
+                    console.log('✅ Transitioned to Risk Assessment screen');
+                    
+                    // Double-check the screen is actually showing
+                    if (!riskScreen.classList.contains('active')) {
+                        console.error('❌ Risk screen failed to activate!');
+                        riskScreen.classList.add('active');
+                    }
+                }, 100);
+                
+            } catch (error) {
+                showLoading(false);
+                console.error('❌ Demographics form error:', error);
+                console.error('Error stack:', error.stack);
+                alert('Error: ' + error.message + '\n\nPlease check the console for details.');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+        
+        console.log('✅ Demographics form submission handler registered');
+    } else {
+        console.error('❌ Demographics form NOT found!');
+    }
+
+    // ===== CONDITIONAL FIELD VISIBILITY =====
+    const hasSavingsRadios = document.querySelectorAll('[name="hasSavings"]');
+    hasSavingsRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const group = document.getElementById('savingsAmountGroup');
+            if (group) {
+                group.style.display = this.value === '1' ? 'block' : 'none';
+            }
+        });
+    });
     
-    // ... rest of your DOMContentLoaded code
+    const borrowedMoneyRadios = document.querySelectorAll('[name="borrowedMoney"]');
+    borrowedMoneyRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const group = document.getElementById('borrowingSourcesGroup');
+            if (group) {
+                group.style.display = this.value === '1' ? 'block' : 'none';
+            }
+        });
+    });
+    
+    const hasOffFarmRadios = document.querySelectorAll('[name="hasOffFarmIncome"]');
+    hasOffFarmRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            const group = document.getElementById('offFarmIncomeGroup');
+            if (group) {
+                group.style.display = this.value === '1' ? 'block' : 'none';
+            }
+        });
+    });
+
+    // ===== CROPS CHECKBOX VALIDATION =====
+    document.addEventListener('change', function(e) {
+        if (e.target.name === 'crops') {
+            const cropsCheckboxes = document.querySelectorAll('input[name="crops"]');
+            const anyChecked = Array.from(cropsCheckboxes).some(cb => cb.checked);
+            const cropsError = document.getElementById('cropsError');
+            
+            if (cropsError) {
+                cropsError.style.display = anyChecked ? 'none' : 'block';
+            }
+        }
+    });
+
+    // ===== RISK FORM =====
+    const riskForm = document.getElementById('riskForm');
+    if (riskForm) {
+        riskForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoading();
+            
+            try {
+                const formData = new FormData(e.target);
+                gameState.demographics.riskPreference = parseInt(formData.get('riskChoice'));
+                gameState.demographics.riskComfort = parseInt(formData.get('riskComfort'));
+                gameState.demographics.decisionMaker = parseInt(formData.get('decisionMaker'));
+                
+                showLoading(false);
+                
+                currentStep = 12;
+                updateGlobalProgress(currentStep, TOTAL_STEPS);
+                showScreen('empowermentScreen');
+            } catch (error) {
+                showLoading(false);
+                console.error('Risk form error:', error);
+                alert('Error: ' + error.message);
+            }
+        });
+        console.log('✅ Risk form handler registered');
+    }
+
+
+
+ const empForm = document.getElementById('empowermentForm');
+if (empForm) {
+    empForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showLoading();
+        
+        try {
+            const formData = new FormData(e.target);
+            gameState.empowermentScores = {
+                cropDecisions: parseInt(formData.get('q1')),
+                moneyDecisions: parseInt(formData.get('q2')),
+                inputDecisions: parseInt(formData.get('q3')),
+                opinionConsidered: parseInt(formData.get('q4')),
+                confidenceExpressing: parseInt(formData.get('q5'))
+            };
+            
+            const respondentData = {
+                ...gameState.demographics,
+                empowermentScores: gameState.empowermentScores
+            };
+            
+            // Create respondent
+            const respondent = await apiCall('/respondent/create', 'POST', respondentData);
+            gameState.respondentId = respondent._id;
+            
+            if (gameState.treatmentGroup && respondent.treatmentGroup !== gameState.treatmentGroup) {
+                console.error('⚠️ WARNING: Treatment group mismatch!');
+            }
+            gameState.treatmentGroup = respondent.treatmentGroup;
+            
+            console.log(`✅ Respondent created: ${respondent._id}, Treatment: ${respondent.treatmentGroup}`);
+            
+            // ✅ FIXED: Better detection logic using localStorage
+            const savedHouseholdData = localStorage.getItem('weather_game_household');
+            let savedFirstId = null;
+            if (savedHouseholdData) {
+                try {
+                    const parsed = JSON.parse(savedHouseholdData);
+                    savedFirstId = parsed.firstRespondentId;
+                } catch (e) {
+                    console.warn('Could not parse saved household data');
+                }
+            }
+            
+            // Determine if this is first or second partner
+            let isFirstPartner;
+            
+            if (!gameState.firstRespondentId && !savedFirstId) {
+                // No first partner exists anywhere - this is first
+                isFirstPartner = true;
+            } else if (gameState.firstRespondentId && respondent._id === gameState.firstRespondentId) {
+                // Current respondent matches stored first partner (shouldn't happen but handle it)
+                isFirstPartner = true;
+            } else if (savedFirstId && respondent._id === savedFirstId) {
+                // Current respondent matches saved first partner (shouldn't happen but handle it)
+                isFirstPartner = true;
+            } else if (gameState.firstRespondentId || savedFirstId) {
+                // First partner exists and current doesn't match - this is second
+                isFirstPartner = false;
+            } else {
+                // Default to first partner
+                isFirstPartner = true;
+            }
+            
+            console.log('🔍 Partner detection:', {
+                currentId: respondent._id,
+                firstIdInState: gameState.firstRespondentId,
+                firstIdInStorage: savedFirstId,
+                isFirstPartner: isFirstPartner
+            });
+            
+            if (isFirstPartner) {
+                // This is the FIRST partner
+                gameState.firstRespondentId = respondent._id;
+                gameState.firstRespondentRole = gameState.role;
+                gameState.firstRespondentData = {
+                    role: gameState.role,
+                    gender: gameState.gender,
+                    treatmentGroup: gameState.treatmentGroup,
+                    demographics: { ...gameState.demographics }
+                };
+                
+                // ✅ IMPORTANT: Clear any stale secondRespondentId
+                gameState.secondRespondentId = null;
+                
+                console.log('🎯 FIRST PARTNER registered:', {
+                    id: gameState.firstRespondentId,
+                    role: gameState.firstRespondentRole
+                });
+            } else {
+                // This is the SECOND partner
+                gameState.secondRespondentId = respondent._id;
+                
+                console.log('🎯 SECOND PARTNER registered:', {
+                    id: gameState.secondRespondentId,
+                    role: gameState.role
+                });
+            }
+            
+            // Set session type based on role
+            if (gameState.role === 'husband') {
+                gameState.sessionType = 'individual_husband';
+            } else if (gameState.role === 'wife') {
+                gameState.sessionType = 'individual_wife';
+            }
+            
+            console.log('📋 Session type set to:', gameState.sessionType);
+            
+            // Create session
+            const session = await apiCall('/session/start', 'POST', { 
+                respondentId: gameState.respondentId,
+                sessionType: gameState.sessionType
+            });
+            gameState.sessionId = session.sessionId;
+            
+            console.log('✅ Session created:', session.sessionId);
+            
+            showLoading(false);
+            showScreen('tutorialScreen');
+            initializeTutorial();
+        } catch (error) {
+            showLoading(false);
+            console.error('Empowerment form error:', error);
+            alert('Error: ' + error.message);
+        }
+    });
+}
+
+    // ===== TUTORIAL =====
+    const tutorialPrevBtn = document.getElementById('tutorialPrevBtn');
+    if (tutorialPrevBtn) {
+        tutorialPrevBtn.addEventListener('click', previousTutorialCard);
+    }
+    
+    const tutorialNextBtn = document.getElementById('tutorialNextBtn');
+    if (tutorialNextBtn) {
+        tutorialNextBtn.addEventListener('click', nextTutorialCard);
+    }
+    
+    const tutorialFinishBtn = document.getElementById('tutorialFinishBtn');
+    if (tutorialFinishBtn) {
+        tutorialFinishBtn.addEventListener('click', startGameAfterTutorial);
+    }
+
+    const cardStack = document.getElementById('tutorialCardStack');
+    if (cardStack) {
+        cardStack.addEventListener('touchstart', handleTouchStart, false);
+        cardStack.addEventListener('touchend', handleTouchEnd, false);
+    }
+
+    // ===== GAME ALLOCATION INPUTS =====
+    ['insuranceSpend', 'inputSpend', 'educationSpend', 'consumptionSpend'].forEach(inputId => {
+        const input = document.getElementById(inputId);
+        if (input) input.addEventListener('input', updateAllocation);
+    });
+
+    // ===== ALLOCATION FORM =====
+    // ===== ALLOCATION FORM =====
+
+// ===== ALLOCATION FORM =====
+const allocForm = document.getElementById('allocationForm');
+if (allocForm) {
+    allocForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        console.log('📝 Allocation form submitted');
+        console.log('Session ID:', gameState.sessionId);
+        console.log('Respondent ID:', gameState.respondentId);
+        
+        // CRITICAL: Check if we have required IDs
+        if (!gameState.sessionId) {
+            console.error('❌ Missing sessionId');
+            alert('Error: Session not initialized. Please restart the game.');
+            return;
+        }
+        
+        if (!gameState.respondentId) {
+            console.error('❌ Missing respondentId');
+            alert('Error: Respondent not initialized. Please restart the game.');
+            return;
+        }
+        
+        showLoading();
+        
+        try {
+            const budget = parseInt(document.getElementById('totalBudget').textContent);
+            const bundleCheckbox = document.getElementById('bundleAccepted');
+            const bundleAccepted = bundleCheckbox ? bundleCheckbox.checked : false;
+            
+            // Get inputChoiceType if insurance was purchased
+            let inputChoiceType = '';
+            if (bundleAccepted) {
+                const inputChoiceElement = document.getElementById('inputChoiceType');
+                inputChoiceType = inputChoiceElement ? inputChoiceElement.value : '';
+                
+                // Validate for control group
+                if (gameState.treatmentGroup === 'control' && !inputChoiceType) {
+                    showLoading(false);
+                    alert('Please select which input you want to receive with insurance');
+                    return;
+                }
+            }
+            
+            // Determine bundle product
+            let bundleProduct = 'none';
+            if (bundleAccepted) {
+                if (gameState.treatmentGroup === 'control') {
+                    bundleProduct = inputChoiceType; // 'seeds' or 'fertilizer'
+                } else if (gameState.treatmentGroup === 'fertilizer_bundle') {
+                    bundleProduct = 'fertilizer';
+                } else if (gameState.treatmentGroup === 'seedling_bundle') {
+                    bundleProduct = 'seeds';
+                }
+            }
+            
+            // ✅ COMPLETE seasonData object with ALL required fields
+            const seasonData = {
+                respondentId: gameState.respondentId,
+                sessionId: gameState.sessionId,
+                roundNumber: gameState.currentSeason,
+                budget: budget,
+                insuranceSpend: parseInt(document.getElementById('insuranceSpend').value) || 0,
+                inputSpend: parseInt(document.getElementById('inputSpend').value) || 0,
+                educationSpend: parseInt(document.getElementById('educationSpend').value) || 0,
+                consumptionSpend: parseInt(document.getElementById('consumptionSpend').value) || 0,
+                decisionContext: gameState.sessionType,
+                isPracticeRound: false,
+                bundleAccepted: bundleAccepted,
+                bundleProduct: bundleProduct,
+                inputChoiceType: inputChoiceType,
+                startTime: new Date(),
+                weatherShock: { occurred: false, type: 'normal', severity: 'none' },
+                harvestOutcome: 0,
+                payoutReceived: 0
+            };
+            
+            console.log('📊 Season data:', seasonData);
+            
+            // Generate weather and calculate outcomes
+            const weather = generateWeatherEvent();
+            
+            let severity = 'none';
+            if (weather.type === 'drought') {
+                severity = weather.harvestMultiplier < 0.5 ? 'severe' : 'mild';
+            } else if (weather.type === 'flood') {
+                severity = 'moderate';
+            }
+            
+            seasonData.weatherShock = {
+                occurred: weather.type !== 'normal',
+                type: weather.type,
+                severity: severity
+            };
+            
+            calculateOutcomes(seasonData, weather);
+            
+            console.log('🌐 Saving round to server...');
+            await apiCall('/round/save', 'POST', seasonData);
+            gameState.seasonData.push(seasonData);
+            
+            console.log(`✅ Season ${gameState.currentSeason} saved successfully`);
+            
+            showLoading(false);
+            showWeatherOutcome(seasonData, weather);
+            
+        } catch (error) {
+            showLoading(false);
+            console.error('❌ Allocation error:', error);
+            console.error('Error details:', error.message);
+            alert('Error saving allocation: ' + error.message);
+        }
+    });
+    console.log('✅ Allocation form handler registered');
+}
+
+
+
+    // ===== NEXT SEASON BUTTON =====
+    const nextSeasonBtn = document.getElementById('nextRoundBtn');
+    if (nextSeasonBtn) {
+        nextSeasonBtn.addEventListener('click', nextSeason);
+    }
+
+    // ===== KNOWLEDGE FORM =====
+    const knowledgeForm = document.getElementById('knowledgeForm');
+    if (knowledgeForm) {
+        knowledgeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (isSubmittingKnowledge) {
+                console.log('Already submitting knowledge test...');
+                return;
+            }
+            
+            isSubmittingKnowledge = true;
+            showLoading();
+            
+            try {
+                const formData = new FormData(e.target);
+                const answers = {
+                    q1: formData.get('q1') === 'true',
+                    q2: formData.get('q2') === 'true',
+                    q3: formData.get('q3') === 'false',
+                    q4: formData.get('q4') === 'true',
+                    q5: formData.get('q5') === 'true'
+                };
+                
+                await apiCall('/knowledge/submit', 'POST', {
+                    respondentId: gameState.respondentId,
+                    answers: answers
+                });
+                
+                showLoading(false);
+                await showResults();
+                
+            } catch (error) {
+                showLoading(false);
+                console.error('Knowledge test error:', error);
+                alert('Error submitting knowledge test: ' + error.message);
+            } finally {
+                isSubmittingKnowledge = false;
+            }
+        });
+    }
+
+    // ===== COUPLE PRE-QUESTIONS =====
+    const couplePreForm = document.getElementById('couplePreQuestionsForm');
+    if (couplePreForm) {
+        couplePreForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            try {
+                const formData = new FormData(e.target);
+                gameState.coupleInfo = {
+                    marriageDuration: parseInt(formData.get('marriageDuration')),
+                    numberOfChildren: parseInt(formData.get('numberOfChildren'))
+                };
+                
+                console.log('✅ Couple info collected:', gameState.coupleInfo);
+                
+                await startCoupleSession();
+            } catch (error) {
+                console.error('Couple pre-questions error:', error);
+                alert('Error: ' + error.message);
+            }
+        });
+    }
+
+    // ===== PERCEPTION FORM =====
+    const perceptionForm = document.getElementById('perceptionForm');
+    if (perceptionForm) {
+        perceptionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoading();
+            
+            try {
+                const formData = new FormData(e.target);
+                
+                const perceptionData = {
+                    sessionId: gameState.sessionId,
+                    bundleInfluence: parseInt(formData.get('bundleInfluence')),
+                    insuranceUnderstanding: parseInt(formData.get('insuranceUnderstanding')),
+                    willingnessToPay: formData.get('willingnessToPay') === 'yes',
+                    recommendToOthers: parseInt(formData.get('recommendToOthers')),
+                    perceivedFairness: parseInt(formData.get('perceivedFairness')),
+                    trustInPayout: parseInt(formData.get('trustInPayout')),
+                    bundleValuePerception: parseInt(formData.get('bundleValuePerception')),
+                    futureUseLikelihood: parseInt(formData.get('futureUseLikelihood'))
+                };
+                
+                await apiCall('/perception/submit', 'POST', perceptionData);
+                
+                console.log('✅ Perception data submitted');
+                
+                showLoading(false);
+                await showResults();
+                
+            } catch (error) {
+                showLoading(false);
+                console.error('Perception form error:', error);
+                alert('Error submitting perception data: ' + error.message);
+            }
+        });
+    }
+
+    // ===== SECOND PARTNER BUTTONS =====
+    const startSecondBtn = document.getElementById('startSecondPartnerBtn');
+    if (startSecondBtn) {
+        startSecondBtn.addEventListener('click', startSecondPartner);
+        console.log('✅ Second partner button listener registered');
+    }
+    
+    const startCouplePromptBtn = document.getElementById('startCouplePromptBtn');
+    if (startCouplePromptBtn) {
+        startCouplePromptBtn.addEventListener('click', startCouplePreQuestions);
+    }
+
+    // ===== RESTART BUTTON =====
+    const restartBtn = document.getElementById('restartBtn');
+    if (restartBtn) {
+        restartBtn.addEventListener('click', restartGame);
+    }
+
+    // ===== LANGUAGE TOGGLE =====
+    const langBtn = document.getElementById('languageBtn');
+    if (langBtn) {
+        langBtn.addEventListener('click', () => {
+            const newLang = gameState.language === 'english' ? 'dagbani' : 'english';
+            updateLanguage(newLang);
+        });
+        console.log('✅ Language toggle button listener registered');
+    }
+
+    // ===== CONNECTION STATUS =====
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
+    updateConnectionStatus();
+
+    console.log('✅ All event listeners registered');
+    console.log('🎮 Game ready!');
 });
+
+
 
 
 
@@ -4009,62 +5034,6 @@ function validateCurrentDemoPage() {
 
 
 
-// Add navigation button listeners
-document.addEventListener('DOMContentLoaded', function() {
-    const nextBtn = document.getElementById('demoNextBtn');
-    if (nextBtn) {
-        nextBtn.addEventListener('click', function() {
-            if (validateCurrentDemoPage()) {
-                currentDemoPage++;
-                showDemoPage(currentDemoPage);
-            }
-        });
-    }
-    
-    const prevBtn = document.getElementById('demoPrevBtn');
-    if (prevBtn) {
-        prevBtn.addEventListener('click', function() {
-            if (currentDemoPage > 1) {
-                currentDemoPage--;
-                showDemoPage(currentDemoPage);
-            }
-        });
-    }
-    
-    // Initialize to page 1
-    showDemoPage(1);
-    
-    // Show/hide conditional fields
-    const hasSavingsRadios = document.querySelectorAll('[name="hasSavings"]');
-    hasSavingsRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            const group = document.getElementById('savingsAmountGroup');
-            if (group) {
-                group.style.display = this.value === '1' ? 'block' : 'none';
-            }
-        });
-    });
-    
-    const borrowedMoneyRadios = document.querySelectorAll('[name="borrowedMoney"]');
-    borrowedMoneyRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            const group = document.getElementById('borrowingSourcesGroup');
-            if (group) {
-                group.style.display = this.value === '1' ? 'block' : 'none';
-            }
-        });
-    });
-    
-    const hasOffFarmRadios = document.querySelectorAll('[name="hasOffFarmIncome"]');
-    hasOffFarmRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            const group = document.getElementById('offFarmIncomeGroup');
-            if (group) {
-                group.style.display = this.value === '1' ? 'block' : 'none';
-            }
-        });
-    });
-});
 
 
 
@@ -4193,6 +5162,9 @@ function updateCoupleQuestionsLang() {
     if (startBtn) startBtn.textContent = t('couple.startSession');
 }
 
+
+
+
 function updateExtendedDemographicsLang() {
     // Update page titles
     const pageTitles = {
@@ -4233,7 +5205,7 @@ function updateExtendedDemographicsLang() {
     updateCheckboxLabel('asset_generator', t('demographicsExtended.generator'));
     updateCheckboxLabel('asset_plough', t('demographicsExtended.plough'));
     
-    // Update navigation buttons
+    // Update navigation button TEXT only (not event listeners)
     const prevBtn = document.getElementById('demoPrevBtn');
     if (prevBtn) {
         const span = prevBtn.querySelector('span');
@@ -4252,6 +5224,9 @@ function updateExtendedDemographicsLang() {
         if (span) span.textContent = t('demographicsExtended.continueRisk');
     }
 }
+
+
+
 
 // Helper function to update label by its text content
 function updateLabelByText(searchText, newText) {
@@ -4327,3 +5302,183 @@ function goBackToEmpowerment() {
 
 
 
+// ===== SHOW SHORTENED DEMOGRAPHICS FOR SECOND PARTNER =====
+function showSecondPartnerDemographics() {
+    console.log('📝 Showing shortened demographics for second partner');
+    
+    // Update role guidance
+    if (gameState.firstRespondentRole) {
+        const roleSelect = document.getElementById('secondPartnerRole');
+        const roleGuidance = document.getElementById('secondPartnerRoleGuidance');
+        
+        if (roleSelect && roleGuidance) {
+            const oppositeRole = gameState.firstRespondentRole === 'husband' ? 'wife' : 'husband';
+            
+            roleGuidance.style.display = 'block';
+            roleGuidance.innerHTML = `
+                <i class="fas fa-info-circle"></i>
+                The <strong>${gameState.firstRespondentRole}</strong> has already completed their session. 
+                Please select <strong>"${oppositeRole}"</strong> below.
+            `;
+            
+            // Pre-select the opposite role
+            roleSelect.value = oppositeRole;
+            
+            // Disable the first partner's role
+            const options = roleSelect.querySelectorAll('option');
+            options.forEach(option => {
+                if (option.value === gameState.firstRespondentRole) {
+                    option.disabled = true;
+                    option.textContent = option.textContent + ' (Already played)';
+                }
+            });
+        }
+    }
+    
+    showScreen('secondPartnerDemographicsScreen');
+}
+
+// ===== SECOND PARTNER DEMOGRAPHICS FORM HANDLER =====
+const secondPartnerDemoForm = document.getElementById('secondPartnerDemographicsForm');
+if (secondPartnerDemoForm) {
+    secondPartnerDemoForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showLoading();
+        
+        try {
+            const formData = new FormData(e.target);
+            
+            // Validate role
+            const selectedRole = formData.get('role');
+            if (selectedRole === gameState.firstRespondentRole) {
+                throw new Error(`The ${gameState.firstRespondentRole} has already played!`);
+            }
+            
+            // ✅ MERGE individual data with household data
+            gameState.demographics = {
+                ...gameState.demographics, // Keep household data
+                // Add individual data
+                gender: formData.get('gender'),
+                role: selectedRole,
+                age: parseInt(formData.get('age')),
+                education: parseInt(formData.get('education')),
+                priorInsuranceKnowledge: formData.get('priorKnowledge') === '1',
+                purchasedInsuranceBefore: formData.get('purchasedInsuranceBefore') === '1',
+                insuranceType: '',
+                trustFarmerGroup: parseInt(formData.get('trust_farmerGroup')),
+                trustNGO: parseInt(formData.get('trust_ngo')),
+                trustInsuranceProvider: parseInt(formData.get('trust_insuranceProvider')),
+                rainfallChangePerception: parseInt(formData.get('rainfallChangePerception')),
+                insurerPayoutTrust: parseInt(formData.get('insurerPayoutTrust')),
+                language: gameState.language || 'english'
+            };
+            
+            gameState.gender = formData.get('gender');
+            gameState.role = selectedRole;
+            
+            console.log('✅ Second partner demographics collected');
+            console.log('📋 Household data preserved from first partner');
+            
+            showLoading(false);
+            
+            // Go to risk screen (Step 2 of 4)
+            currentStep = 2;
+            updateGlobalProgress(2, 4);
+            showScreen('riskScreen');
+            
+        } catch (error) {
+            showLoading(false);
+            console.error('❌ Second partner form error:', error);
+            alert(error.message);
+        }
+    });
+}
+
+
+
+// ===== UPDATE SECOND PARTNER GUIDANCE =====
+function updateSecondPartnerGuidance() {
+    console.log('📝 Updating second partner guidance');
+    
+    if (!gameState.firstRespondentId || !gameState.firstRespondentRole) {
+        console.log('⚠️ No first partner data available');
+        return;
+    }
+    
+    // Find the role select on page 1
+    const roleSelect = document.getElementById('role');
+    if (!roleSelect) {
+        console.log('⚠️ Role select not found');
+        return;
+    }
+    
+    // Determine opposite role
+    const oppositeRole = gameState.firstRespondentRole === 'husband' ? 'wife' : 'husband';
+    const firstRole = gameState.firstRespondentRole;
+    
+    console.log(`First partner was: ${firstRole}, second should be: ${oppositeRole}`);
+    
+    // Check if guidance already exists
+    let guidanceDiv = document.getElementById('secondPartnerGuidance');
+    
+    if (!guidanceDiv) {
+        // Create guidance div if it doesn't exist
+        guidanceDiv = document.createElement('div');
+        guidanceDiv.id = 'secondPartnerGuidance';
+        guidanceDiv.style.cssText = `
+            background: #FFF9C4;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 15px;
+            border-left: 6px solid #FFA726;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        // Insert after the role select's form-group
+        const roleFormGroup = roleSelect.closest('.form-group');
+        if (roleFormGroup) {
+            roleFormGroup.appendChild(guidanceDiv);
+        }
+    }
+    
+    // Update guidance content
+    guidanceDiv.innerHTML = `
+        <p style="margin: 0; font-size: 16px; line-height: 1.6;">
+            <i class="fas fa-info-circle" style="color: #F57C00; margin-right: 10px;"></i>
+            <strong>Note:</strong> The <strong>${firstRole}</strong> has already completed their session. 
+            Please select <strong>"${oppositeRole}"</strong> below.
+        </p>
+    `;
+    
+    // Disable the first partner's role option
+    const options = roleSelect.querySelectorAll('option');
+    options.forEach(option => {
+        if (option.value === firstRole) {
+            option.disabled = true;
+            option.textContent = option.textContent.replace(' (Already played)', '') + ' (Already played)';
+        } else if (option.value === oppositeRole) {
+            option.disabled = false;
+        }
+    });
+    
+    // Pre-select the opposite role
+    roleSelect.value = oppositeRole;
+    
+    // Trigger change event to update UI if needed
+    const changeEvent = new Event('change', { bubbles: true });
+    roleSelect.dispatchEvent(changeEvent);
+    
+    console.log('✅ Second partner guidance updated');
+}
+
+
+// ===== SECOND PARTNER BUTTON (Event Delegation) =====
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('#startSecondPartnerBtn');
+    if (btn) {
+        console.log('🔘 Second partner button clicked via delegation!');
+        e.preventDefault();
+        startSecondPartner();
+    }
+});
+console.log('✅ Second partner button listener registered (delegation)');

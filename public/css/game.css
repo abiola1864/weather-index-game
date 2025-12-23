@@ -2919,4 +2919,23 @@ button:disabled {
         }
     }
 
+
+    /* Fix excessive top margin on post-game screens */
+#knowledgeScreen .form-container,
+#perceptionScreen .form-container,
+#resultsScreen .results-container {
+    padding-top: 40px !important;
+    margin-top: 0 !important;
+}
+
+#knowledgeScreen,
+#perceptionScreen,
+#resultsScreen {
+    padding-top: 20px !important;
+}
+
+/* Ensure progress header doesn't add extra space */
+.progress-header {
+    margin-bottom: 30px;
+}
     

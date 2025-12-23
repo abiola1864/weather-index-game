@@ -397,6 +397,7 @@ const respondentSchema = new mongoose.Schema({
 
 
 // ===== COMMUNITY ASSIGNMENT SCHEMA =====
+// ===== COMMUNITY ASSIGNMENT SCHEMA =====
 const communityAssignmentSchema = new mongoose.Schema({
   communityName: {
     type: String,
@@ -405,8 +406,8 @@ const communityAssignmentSchema = new mongoose.Schema({
   },
   district: {
     type: String,
-    enum: ['Savelugu Municipal', 'Nanton District'],
     required: true
+    // ✅ No enum - allows any district name
   },
   treatmentGroup: {
     type: String,
@@ -415,7 +416,7 @@ const communityAssignmentSchema = new mongoose.Schema({
   },
   targetHouseholds: {
     type: Number,
-    default: 100
+    default: 10
   },
   completedHouseholds: {
     type: Number,
@@ -426,6 +427,7 @@ const communityAssignmentSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
 
 const CommunityAssignment = mongoose.model('CommunityAssignment', communityAssignmentSchema);
 
