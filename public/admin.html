@@ -406,7 +406,155 @@
         </div>
     </div>
 
+
+    <!-- DANGER ZONE - DELETE ALL DATA -->
+<div class="section" style="border: 3px solid var(--ghana-red); background: #FFEBEE;">
+    <h2 style="color: var(--ghana-red);">
+        <i class="fas fa-exclamation-triangle"></i> Danger Zone
+    </h2>
+    <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+        <h3 style="color: var(--ghana-red); margin-bottom: 15px;">
+            ⚠️ Delete All Game Data
+        </h3>
+        <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">
+            <strong>WARNING:</strong> This will permanently delete ALL data from the database including:
+        </p>
+        <ul style="margin-left: 30px; margin-bottom: 20px; color: #666;">
+            <li>All respondent records (demographics, attitudes, behavior)</li>
+            <li>All game sessions and rounds</li>
+            <li>All knowledge test results</li>
+            <li>All perception assessments</li>
+            <li>⚠️ Community assignments will NOT be deleted (preserved for new data collection)</li>
+        </ul>
+        <div style="background: #FFF9C4; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--ghana-yellow);">
+            <p style="margin: 0; color: #555;">
+                <i class="fas fa-shield-alt"></i> <strong>Password protected:</strong> You must enter the correct password to proceed.
+            </p>
+        </div>
+        
+        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <input 
+                type="password" 
+                id="deletePassword" 
+                placeholder="Enter password to enable delete"
+                style="padding: 12px; border: 2px solid #ccc; border-radius: 8px; font-size: 16px; flex: 1; min-width: 200px;"
+            />
+            <button 
+                id="deleteAllBtn" 
+                class="btn" 
+                style="background: var(--ghana-red); color: white; cursor: not-allowed; opacity: 0.5;"
+                disabled
+            >
+                <i class="fas fa-trash-alt"></i>
+                Delete All Data
+            </button>
+        </div>
+        
+        <p id="deleteMessage" style="margin-top: 15px; display: none;"></p>
+    </div>
+</div>
+
+
+
     <script>
+
+
+// Password protection for delete button
+const DELETE_PASSWORD = 'gme110_ghana';
+const deletePasswordInput = document.getElementById('deletePassword');
+const deleteAllBtn = document.getElementById('deleteAllBtn');
+
+deletePasswordInput.addEventListener('input', function() {
+    if (this.value === DELETE_PASSWORD) {
+        deleteAllBtn.disabled = false;
+        deleteAllBtn.style.opacity = '1';
+        deleteAllBtn.style.cursor = 'pointer';
+        this.style.borderColor = 'var(--ghana-green)';
+        this.style.background = '#E8F5E9';
+    } else {
+        deleteAllBtn.disabled = true;
+        deleteAllBtn.style.opacity = '0.5';
+        deleteAllBtn.style.cursor = 'not-allowed';
+        this.style.borderColor = '#ccc';
+        this.style.background = 'white';
+    }
+});
+
+deleteAllBtn.addEventListener('click', async function() {
+    const password = deletePasswordInput.value;
+    
+    if (password !== DELETE_PASSWORD) {
+        alert('Incorrect password!');
+        return;
+    }
+    
+    const confirmText = `⚠️ CRITICAL WARNING ⚠️
+
+This will PERMANENTLY DELETE ALL:
+- ${document.getElementById('totalRespondents').textContent} Respondents
+- All game sessions and rounds
+- All knowledge tests
+- All perception data
+
+Community assignments WILL BE PRESERVED.
+
+Type "DELETE ALL DATA" to confirm:`;
+    
+    const userConfirm = prompt(confirmText);
+    
+    if (userConfirm !== 'DELETE ALL DATA') {
+        alert('Deletion cancelled. You must type "DELETE ALL DATA" exactly.');
+        return;
+    }
+    
+    // Final confirmation
+    if (!confirm('Are you ABSOLUTELY SURE? This cannot be undone!')) {
+        return;
+    }
+    
+    const messageEl = document.getElementById('deleteMessage');
+    messageEl.style.display = 'block';
+    messageEl.style.color = '#F57F17';
+    messageEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting all data...';
+    
+    try {
+        const response = await fetch(`${API_BASE}/api/admin/delete-all`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ password })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            messageEl.style.color = 'var(--ghana-green)';
+            messageEl.innerHTML = `
+                <i class="fas fa-check-circle"></i> 
+                <strong>Success!</strong> Deleted: ${result.data.respondentsDeleted} respondents, 
+                ${result.data.sessionsDeleted} sessions, ${result.data.roundsDeleted} rounds, 
+                ${result.data.knowledgeDeleted} knowledge tests, ${result.data.perceptionsDeleted} perceptions.
+            `;
+            
+            // Clear password and reload dashboard after 3 seconds
+            setTimeout(() => {
+                deletePasswordInput.value = '';
+                deletePasswordInput.dispatchEvent(new Event('input'));
+                loadDashboard();
+            }, 3000);
+        } else {
+            messageEl.style.color = 'var(--ghana-red)';
+            messageEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Error: ${result.message}`;
+        }
+    } catch (error) {
+        messageEl.style.color = 'var(--ghana-red)';
+        messageEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Error: ${error.message}`;
+    }
+});
+
+
+
         const API_BASE = window.location.origin;
 
         // Load all data on page load

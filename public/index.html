@@ -361,6 +361,156 @@ select:invalid:focus {
 }
 
 
+/* ===== HORIZONTAL LIKERT SCALE (1-5 in a line) ===== */
+.rating-scale {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin: 20px 0 10px 0;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #f5f5f5, #e8e8e8);
+    border-radius: 15px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.rating-scale label {
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+    margin: 0;
+}
+
+.rating-scale input[type="radio"] {
+    display: none; /* Hide default radio button */
+}
+
+.rating-scale span {
+    display: block;
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: white;
+    color: #666;
+    font-weight: 700;
+    font-size: 18px;
+    transition: all 0.3s ease;
+    border: 3px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Hover effect */
+.rating-scale label:hover span {
+    background: #E8F5E9;
+    border-color: var(--primary);
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+}
+
+/* Selected state */
+.rating-scale input[type="radio"]:checked + span {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: scale(1.15);
+    box-shadow: 0 4px 15px rgba(46, 125, 50, 0.5);
+}
+
+/* Scale labels (Not at all --- Fully trust) */
+.scale-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding: 0 10px;
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+}
+
+.scale-labels span:first-child {
+    text-align: left;
+}
+
+.scale-labels span:last-child {
+    text-align: right;
+}
+
+/* Mobile responsive - keep horizontal but smaller */
+@media (max-width: 768px) {
+    .rating-scale {
+        padding: 12px 10px;
+        gap: 5px;
+    }
+    
+    .rating-scale span {
+        width: 45px;
+        height: 45px;
+        line-height: 45px;
+        font-size: 16px;
+    }
+    
+    .scale-labels {
+        font-size: 12px;
+        padding: 0 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .rating-scale span {
+        width: 40px;
+        height: 40px;
+        line-height: 40px;
+        font-size: 14px;
+    }
+}
+
+
+/* ===== BACK BUTTON ON DEMO PAGES ===== */
+.demo-back-btn {
+    position: absolute;
+    top: 80px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid #757575;
+    color: #424242;
+    padding: 10px 18px;
+    border-radius: 50px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.demo-back-btn:hover {
+    background: #757575;
+    color: white;
+    transform: translateX(-5px);
+}
+
+.demo-back-btn i {
+    font-size: 16px;
+}
+
+@media (max-width: 768px) {
+    .demo-back-btn {
+        top: 70px;
+        left: 10px;
+        padding: 8px 14px;
+        font-size: 13px;
+    }
+}
+
+
+
 
     </style>
 </head>
@@ -450,6 +600,15 @@ select:invalid:focus {
 <!-- Demographics Screen - 10-STEP VERSION (SHORTER PAGES) -->
 <div id="demographicsScreen" class="screen">
     <div class="form-container" style="max-width: 800px;">
+
+         <!-- ✅ BACK TO PREVIOUS PAGE BUTTON (only shows after page 1) -->
+        <button class="demo-back-btn" onclick="goBackOnePage()" id="demoTopBackBtn" style="display: none;">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back</span>
+        </button>
+        
+
+
         <div class="progress-header">
     <div class="progress-bar">
         <div class="progress-fill" id="demoProgressBar" style="width: 7.7%"></div>
@@ -850,62 +1009,161 @@ select:invalid:focus {
         </div>
     </div>
 
-    <div class="form-group">
-        <label>How much do you trust insurance providers? (1 = Not at all, 5 = Fully) <span style="color: red;">*</span></label>
-        <div class="rating-scale">
-            <label><input type="radio" name="trust_insuranceProvider" value="1" required> 1</label>
-            <label><input type="radio" name="trust_insuranceProvider" value="2"> 2</label>
-            <label><input type="radio" name="trust_insuranceProvider" value="3"> 3</label>
-            <label><input type="radio" name="trust_insuranceProvider" value="4"> 4</label>
-            <label><input type="radio" name="trust_insuranceProvider" value="5"> 5</label>
-        </div>
+   <div class="form-group">
+    <label>How much do you trust insurance providers? (1 = Not at all, 5 = Fully) <span style="color: red;">*</span></label>
+    <div class="rating-scale">
+        <label>
+            <input type="radio" name="trust_insuranceProvider" value="1" required>
+            <span>1</span>
+        </label>
+        <label>
+            <input type="radio" name="trust_insuranceProvider" value="2">
+            <span>2</span>
+        </label>
+        <label>
+            <input type="radio" name="trust_insuranceProvider" value="3">
+            <span>3</span>
+        </label>
+        <label>
+            <input type="radio" name="trust_insuranceProvider" value="4">
+            <span>4</span>
+        </label>
+        <label>
+            <input type="radio" name="trust_insuranceProvider" value="5">
+            <span>5</span>
+        </label>
     </div>
+    <div class="scale-labels">
+        <span>Not at all</span>
+        <span>Fully trust</span>
+    </div>
+</div>
 
-    <div class="form-group">
-        <label>How much do you trust farmer groups/cooperatives? (1-5) <span style="color: red;">*</span></label>
-        <div class="rating-scale">
-            <label><input type="radio" name="trust_farmerGroup" value="1" required> 1</label>
-            <label><input type="radio" name="trust_farmerGroup" value="2"> 2</label>
-            <label><input type="radio" name="trust_farmerGroup" value="3"> 3</label>
-            <label><input type="radio" name="trust_farmerGroup" value="4"> 4</label>
-            <label><input type="radio" name="trust_farmerGroup" value="5"> 5</label>
-        </div>
+<div class="form-group">
+    <label>How much do you trust farmer groups/cooperatives? (1-5) <span style="color: red;">*</span></label>
+    <div class="rating-scale">
+        <label>
+            <input type="radio" name="trust_farmerGroup" value="1" required>
+            <span>1</span>
+        </label>
+        <label>
+            <input type="radio" name="trust_farmerGroup" value="2">
+            <span>2</span>
+        </label>
+        <label>
+            <input type="radio" name="trust_farmerGroup" value="3">
+            <span>3</span>
+        </label>
+        <label>
+            <input type="radio" name="trust_farmerGroup" value="4">
+            <span>4</span>
+        </label>
+        <label>
+            <input type="radio" name="trust_farmerGroup" value="5">
+            <span>5</span>
+        </label>
     </div>
+    <div class="scale-labels">
+        <span>Not at all</span>
+        <span>Fully trust</span>
+    </div>
+</div>
 
-    <div class="form-group">
-        <label>How much do you trust NGOs? (1-5) <span style="color: red;">*</span></label>
-        <div class="rating-scale">
-            <label><input type="radio" name="trust_ngo" value="1" required> 1</label>
-            <label><input type="radio" name="trust_ngo" value="2"> 2</label>
-            <label><input type="radio" name="trust_ngo" value="3"> 3</label>
-            <label><input type="radio" name="trust_ngo" value="4"> 4</label>
-            <label><input type="radio" name="trust_ngo" value="5"> 5</label>
-        </div>
+<div class="form-group">
+    <label>How much do you trust NGOs? (1-5) <span style="color: red;">*</span></label>
+    <div class="rating-scale">
+        <label>
+            <input type="radio" name="trust_ngo" value="1" required>
+            <span>1</span>
+        </label>
+        <label>
+            <input type="radio" name="trust_ngo" value="2">
+            <span>2</span>
+        </label>
+        <label>
+            <input type="radio" name="trust_ngo" value="3">
+            <span>3</span>
+        </label>
+        <label>
+            <input type="radio" name="trust_ngo" value="4">
+            <span>4</span>
+        </label>
+        <label>
+            <input type="radio" name="trust_ngo" value="5">
+            <span>5</span>
+        </label>
     </div>
+    <div class="scale-labels">
+        <span>Not at all</span>
+        <span>Fully trust</span>
+    </div>
+</div>
+
 
     <!-- ✅ ADD THIS QUESTION -->
-    <div class="form-group">
-        <label>Do you think rainfall patterns have changed in recent years? (1 = Not at all, 5 = Very much) <span style="color: red;">*</span></label>
-        <div class="rating-scale">
-            <label><input type="radio" name="rainfallChangePerception" value="1" required> 1</label>
-            <label><input type="radio" name="rainfallChangePerception" value="2"> 2</label>
-            <label><input type="radio" name="rainfallChangePerception" value="3"> 3</label>
-            <label><input type="radio" name="rainfallChangePerception" value="4"> 4</label>
-            <label><input type="radio" name="rainfallChangePerception" value="5"> 5</label>
-        </div>
+ <!-- ✅ QUESTION: Rainfall Change Perception -->
+<div class="form-group">
+    <label>Do you think rainfall patterns have changed in recent years? (1 = Not at all, 5 = Very much) <span style="color: red;">*</span></label>
+    <div class="rating-scale">
+        <label>
+            <input type="radio" name="rainfallChangePerception" value="1" required>
+            <span>1</span>
+        </label>
+        <label>
+            <input type="radio" name="rainfallChangePerception" value="2">
+            <span>2</span>
+        </label>
+        <label>
+            <input type="radio" name="rainfallChangePerception" value="3">
+            <span>3</span>
+        </label>
+        <label>
+            <input type="radio" name="rainfallChangePerception" value="4">
+            <span>4</span>
+        </label>
+        <label>
+            <input type="radio" name="rainfallChangePerception" value="5">
+            <span>5</span>
+        </label>
     </div>
+    <div class="scale-labels">
+        <span>Not at all</span>
+        <span>Very much</span>
+    </div>
+</div>
 
-    <!-- ✅ ADD THIS QUESTION -->
-    <div class="form-group">
-        <label>How much do you trust that insurance companies will pay out when needed? (1 = Not at all, 5 = Fully) <span style="color: red;">*</span></label>
-        <div class="rating-scale">
-            <label><input type="radio" name="insurerPayoutTrust" value="1" required> 1</label>
-            <label><input type="radio" name="insurerPayoutTrust" value="2"> 2</label>
-            <label><input type="radio" name="insurerPayoutTrust" value="3"> 3</label>
-            <label><input type="radio" name="insurerPayoutTrust" value="4"> 4</label>
-            <label><input type="radio" name="insurerPayoutTrust" value="5"> 5</label>
-        </div>
+<!-- ✅ QUESTION: Insurer Payout Trust -->
+<div class="form-group">
+    <label>How much do you trust that insurance companies will pay out when needed? (1 = Not at all, 5 = Fully) <span style="color: red;">*</span></label>
+    <div class="rating-scale">
+        <label>
+            <input type="radio" name="insurerPayoutTrust" value="1" required>
+            <span>1</span>
+        </label>
+        <label>
+            <input type="radio" name="insurerPayoutTrust" value="2">
+            <span>2</span>
+        </label>
+        <label>
+            <input type="radio" name="insurerPayoutTrust" value="3">
+            <span>3</span>
+        </label>
+        <label>
+            <input type="radio" name="insurerPayoutTrust" value="4">
+            <span>4</span>
+        </label>
+        <label>
+            <input type="radio" name="insurerPayoutTrust" value="5">
+            <span>5</span>
+        </label>
     </div>
+    <div class="scale-labels">
+        <span>Not at all</span>
+        <span>Fully trust</span>
+    </div>
+</div>
+
+
 
     <div class="form-group">
         <label>Distance to nearest market (minutes walking) <span style="color: red;">*</span></label>
@@ -1011,18 +1269,38 @@ select:invalid:focus {
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label data-translate="risk.comfort">
-                            How comfortable are you with financial risks?
-                        </label>
-                        <div class="rating-scale">
-                            <label><input type="radio" name="riskComfort" value="1" required> 1 - Not at all</label>
-                            <label><input type="radio" name="riskComfort" value="2"> 2</label>
-                            <label><input type="radio" name="riskComfort" value="3"> 3 - Neutral</label>
-                            <label><input type="radio" name="riskComfort" value="4"> 4</label>
-                            <label><input type="radio" name="riskComfort" value="5"> 5 - Very comfortable</label>
-                        </div>
-                    </div>
+
+<div class="form-group">
+    <label data-translate="risk.comfort">
+        How comfortable are you with financial risks?
+    </label>
+    <div class="rating-scale">
+        <label>
+            <input type="radio" name="riskComfort" value="1" required>
+            <span>1</span>
+        </label>
+        <label>
+            <input type="radio" name="riskComfort" value="2">
+            <span>2</span>
+        </label>
+        <label>
+            <input type="radio" name="riskComfort" value="3">
+            <span>3</span>
+        </label>
+        <label>
+            <input type="radio" name="riskComfort" value="4">
+            <span>4</span>
+        </label>
+        <label>
+            <input type="radio" name="riskComfort" value="5">
+            <span>5</span>
+        </label>
+    </div>
+    <div class="scale-labels">
+        <span>Not at all</span>
+        <span>Very comfortable</span>
+    </div>
+</div>
 
                     <div class="form-group">
                         <label data-translate="risk.decisionMaker">

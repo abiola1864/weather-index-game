@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { GameSession, GameRound, Respondent, KnowledgeTest, CommunityAssignment } = require('../models/Game');
 
+
 const {
   getDashboardStats,
   getCommunityAssignments,
@@ -364,5 +365,74 @@ router.delete('/households/:householdId', async (req, res) => {
     });
   }
 });
+
+
+// ===== DELETE ALL DATA (PASSWORD PROTECTED) =====
+router.post('/delete-all', async (req, res) => {
+  try {
+    const { password } = req.body;
+    
+    // Password protection
+    const CORRECT_PASSWORD = 'gme110_ghana';
+    
+    if (password !== CORRECT_PASSWORD) {
+      return res.status(403).json({
+        success: false,
+        message: 'Incorrect password'
+      });
+    }
+    
+    console.log('⚠️ DELETE ALL DATA requested...');
+    
+    // Get counts before deletion
+    const respondentsCount = await Respondent.countDocuments();
+    const sessionsCount = await GameSession.countDocuments();
+    const roundsCount = await GameRound.countDocuments();
+    const knowledgeCount = await KnowledgeTest.countDocuments();
+    
+    // Import Perception model
+    const { Perception } = require('../models/Game');
+    const perceptionsCount = await Perception.countDocuments();
+    
+    // Delete all data (but preserve CommunityAssignments)
+    await Respondent.deleteMany({});
+    await GameSession.deleteMany({});
+    await GameRound.deleteMany({});
+    await KnowledgeTest.deleteMany({});
+    await Perception.deleteMany({});
+    
+    console.log('✅ All data deleted successfully');
+    console.log(`   - Respondents: ${respondentsCount}`);
+    console.log(`   - Sessions: ${sessionsCount}`);
+    console.log(`   - Rounds: ${roundsCount}`);
+    console.log(`   - Knowledge Tests: ${knowledgeCount}`);
+    console.log(`   - Perceptions: ${perceptionsCount}`);
+    
+    res.json({
+      success: true,
+      message: 'All data deleted successfully',
+      data: {
+        respondentsDeleted: respondentsCount,
+        sessionsDeleted: sessionsCount,
+        roundsDeleted: roundsCount,
+        knowledgeDeleted: knowledgeCount,
+        perceptionsDeleted: perceptionsCount
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error deleting all data:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+
+// ===== DELETE ALL DATA (PASSWORD PROTECTED) =====
+const { deleteAllData } = require('../controllers/adminController');
+router.post('/delete-all', deleteAllData);
+
+
 
 module.exports = router;

@@ -2003,27 +2003,18 @@ function showSecondPartnerPrompt() {
 
 
 
-
 function startSecondPartner() {
     console.log('🔄 Starting second partner...');
     
-    // ===== SEPARATE HOUSEHOLD VS INDIVIDUAL DATA =====
-    
-    // HOUSEHOLD DATA (shared by both partners) - from pages 2-10
+    // ===== EXTRACT AND SAVE HOUSEHOLD DATA =====
     const householdData = {
         householdId: gameState.householdId,
         communityName: gameState.demographics.communityName,
         enumeratorName: gameState.demographics.enumeratorName,
         householdSize: gameState.demographics.householdSize,
         childrenUnder15: gameState.demographics.childrenUnder15,
-        
-        // Assets (Page 3)
         assets: gameState.demographics.assets,
-        
-        // Livestock (Page 6)
         livestock: gameState.demographics.livestock,
-        
-        // Farm details (Pages 4-5)
         yearsOfFarming: gameState.demographics.yearsOfFarming,
         landCultivated: gameState.demographics.landCultivated,
         landAccessMethod: gameState.demographics.landAccessMethod,
@@ -2032,38 +2023,23 @@ function startSecondPartner() {
         numberOfCropsPlanted: gameState.demographics.numberOfCropsPlanted,
         lastSeasonIncome: gameState.demographics.lastSeasonIncome,
         farmingInputExpenditure: gameState.demographics.farmingInputExpenditure,
-        
-        // Farm inputs (Page 7)
         improvedInputs: gameState.demographics.improvedInputs,
         hasIrrigationAccess: gameState.demographics.hasIrrigationAccess,
-        
-        // Shocks (Page 8)
         shocks: gameState.demographics.shocks,
         estimatedLossLastYear: gameState.demographics.estimatedLossLastYear,
         harvestLossPercentage: gameState.demographics.harvestLossPercentage,
-        
-        // Savings & Credit (Page 9)
         hasSavings: gameState.demographics.hasSavings,
         savingsAmount: gameState.demographics.savingsAmount,
         borrowedMoney: gameState.demographics.borrowedMoney,
         borrowSources: gameState.demographics.borrowSources,
         hasOffFarmIncome: gameState.demographics.hasOffFarmIncome,
         offFarmIncomeAmount: gameState.demographics.offFarmIncomeAmount,
-        
-        // Community access (Page 10)
         memberOfFarmerGroup: gameState.demographics.memberOfFarmerGroup,
         farmerGroupName: gameState.demographics.farmerGroupName,
         distanceToMarket: gameState.demographics.distanceToMarket,
         distanceToInsurer: gameState.demographics.distanceToInsurer,
         usesMobileMoney: gameState.demographics.usesMobileMoney
     };
-    
-    // NOTE: Individual fields NOT included:
-    // - gender, role, age (Page 1)
-    // - education (Page 2)
-    // - priorInsuranceKnowledge, purchasedInsuranceBefore (Page 10)
-    // - trust scores: trustInsuranceProvider, trustFarmerGroup, trustNGO (Page 10)
-    // - rainfallChangePerception, insurerPayoutTrust (Page 10)
     
     // Save first partner's complete state
     const savedState = {
@@ -2073,14 +2049,10 @@ function startSecondPartner() {
         firstRole: gameState.role,
         firstGender: gameState.gender,
         firstSessionType: gameState.sessionType,
-        householdData: householdData // Only household data, NOT individual data
+        householdData: householdData
     };
     
-    console.log('💾 Saving first partner state');
-    console.log('📊 Household data fields:', Object.keys(householdData).length);
-    console.log('📊 Individual fields excluded: gender, role, age, education, trust scores');
-    
-    // Store first partner info before resetting
+    // Store first partner tracking info
     if (!gameState.firstRespondentId) {
         gameState.firstRespondentId = savedState.firstRespondentId;
         gameState.firstRespondentRole = savedState.firstRole;
@@ -2092,171 +2064,70 @@ function startSecondPartner() {
         };
     }
     
-    // Save to localStorage
+    // Save to localStorage for recovery
     try {
         localStorage.setItem('weather_game_household', JSON.stringify(savedState));
-        console.log('💾 Saved to localStorage');
+        console.log('💾 Saved first partner data to localStorage');
     } catch (e) {
         console.warn('⚠️ Could not save to localStorage:', e);
     }
     
-    // ===== RESET FOR SECOND PARTNER =====
+    // ===== RESET GAME STATE FOR SECOND PARTNER =====
+    const preservedData = {
+        householdId: gameState.householdId,
+        treatmentGroup: gameState.treatmentGroup,
+        firstRespondentId: gameState.firstRespondentId,
+        firstRespondentRole: gameState.firstRespondentRole,
+        firstRespondentData: gameState.firstRespondentData
+    };
     
-    // Keep tracking variables
-    const householdId = gameState.householdId;
-    const treatmentGroup = gameState.treatmentGroup;
-    const firstRespondentId = gameState.firstRespondentId;
-    const firstRespondentRole = gameState.firstRespondentRole;
-    const firstRespondentData = gameState.firstRespondentData;
-    
-    // Reset individual session data
+    // Reset individual fields
     gameState.respondentId = null;
     gameState.sessionId = null;
-    gameState.demographics = { ...householdData }; // ONLY household data, NO individual fields
+    gameState.demographics = { ...householdData }; // Keep household data
     gameState.empowermentScores = {};
     gameState.seasonData = [];
     gameState.currentSeason = 1;
-    
-    // Individual fields - MUST be blank for second partner
     gameState.gender = null;
     gameState.role = null;
     gameState.sessionType = null;
     
-    // Restore household tracking
-    gameState.householdId = householdId;
-    gameState.treatmentGroup = treatmentGroup;
-    gameState.firstRespondentId = firstRespondentId;
-    gameState.firstRespondentRole = firstRespondentRole;
-    gameState.firstRespondentData = firstRespondentData;
+    // Restore preserved tracking data
+    Object.assign(gameState, preservedData);
     
-    console.log('✅ Second partner reset complete');
-    console.log('📋 First partner ID:', gameState.firstRespondentId);
-    console.log('📋 First partner role:', gameState.firstRespondentRole);
-    console.log('📋 Household ID:', gameState.householdId);
-    console.log('📋 Treatment group:', gameState.treatmentGroup);
-    console.log('✅ Individual fields cleared (gender, role, age, education, trust)');
+    console.log('✅ Game state reset for second partner');
+    console.log('📋 Preserved:', {
+        householdId: gameState.householdId,
+        firstRespondentRole: gameState.firstRespondentRole,
+        treatmentGroup: gameState.treatmentGroup
+    });
     
-    // Clear all form fields
-    const forms = document.querySelectorAll('form');
-    forms.forEach(form => form.reset());
+    // Clear all forms
+    document.querySelectorAll('form').forEach(form => form.reset());
     
-    // Reset to page 1
+    // Reset progress
     currentDemoPage = 1;
     currentStep = 1;
     updateGlobalProgress(1, 13);
     
+    // Show demographics screen
     showScreen('demographicsScreen');
     
-    // Set up form for second partner
+    // ===== SETUP FORM AFTER SCREEN TRANSITION =====
     setTimeout(() => {
         showDemoPage(1);
         
-        // ===== ONLY PRE-FILL HOUSEHOLD IDENTIFIER FIELDS =====
-        
-        // PAGE 1: Community & Enumerator (DISABLE - household identifiers)
-        const communitySelect = document.getElementById('communityName');
-        const enumeratorSelect = document.getElementById('enumeratorName');
-        
-        if (communitySelect) {
-            communitySelect.value = householdData.communityName || '';
-            communitySelect.disabled = true;
-            communitySelect.style.opacity = '0.6';
-            communitySelect.style.background = '#f5f5f5';
-            communitySelect.style.cursor = 'not-allowed';
+        const form = document.getElementById('demographicsForm');
+        if (!form) {
+            console.error('❌ Demographics form not found!');
+            return;
         }
         
-        if (enumeratorSelect) {
-            enumeratorSelect.value = householdData.enumeratorName || '';
-            enumeratorSelect.disabled = true;
-            enumeratorSelect.style.opacity = '0.6';
-            enumeratorSelect.style.background = '#f5f5f5';
-            enumeratorSelect.style.cursor = 'not-allowed';
-        }
+        // ===== STEP 1: REMOVE OLD HIDDEN FIELDS =====
+        form.querySelectorAll('input[data-second-partner-hidden]').forEach(field => field.remove());
         
-        // ⚠️ CRITICAL: Do NOT pre-fill individual fields
-        // Gender, Role, Age, Education are left BLANK for second partner to fill
-        
-        console.log('✅ Form setup complete:');
-        console.log('  - Community: Pre-filled & disabled');
-        console.log('  - Enumerator: Pre-filled & disabled');
-        console.log('  - Gender: BLANK (second partner must fill)');
-        console.log('  - Role: BLANK (second partner must fill)');
-        console.log('  - Age: BLANK (second partner must fill)');
-        console.log('  - Education: BLANK (second partner must fill)');
-        console.log('  - Trust scores: BLANK (second partner must fill)');
-        
-        // Add informative notice for second partner
-        const page1 = document.getElementById('demoPage1');
-        if (page1 && !document.getElementById('secondPartnerNotice')) {
-            const noticeDiv = document.createElement('div');
-            noticeDiv.id = 'secondPartnerNotice';
-            noticeDiv.style.cssText = `
-                background: linear-gradient(135deg, #FFF9C4, #FFF59D);
-                padding: 20px;
-                border-radius: 12px;
-                margin-bottom: 25px;
-                border-left: 6px solid #FFA726;
-                box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
-            `;
-            noticeDiv.innerHTML = `
-                <p style="margin: 0 0 15px 0; font-size: 18px; font-weight: 700; color: #F57C00;">
-                    <i class="fas fa-user-circle" style="margin-right: 10px;"></i>
-                    Second Partner - Please Enter YOUR Personal Information
-                </p>
-                <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 12px;">
-                    <p style="margin: 0 0 8px 0; font-weight: 600; color: #2E7D32;">
-                        ✅ Already saved (you don't need to fill these again):
-                    </p>
-                    <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #555;">
-                        Community, Enumerator, Household size, Children, Assets, Livestock, Farm size, Crops, Income, Shocks, Savings, Market distance
-                    </p>
-                </div>
-                <div style="background: white; padding: 15px; border-radius: 8px;">
-                    <p style="margin: 0 0 8px 0; font-weight: 600; color: #F57C00;">
-                        📝 You MUST fill out (your personal information):
-                    </p>
-                    <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #555;">
-                        Your role (husband/wife), gender, age, education level, and all trust/perception questions on page 10
-                    </p>
-                </div>
-            `;
-            page1.insertBefore(noticeDiv, page1.firstChild);
-        }
-        
-        // Update role selection guidance
-        updateSecondPartnerGuidance();
-        
-        console.log('✅ Second partner demographics form ready');
-        console.log('✅ Using SAME 10-page form as first partner');
-        
-    }, 200);
-}
-
-
-
-
-
-// ===== START SECOND PARTNER - FIXED =====
-// Replace the existing startSecondPartner() function
-
-// ===== START SECOND PARTNER - FIXED STEP COUNTER =====
-// ===== START SECOND PARTNER - WITH HOUSEHOLD DATA COPY =====
-// ===== START SECOND PARTNER - FIXED =====
-// Replace the existing startSecondPartner() function (around line 2124)
-
-// ===== START SECOND PARTNER - FIXED =====
-setTimeout(() => {
-    showDemoPage(1); // Start at page 1 but with pre-filled data
-    
-    // ✅ CRITICAL: Add hidden fields for ALL household data that will be disabled
-    const form = document.getElementById('demographicsForm');
-    if (form) {
-        // Remove any existing hidden fields first
-        const existingHidden = form.querySelectorAll('input[data-second-partner-hidden]');
-        existingHidden.forEach(field => field.remove());
-        
-        // Create hidden fields for ALL data from first partner
-        const hiddenFieldsData = {
+        // ===== STEP 2: ADD HIDDEN FIELDS FOR HOUSEHOLD DATA =====
+        const hiddenFields = {
             'enumeratorName': householdData.enumeratorName,
             'communityName': householdData.communityName,
             'householdSize': householdData.householdSize,
@@ -2283,8 +2154,8 @@ setTimeout(() => {
             'usesMobileMoney': householdData.usesMobileMoney ? '1' : '0'
         };
         
-        // Add all hidden fields
-        Object.entries(hiddenFieldsData).forEach(([name, value]) => {
+        // Create hidden inputs
+        Object.entries(hiddenFields).forEach(([name, value]) => {
             const hidden = document.createElement('input');
             hidden.type = 'hidden';
             hidden.name = name;
@@ -2293,7 +2164,7 @@ setTimeout(() => {
             form.appendChild(hidden);
         });
         
-        // Add hidden fields for crops (checkboxes)
+        // Add crops
         if (householdData.mainCrops && Array.isArray(householdData.mainCrops)) {
             householdData.mainCrops.forEach(crop => {
                 const hidden = document.createElement('input');
@@ -2305,7 +2176,7 @@ setTimeout(() => {
             });
         }
         
-        // Add hidden fields for assets (checkboxes)
+        // Add assets
         if (householdData.assets) {
             Object.entries(householdData.assets).forEach(([asset, has]) => {
                 if (has) {
@@ -2319,7 +2190,7 @@ setTimeout(() => {
             });
         }
         
-        // Add hidden fields for livestock
+        // Add livestock
         if (householdData.livestock) {
             Object.entries(householdData.livestock).forEach(([animal, count]) => {
                 const hidden = document.createElement('input');
@@ -2331,7 +2202,7 @@ setTimeout(() => {
             });
         }
         
-        // Add hidden fields for improved inputs
+        // Add improved inputs
         if (householdData.improvedInputs) {
             Object.entries(householdData.improvedInputs).forEach(([input, used]) => {
                 if (used) {
@@ -2345,7 +2216,7 @@ setTimeout(() => {
             });
         }
         
-        // Add hidden fields for shocks
+        // Add shocks
         if (householdData.shocks) {
             Object.entries(householdData.shocks).forEach(([shock, experienced]) => {
                 if (experienced) {
@@ -2359,7 +2230,7 @@ setTimeout(() => {
             });
         }
         
-        // Add hidden fields for borrow sources
+        // Add borrow sources
         if (householdData.borrowSources && Array.isArray(householdData.borrowSources)) {
             householdData.borrowSources.forEach(source => {
                 const hidden = document.createElement('input');
@@ -2372,98 +2243,59 @@ setTimeout(() => {
         }
         
         console.log('✅ Added hidden fields for all household data');
-    }
-    
-    // Disable and visually indicate pre-filled fields on page 1
-    const communitySelect = document.getElementById('communityName');
-    const enumeratorInput = document.getElementById('enumeratorName');
-    
-    if (communitySelect) {
-        communitySelect.value = householdData.communityName;
-        communitySelect.disabled = true;
-        communitySelect.style.opacity = '0.6';
-        communitySelect.style.background = '#f5f5f5';
-        communitySelect.style.cursor = 'not-allowed';
-    }
-    
-    if (enumeratorInput) {
-        enumeratorInput.value = householdData.enumeratorName;
-        enumeratorInput.disabled = true;
-        enumeratorInput.style.opacity = '0.6';
-        enumeratorInput.style.background = '#f5f5f5';
-        enumeratorInput.style.cursor = 'not-allowed';
-    }
-    
-    // Add notice for second partner
-    const page1 = document.getElementById('demoPage1');
-    if (page1 && !document.getElementById('secondPartnerNotice')) {
-        const noticeDiv = document.createElement('div');
-        noticeDiv.id = 'secondPartnerNotice';
-        noticeDiv.style.cssText = `
-            background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            border-left: 6px solid #2196F3;
-        `;
-        noticeDiv.innerHTML = `
-            <p style="margin: 0 0 10px 0; font-size: 18px; font-weight: 700; color: #1565C0;">
-                <i class="fas fa-user-friends" style="margin-right: 10px;"></i>
-                Second Partner Information
-            </p>
-            <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #424242;">
-                <strong>Community and Enumerator</strong> are pre-filled from the first partner.
-                <br>Please fill in <strong>your personal details</strong> (role, gender, age).
-            </p>
-        `;
-        page1.insertBefore(noticeDiv, page1.firstChild);
-    }
-    
-    // Pre-select opposite role and add guidance
-    const roleSelect = document.getElementById('role');
-    if (roleSelect && gameState.firstRespondentRole) {
-        const oppositeRole = gameState.firstRespondentRole === 'husband' ? 'wife' : 'husband';
         
-        // Add visual guidance
-        const roleFormGroup = roleSelect.closest('.form-group');
-        if (roleFormGroup && !document.getElementById('secondPartnerGuidance')) {
-            const guidanceDiv = document.createElement('div');
-            guidanceDiv.id = 'secondPartnerGuidance';
-            guidanceDiv.style.cssText = `
-                background: #FFF9C4;
-                padding: 15px;
-                border-radius: 8px;
-                margin-top: 10px;
-                border-left: 4px solid #FFA726;
+        // ===== STEP 3: DISABLE AND HIDE VISIBLE ENUMERATOR/COMMUNITY FIELDS =====
+       // Disable and hide enumerator and community fields
+const communitySelect = document.getElementById('communityName');
+const enumeratorSelect = document.getElementById('enumeratorName');
+
+if (communitySelect) {
+    communitySelect.removeAttribute('required');
+    communitySelect.disabled = true; // ✅ Disable so it's not in FormData
+    const formGroup = communitySelect.closest('.form-group');
+    if (formGroup) formGroup.style.display = 'none';
+}
+
+if (enumeratorSelect) {
+    enumeratorSelect.removeAttribute('required');
+    enumeratorSelect.disabled = true; // ✅ Disable so it's not in FormData
+    const formGroup = enumeratorSelect.closest('.form-group');
+    if (formGroup) formGroup.style.display = 'none';
+}
+
+        
+        // ===== STEP 4: ADD NOTICE BOX =====
+        const page1 = document.getElementById('demoPage1');
+        if (page1 && !document.getElementById('secondPartnerNotice')) {
+            const noticeDiv = document.createElement('div');
+            noticeDiv.id = 'secondPartnerNotice';
+            noticeDiv.style.cssText = `
+                background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+                padding: 20px;
+                border-radius: 12px;
+                margin-bottom: 25px;
+                border-left: 6px solid #2196F3;
             `;
-            guidanceDiv.innerHTML = `
-                <p style="margin: 0; font-size: 14px;">
-                    <i class="fas fa-info-circle" style="color: #F57C00; margin-right: 8px;"></i>
-                    <strong>Note:</strong> The ${gameState.firstRespondentRole} already played. 
-                    Please select "${oppositeRole}" below.
+            noticeDiv.innerHTML = `
+                <p style="margin: 0 0 10px 0; font-size: 18px; font-weight: 700; color: #1565C0;">
+                    <i class="fas fa-user-friends" style="margin-right: 10px;"></i>
+                    Second Partner Information
+                </p>
+                <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #424242;">
+                    <strong>Community and Enumerator</strong> are already saved from the first partner.
+                    <br>Please fill in <strong>your personal details</strong> (role, gender, age, education, trust scores).
                 </p>
             `;
-            roleFormGroup.appendChild(guidanceDiv);
+            page1.insertBefore(noticeDiv, page1.firstChild);
         }
         
-        // Disable first partner's role
-        const options = roleSelect.querySelectorAll('option');
-        options.forEach(option => {
-            if (option.value === gameState.firstRespondentRole) {
-                option.disabled = true;
-                if (!option.textContent.includes('Already played')) {
-                    option.textContent = option.textContent + ' (Already played)';
-                }
-            }
-        });
+        // ===== STEP 5: SETUP ROLE GUIDANCE =====
+        updateSecondPartnerGuidance();
         
-        // Pre-select opposite role
-        roleSelect.value = oppositeRole;
-    }
-    
-    console.log('✅ Demographics screen prepared for second partner with hidden fields');
-}, 200);
-
+        console.log('✅ Second partner form setup complete');
+        
+    }, 200);
+}
 
 
 
@@ -2799,8 +2631,192 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== DEMOGRAPHICS FORM SUBMISSION (PARTNER 1) =====
    // ===== DEMOGRAPHICS FORM SUBMISSION (PARTNER 1) =====
-
-
+const demoForm = document.getElementById('demographicsForm');
+if (demoForm) {
+    console.log('✅ Demographics form found');
+    
+    demoForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        console.log('📝 FORM SUBMIT TRIGGERED');
+        console.log('Current page:', currentDemoPage, '/', DEMOGRAPHICS_PAGES);
+        
+        // CRITICAL: Only process if on last page
+        if (currentDemoPage !== DEMOGRAPHICS_PAGES) {
+            console.log('⚠️ Not on last page - skipping');
+            return;
+        }
+        
+        // Validate before proceeding
+        if (!validateCurrentDemoPage()) {
+            console.log('❌ Validation failed');
+            alert('Please fill in all required fields on this page.');
+            return;
+        }
+        
+        console.log('✅ Starting submission process...');
+        showLoading();
+        
+        try {
+            const formData = new FormData(e.target);
+            
+            // Basic validation
+            const enumeratorName = formData.get('enumeratorName');
+            const communityName = formData.get('communityName');
+            const selectedRole = formData.get('role');
+            const selectedGender = formData.get('gender');
+            
+            if (!enumeratorName?.trim() || !communityName?.trim() || !selectedRole || !selectedGender) {
+                throw new Error('Missing required basic information');
+            }
+            
+            // Collect crops
+            const crops = Array.from(document.querySelectorAll('input[name="crops"]:checked'))
+                .map(cb => cb.value);
+            
+            if (crops.length === 0) {
+                showLoading(false);
+                alert('⚠️ Please select at least one crop on Page 5');
+                currentDemoPage = 5;
+                showDemoPage(5);
+                return;
+            }
+            
+            // Collect assets
+            const assets = {
+                radio: formData.get('asset_radio') === '1',
+                tv: formData.get('asset_tv') === '1',
+                refrigerator: formData.get('asset_refrigerator') === '1',
+                bicycle: formData.get('asset_bicycle') === '1',
+                motorbike: formData.get('asset_motorbike') === '1',
+                mobilePhone: formData.get('asset_mobilePhone') === '1',
+                generator: formData.get('asset_generator') === '1',
+                plough: formData.get('asset_plough') === '1'
+            };
+            
+            const livestock = {
+                cattle: parseInt(formData.get('livestock_cattle')) || 0,
+                goats: parseInt(formData.get('livestock_goats')) || 0,
+                sheep: parseInt(formData.get('livestock_sheep')) || 0,
+                poultry: parseInt(formData.get('livestock_poultry')) || 0
+            };
+            
+            const improvedInputs = {
+                certifiedSeed: formData.get('input_certifiedSeed') === '1',
+                fertilizer: formData.get('input_fertilizer') === '1',
+                pesticides: formData.get('input_pesticides') === '1',
+                irrigation: formData.get('input_irrigation') === '1'
+            };
+            
+            const shocks = {
+                drought: formData.get('shock_drought') === '1',
+                flood: formData.get('shock_flood') === '1',
+                pestsDisease: formData.get('shock_pestsDisease') === '1',
+                cropPriceFall: formData.get('shock_cropPriceFall') === '1'
+            };
+            
+            const borrowSources = [];
+            if (formData.get('borrowedMoney') === '1') {
+                if (formData.get('borrowSource_bank')) borrowSources.push('bank');
+                if (formData.get('borrowSource_microfinance')) borrowSources.push('microfinance');
+                if (formData.get('borrowSource_vsla')) borrowSources.push('vsla');
+                if (formData.get('borrowSource_familyFriends')) borrowSources.push('familyFriends');
+                if (formData.get('borrowSource_moneylender')) borrowSources.push('moneylender');
+            }
+            
+            // Build demographics object
+            gameState.demographics = {
+                householdId: gameState.householdId,
+                communityName: communityName.trim(),
+                enumeratorName: enumeratorName.trim(),
+                gender: selectedGender,
+                role: selectedRole,
+                language: gameState.language || 'english',
+                
+                age: parseInt(formData.get('age')) || 18,
+                education: parseInt(formData.get('education')) || 0,
+                householdSize: parseInt(formData.get('householdSize')) || 1,
+                childrenUnder15: parseInt(formData.get('childrenUnder15')) || 0,
+                
+                assets: assets,
+                livestock: livestock,
+                
+                yearsOfFarming: parseInt(formData.get('farmingYears')) || 0,
+                landCultivated: parseFloat(formData.get('landSize')) || 0,
+                landAccessMethod: parseInt(formData.get('landAccessMethod')) || 1,
+                landAccessOther: formData.get('landAccessOther') || '',
+                mainCrops: crops,
+                numberOfCropsPlanted: parseInt(formData.get('numberOfCropsPlanted')) || 1,
+                lastSeasonIncome: parseFloat(formData.get('lastIncome')) || 0,
+                farmingInputExpenditure: parseFloat(formData.get('farmingInputExpenditure')) || 0,
+                
+                improvedInputs: improvedInputs,
+                hasIrrigationAccess: formData.get('hasIrrigationAccess') === '1',
+                
+                shocks: shocks,
+                estimatedLossLastYear: parseFloat(formData.get('estimatedLossLastYear')) || 0,
+                harvestLossPercentage: parseInt(formData.get('harvestLossPercentage')) || 0,
+                
+                hasSavings: formData.get('hasSavings') === '1',
+                savingsAmount: parseFloat(formData.get('savingsAmount')) || 0,
+                borrowedMoney: formData.get('borrowedMoney') === '1',
+                borrowSources: borrowSources,
+                hasOffFarmIncome: formData.get('hasOffFarmIncome') === '1',
+                offFarmIncomeAmount: parseFloat(formData.get('offFarmIncomeAmount')) || 0,
+                
+                priorInsuranceKnowledge: formData.get('priorKnowledge') === '1',
+                purchasedInsuranceBefore: formData.get('purchasedInsuranceBefore') === '1',
+                insuranceType: formData.get('insuranceType') || '',
+                
+                trustFarmerGroup: parseInt(formData.get('trust_farmerGroup')) || 3,
+                trustNGO: parseInt(formData.get('trust_ngo')) || 3,
+                trustInsuranceProvider: parseInt(formData.get('trust_insuranceProvider')) || 3,
+                rainfallChangePerception: parseInt(formData.get('rainfallChangePerception')) || 3,
+                insurerPayoutTrust: parseInt(formData.get('insurerPayoutTrust')) || 3,
+                
+                communityInsuranceDiscussion: false,
+                extensionVisits: false,
+                numberOfExtensionVisits: 0,
+                
+                memberOfFarmerGroup: formData.get('memberOfFarmerGroup') === '1',
+                farmerGroupName: formData.get('farmerGroupName') || '',
+                
+                distanceToMarket: parseInt(formData.get('distanceToMarket')) || 0,
+                distanceToInsurer: parseInt(formData.get('distanceToInsurer')) || 0,
+                usesMobileMoney: formData.get('usesMobileMoney') === '1'
+            };
+            
+            gameState.gender = selectedGender;
+            gameState.role = selectedRole;
+            
+            console.log('✅ Demographics collected successfully!');
+            console.log('📊 Role:', selectedRole, '| Gender:', selectedGender);
+            console.log('📊 Crops:', crops);
+            
+            showLoading(false);
+            
+            // Move to Risk Assessment (Step 11)
+            currentStep = 11;
+            updateGlobalProgress(currentStep, TOTAL_STEPS);
+            
+            console.log('🎯 Moving to Risk Assessment...');
+            
+            setTimeout(() => {
+                showScreen('riskScreen');
+                console.log('✅ TRANSITIONED TO RISK SCREEN');
+            }, 100);
+            
+        } catch (error) {
+            showLoading(false);
+            console.error('❌ ERROR:', error.message);
+            console.error('Stack:', error.stack);
+            alert('Error submitting demographics: ' + error.message);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    });
+    
+    console.log('✅ Demographics form submission handler registered');
+}
 
 
 
@@ -3800,64 +3816,121 @@ function updateGlobalProgress(stepNumber, totalSteps = TOTAL_STEPS) {
 function showDemoPage(pageNum) {
     console.log(`📄 Showing demo page ${pageNum} of ${DEMOGRAPHICS_PAGES}`);
     
+    // ✅ CHECK IF SECOND PARTNER (they should skip household data pages)
+    const isSecondPartner = document.querySelector('input[data-second-partner-hidden]') !== null;
+    
     // Validate page number
     if (pageNum < 1 || pageNum > DEMOGRAPHICS_PAGES) {
         console.error(`Invalid page number: ${pageNum}`);
         return;
     }
     
-    // FIRST: Scroll to top immediately
+    // AGGRESSIVE SCROLL RESET - Multiple methods
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+    window.pageYOffset = 0;
     
     // Hide all demo pages
     document.querySelectorAll('.demo-page').forEach(page => {
         page.classList.remove('active');
+        page.scrollTop = 0; // Reset scroll of each page
     });
     
     // Show current page
-      const currentPage = document.getElementById(`demoPage${pageNum}`);
+    const currentPage = document.getElementById(`demoPage${pageNum}`);
+    
     if (currentPage) {
+        // Reset current page scroll before showing
+        currentPage.scrollTop = 0;
+        currentPage.style.overflow = 'auto';
+        
         currentPage.classList.add('active');
         
-        // ✅ ADD THIS: Show guidance for second partner on page 1
+        // Update guidance for second partner on page 1
         if (pageNum === 1 && gameState.firstRespondentId) {
             updateSecondPartnerGuidance();
         }
+        
+        console.log(`✅ Page ${pageNum} activated`);
+    } else {
+        console.error(`❌ Page element not found: demoPage${pageNum}`);
     }
     
     // Update global step (demographics is steps 1-10)
     currentStep = pageNum;
     updateGlobalProgress(currentStep, TOTAL_STEPS);
     
-    // Show/hide navigation buttons
+    // ✅ NAVIGATION BUTTONS - Show/Hide based on current page
     const prevBtn = document.getElementById('demoPrevBtn');
     const nextBtn = document.getElementById('demoNextBtn');
     const submitBtn = document.getElementById('demoSubmitBtn');
     
+    // Back button - hide on page 1, show on pages 2-10
     if (prevBtn) {
-        prevBtn.style.display = pageNum === 1 ? 'none' : 'flex';
+        if (pageNum === 1) {
+            prevBtn.style.display = 'none';
+            console.log('⬅️ Back button hidden (page 1)');
+        } else {
+            prevBtn.style.display = 'flex';
+            console.log('⬅️ Back button visible (page ' + pageNum + ')');
+        }
     }
     
+    // Next/Submit buttons - show submit only on last page
     if (nextBtn && submitBtn) {
         if (pageNum === DEMOGRAPHICS_PAGES) {
+            // Last page (10)
             nextBtn.style.display = 'none';
             submitBtn.style.display = 'flex';
             console.log('✅ Submit button now visible on page', pageNum);
         } else {
+            // Pages 1-9
             nextBtn.style.display = 'flex';
             submitBtn.style.display = 'none';
         }
     }
     
-    // Force scroll to top again after DOM update
+    // ✅ TOP BACK BUTTON (if it exists) - Optional feature
+    const topBackBtn = document.getElementById('demoTopBackBtn');
+    if (topBackBtn) {
+        topBackBtn.style.display = pageNum > 1 ? 'flex' : 'none';
+    }
+    
+    // Force multiple scroll resets with different timing
+    setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        if (currentPage) currentPage.scrollTop = 0;
+    }, 0);
+    
     requestAnimationFrame(() => {
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
+        if (currentPage) currentPage.scrollTop = 0;
+    });
+    
+    setTimeout(() => {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+        if (currentPage) currentPage.scrollTop = 0;
+    }, 50);
+    
+    // Log final state
+    console.log('📊 Page state:', {
+        current: pageNum,
+        total: DEMOGRAPHICS_PAGES,
+        isSecondPartner: isSecondPartner,
+        backVisible: prevBtn ? prevBtn.style.display !== 'none' : false,
+        nextVisible: nextBtn ? nextBtn.style.display !== 'none' : false,
+        submitVisible: submitBtn ? submitBtn.style.display !== 'none' : false
     });
 }
+
+
 
 
 
@@ -3967,86 +4040,72 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ===== DEMOGRAPHICS NAVIGATION =====
-    const nextBtn = document.getElementById('demoNextBtn');
-    if (nextBtn) {
-        nextBtn.addEventListener('click', function() {
-            console.log(`▶️ Next clicked. Current page: ${currentDemoPage}`);
-            
-            if (validateCurrentDemoPage()) {
-                if (currentDemoPage < DEMOGRAPHICS_PAGES) {
-                    currentDemoPage++;
-                    showDemoPage(currentDemoPage);
-                } else {
-                    console.log('Already on last page');
-                }
-            }
-        });
-        console.log('✅ Next button listener registered');
-    }
+   // ===== DEMOGRAPHICS NAVIGATION =====
+// Clone buttons to remove any existing listeners
+const nextBtn = document.getElementById('demoNextBtn');
+const prevBtn = document.getElementById('demoPrevBtn');
+
+if (nextBtn) {
+    // Remove old listeners by cloning
+    const newNextBtn = nextBtn.cloneNode(true);
+    nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
     
-    const prevBtn = document.getElementById('demoPrevBtn');
-    if (prevBtn) {
-        prevBtn.addEventListener('click', function() {
-            console.log(`◀️ Previous clicked. Current page: ${currentDemoPage}`);
-            
-            if (currentDemoPage > 1) {
-                currentDemoPage--;
+    newNextBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log(`▶️ Next clicked. Current page: ${currentDemoPage}`);
+        
+        if (validateCurrentDemoPage()) {
+            if (currentDemoPage < DEMOGRAPHICS_PAGES) {
+                const newPage = currentDemoPage + 1;
+                console.log(`✅ Navigating from page ${currentDemoPage} to ${newPage}`);
+                currentDemoPage = newPage;
                 showDemoPage(currentDemoPage);
-            }
-        });
-        console.log('✅ Previous button listener registered');
-    }
-    
-    // ===== DEMOGRAPHICS SUBMIT BUTTON =====
-    const submitBtn = document.getElementById('demoSubmitBtn');
-    if (submitBtn) {
-        submitBtn.addEventListener('click', function(e) {
-            console.log('🔘 SUBMIT BUTTON CLICKED!');
-            console.log('Current page:', currentDemoPage);
-            console.log('Total pages:', DEMOGRAPHICS_PAGES);
-            
-            e.preventDefault();
-            
-            // Only proceed if on last page
-            if (currentDemoPage !== DEMOGRAPHICS_PAGES) {
-                console.log('⚠️ Not on last page, ignoring click');
-                return;
-            }
-            
-            // Validate current page
-            if (!validateCurrentDemoPage()) {
-                console.log('❌ Validation failed');
-                alert('Please fill in all required fields on this page.');
-                return;
-            }
-            
-            console.log('✅ Validation passed, triggering form submission...');
-            
-            // Trigger the form submission
-            const form = document.getElementById('demographicsForm');
-            if (form) {
-                console.log('📋 Form found, dispatching submit event...');
-                const submitEvent = new Event('submit', {
-                    bubbles: true,
-                    cancelable: true
-                });
-                form.dispatchEvent(submitEvent);
             } else {
-                console.error('❌ Form not found!');
-                alert('Error: Demographics form not found. Please refresh the page.');
+                console.log('⚠️ Already on last page');
             }
-        });
-        console.log('✅ Submit button listener registered');
-    } else {
-        console.error('❌ Submit button NOT found in DOM');
-    }
+        } else {
+            console.log('❌ Validation failed, staying on page', currentDemoPage);
+        }
+    }, false);
     
-    // Initialize demographics to page 1
-    showDemoPage(1);
+    console.log('✅ Next button listener registered (clean)');
+}
+
+if (prevBtn) {
+    // Remove old listeners by cloning
+    const newPrevBtn = prevBtn.cloneNode(true);
+    prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+    
+    newPrevBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log(`◀️ Previous clicked. Current page: ${currentDemoPage}`);
+        
+        if (currentDemoPage > 1) {
+            const newPage = currentDemoPage - 1;
+            console.log(`✅ Navigating from page ${currentDemoPage} to ${newPage}`);
+            currentDemoPage = newPage;
+            showDemoPage(currentDemoPage);
+        } else {
+            console.log('⚠️ Already on first page');
+        }
+    }, false);
+    
+    console.log('✅ Previous button listener registered (clean)');
+}
+
+// Initialize demographics to page 1
+showDemoPage(1);
+
+
+
 
     // ===== DEMOGRAPHICS FORM SUBMISSION (PARTNER 1) =====
-    const demoForm = document.getElementById('demographicsForm');
-    if (demoForm) {
+const demoForm = document.getElementById('demographicsForm');
+ if (demoForm) {
         console.log('✅ Demographics form found');
         
         demoForm.addEventListener('submit', async (e) => {
@@ -4799,54 +4858,109 @@ function showTutorialScreen() {
 
 
 
-
 function validateCurrentDemoPage() {
     const currentPage = document.getElementById(`demoPage${currentDemoPage}`);
-    if (!currentPage) return true;
+    if (!currentPage) {
+        console.warn('⚠️ Current page not found:', currentDemoPage);
+        return true;
+    }
+    
+    let allValid = true;
+    let firstInvalidField = null;
+    
+    console.log(`🔍 Validating page ${currentDemoPage}...`);
+    
+    // ✅ SPECIAL: Page 7 - improved inputs checkboxes are OPTIONAL
+    if (currentDemoPage === 7) {
+        // Check only the required field (hasIrrigationAccess)
+        const irrigationRadios = currentPage.querySelectorAll('input[name="hasIrrigationAccess"]');
+        const anyChecked = Array.from(irrigationRadios).some(radio => radio.checked);
+        if (!anyChecked) {
+            console.warn('❌ Irrigation access not selected');
+            allValid = false;
+            firstInvalidField = irrigationRadios[0];
+        } else {
+            console.log('✅ Page 7 validated');
+        }
+        
+        if (!allValid && firstInvalidField) {
+            firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => firstInvalidField.focus(), 300);
+        }
+        
+        return allValid;
+    }
+    
+    // SPECIAL: Validate crops checkboxes on page 5
+    if (currentDemoPage === 5) {
+        const cropsCheckboxes = currentPage.querySelectorAll('input[name="crops"]');
+        const anyChecked = Array.from(cropsCheckboxes).some(cb => cb.checked);
+        const cropsError = document.getElementById('cropsError');
+        
+        if (!anyChecked) {
+            console.warn('❌ No crops selected');
+            allValid = false;
+            if (cropsError) {
+                cropsError.style.display = 'block';
+            }
+            if (!firstInvalidField) {
+                firstInvalidField = document.getElementById('cropsCheckboxGroup');
+            }
+        } else {
+            console.log('✅ Crops validated');
+            if (cropsError) {
+                cropsError.style.display = 'none';
+            }
+        }
+    }
     
     // Get all required fields on current page
     const requiredFields = currentPage.querySelectorAll('[required]');
-    let allValid = true;
+    console.log(`📋 Found ${requiredFields.length} required fields on page ${currentDemoPage}`);
     
     requiredFields.forEach(field => {
-        if (field.type === 'checkbox') {
-            // For checkbox groups with required, check if at least one is checked
-            const checkboxGroup = currentPage.querySelectorAll(`[name="${field.name}"]`);
-            const anyChecked = Array.from(checkboxGroup).some(cb => cb.checked);
+        if (field.type === 'checkbox' || field.type === 'radio') {
+            const name = field.name;
+            const group = currentPage.querySelectorAll(`[name="${name}"]`);
+            const anyChecked = Array.from(group).some(input => input.checked);
+            
             if (!anyChecked) {
+                console.warn('❌ No option selected for:', name);
                 allValid = false;
-                field.setCustomValidity('Please select at least one option');
-            } else {
-                field.setCustomValidity('');
-            }
-        } else if (field.type === 'radio') {
-            // For radio groups, check if one is selected
-            const radioGroup = currentPage.querySelectorAll(`[name="${field.name}"]`);
-            const anyChecked = Array.from(radioGroup).some(radio => radio.checked);
-            if (!anyChecked) {
-                allValid = false;
+                if (!firstInvalidField) {
+                    firstInvalidField = field;
+                }
             }
         } else {
-            // Regular input validation
             if (!field.checkValidity()) {
+                console.warn('❌ Invalid field:', field.name, '| Value:', field.value);
                 allValid = false;
-                field.reportValidity();
+                if (!firstInvalidField) {
+                    firstInvalidField = field;
+                }
             }
         }
     });
     
-    if (!allValid) {
-        // Find first invalid field and focus it
-        const firstInvalid = Array.from(requiredFields).find(field => !field.checkValidity());
-        if (firstInvalid) {
-            firstInvalid.focus();
-            firstInvalid.reportValidity();
-        }
+    if (!allValid && firstInvalidField) {
+        console.log('⚠️ Validation failed - scrolling to first invalid field');
+        firstInvalidField.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+        });
+        
+        setTimeout(() => {
+            firstInvalidField.focus();
+            if (firstInvalidField.reportValidity) {
+                firstInvalidField.reportValidity();
+            }
+        }, 300);
+    } else {
+        console.log('✅ Page validation passed');
     }
     
     return allValid;
 }
-
 
 
 
@@ -5289,12 +5403,58 @@ function updateSecondPartnerGuidance() {
 
 
 // ===== SECOND PARTNER BUTTON (Event Delegation) =====
+// ===== SECOND PARTNER BUTTON (Event Delegation) - Prevent Double Fire =====
+let secondPartnerButtonClicked = false;
+
 document.addEventListener('click', function(e) {
     const btn = e.target.closest('#startSecondPartnerBtn');
     if (btn) {
+        // Prevent double-firing
+        if (secondPartnerButtonClicked) {
+            console.log('⚠️ Second partner button already clicked, ignoring...');
+            return;
+        }
+        
         console.log('🔘 Second partner button clicked via delegation!');
         e.preventDefault();
+        e.stopPropagation();
+        
+        secondPartnerButtonClicked = true;
+        
         startSecondPartner();
+        
+        // Reset flag after 2 seconds
+        setTimeout(() => {
+            secondPartnerButtonClicked = false;
+        }, 2000);
     }
 });
 console.log('✅ Second partner button listener registered (delegation)');
+
+
+
+
+
+
+function goBackToWelcome() {
+    if (confirm('Go back to welcome screen? Current progress will be lost.')) {
+        // Reset game state
+        currentDemoPage = 1;
+        currentStep = 1;
+        
+        // Clear forms
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => form.reset());
+        
+        // Show welcome screen
+        showScreen('welcomeScreen');
+    }
+}
+
+
+function goBackOnePage() {
+    if (currentDemoPage > 1) {
+        currentDemoPage--;
+        showDemoPage(currentDemoPage);
+    }
+}

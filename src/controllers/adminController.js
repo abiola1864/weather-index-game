@@ -1,13 +1,16 @@
-const { Respondent, GameSession, GameRound, KnowledgeTest, CommunityAssignment } = require('../models/Game');
+const { Respondent, GameSession, GameRound, KnowledgeTest, CommunityAssignment, Perception } = require('../models/Game');
 
 // Get dashboard statistics
 const getDashboardStats = async (req, res) => {
   try {
+    const uniqueHouseholds = await Respondent.distinct('householdId');
+    
     const overview = {
       totalRespondents: await Respondent.countDocuments(),
       totalSessions: await GameSession.countDocuments(),
       completedSessions: await GameSession.countDocuments({ status: 'completed' }),
-      inProgressSessions: await GameSession.countDocuments({ status: 'in_progress' })
+      inProgressSessions: await GameSession.countDocuments({ status: 'in_progress' }),
+      uniqueHouseholds: uniqueHouseholds.length
     };
 
     const treatmentCounts = await Respondent.aggregate([
@@ -40,7 +43,7 @@ const getDashboardStats = async (req, res) => {
 // Get all respondents with filters
 const getAllRespondents = async (req, res) => {
   try {
-    const { community, treatment, enumerator, limit = 50 } = req.query;
+    const { community, treatment, enumerator, status, limit = 50 } = req.query;
     
     const filter = {};
     if (community) filter.communityName = community;
@@ -49,12 +52,33 @@ const getAllRespondents = async (req, res) => {
 
     const respondents = await Respondent.find(filter)
       .sort({ createdAt: -1 })
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .lean();
+
+    // Add game completion status
+    const respondentsWithStatus = await Promise.all(respondents.map(async (r) => {
+      const completedSession = await GameSession.findOne({ 
+        respondentId: r._id, 
+        status: 'completed' 
+      });
+      return {
+        ...r,
+        gameCompleted: !!completedSession
+      };
+    }));
+
+    // Filter by status if provided
+    let filteredRespondents = respondentsWithStatus;
+    if (status === 'completed') {
+      filteredRespondents = respondentsWithStatus.filter(r => r.gameCompleted);
+    } else if (status === 'in_progress') {
+      filteredRespondents = respondentsWithStatus.filter(r => !r.gameCompleted);
+    }
 
     res.json({
       success: true,
-      data: respondents,
-      count: respondents.length
+      data: filteredRespondents,
+      count: filteredRespondents.length
     });
   } catch (error) {
     console.error('Error fetching respondents:', error);
@@ -83,12 +107,13 @@ const exportCommunityAssignments = async (req, res) => {
   try {
     const communities = await CommunityAssignment.find().sort({ communityName: 1 });
 
-    let csv = 'Community Name,District,Treatment Group,Target Households,Completed Households,Progress %\n';
+    let csv = 'Community Name,District,Treatment Group,Target Households,Actual Respondents,Progress %\n';
     
-    communities.forEach(c => {
-      const progress = ((c.completedHouseholds / c.targetHouseholds) * 100).toFixed(1);
-      csv += `"${c.communityName}","${c.district}","${c.treatmentGroup}",${c.targetHouseholds},${c.completedHouseholds},${progress}\n`;
-    });
+    for (const c of communities) {
+      const respondentCount = await Respondent.countDocuments({ communityName: c.communityName });
+      const progress = ((respondentCount / c.targetHouseholds) * 100).toFixed(1);
+      csv += `"${c.communityName}","${c.district}","${c.treatmentGroup}",${c.targetHouseholds},${respondentCount},${progress}\n`;
+    }
 
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename=community-assignments.csv');
@@ -98,7 +123,6 @@ const exportCommunityAssignments = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 // Export knowledge test results
 const exportKnowledgeTests = async (req, res) => {
@@ -137,12 +161,9 @@ const exportKnowledgeTests = async (req, res) => {
   }
 };
 
-
-
 // Export perception assessments
 const exportPerceptions = async (req, res) => {
   try {
-    const { Perception } = require('../models/Game');
     const perceptions = await Perception.find()
       .populate('respondentId')
       .sort({ createdAt: -1 });
@@ -179,8 +200,6 @@ const exportPerceptions = async (req, res) => {
   }
 };
 
-
-
 // Get community progress with actual respondent counts
 const getCommunityProgress = async (req, res) => {
   try {
@@ -211,9 +230,6 @@ const getCommunityProgress = async (req, res) => {
   }
 };
 
-
-
-// Export respondent data as CSV
 // Export COMPLETE respondent data as CSV
 const exportRespondentData = async (req, res) => {
   try {
@@ -222,7 +238,7 @@ const exportRespondentData = async (req, res) => {
     // Create comprehensive CSV header
     let csv = 'Respondent ID,Household ID,Community,District,Enumerator,Gender,Role,Treatment Group,Language,';
     csv += 'Age,Education,Household Size,Children Under 15,';
-    csv += 'Years Farming,Land Cultivated,Land Access Method,Main Crops,Crops Planted Count,';
+    csv += 'Years Farming,Land Cultivated,Land Access Method,Land Access Other,Main Crops,Crops Planted Count,';
     csv += 'Last Season Income,Farming Input Expenditure,';
     csv += 'Has Radio,Has TV,Has Refrigerator,Has Bicycle,Has Motorbike,Has Mobile,Has Generator,Has Plough,';
     csv += 'Cattle Count,Goats Count,Sheep Count,Poultry Count,';
@@ -270,6 +286,7 @@ const exportRespondentData = async (req, res) => {
       csv += `${r.yearsOfFarming},`;
       csv += `${r.landCultivated},`;
       csv += `${r.landAccessMethod},`;
+      csv += `"${r.landAccessOther || 'N/A'}",`;
       csv += `"${(r.mainCrops || []).join('; ')}",`;
       csv += `${r.numberOfCropsPlanted},`;
       csv += `${r.lastSeasonIncome},`;
@@ -364,13 +381,72 @@ const exportRespondentData = async (req, res) => {
   }
 };
 
+// ===== DELETE ALL DATA (PASSWORD PROTECTED) =====
+const deleteAllData = async (req, res) => {
+  try {
+    const { password } = req.body;
+    
+    // Password protection
+    const CORRECT_PASSWORD = 'gme110_ghana';
+    
+    if (password !== CORRECT_PASSWORD) {
+      return res.status(403).json({
+        success: false,
+        message: 'Incorrect password'
+      });
+    }
+    
+    console.log('⚠️ DELETE ALL DATA requested...');
+    
+    // Get counts before deletion
+    const respondentsCount = await Respondent.countDocuments();
+    const sessionsCount = await GameSession.countDocuments();
+    const roundsCount = await GameRound.countDocuments();
+    const knowledgeCount = await KnowledgeTest.countDocuments();
+    const perceptionsCount = await Perception.countDocuments();
+    
+    // Delete all data (but preserve CommunityAssignments)
+    await Respondent.deleteMany({});
+    await GameSession.deleteMany({});
+    await GameRound.deleteMany({});
+    await KnowledgeTest.deleteMany({});
+    await Perception.deleteMany({});
+    
+    console.log('✅ All data deleted successfully');
+    console.log(`   - Respondents: ${respondentsCount}`);
+    console.log(`   - Sessions: ${sessionsCount}`);
+    console.log(`   - Rounds: ${roundsCount}`);
+    console.log(`   - Knowledge Tests: ${knowledgeCount}`);
+    console.log(`   - Perceptions: ${perceptionsCount}`);
+    
+    res.json({
+      success: true,
+      message: 'All data deleted successfully',
+      data: {
+        respondentsDeleted: respondentsCount,
+        sessionsDeleted: sessionsCount,
+        roundsDeleted: roundsCount,
+        knowledgeDeleted: knowledgeCount,
+        perceptionsDeleted: perceptionsCount
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error deleting all data:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 module.exports = {
- getDashboardStats,
+  getDashboardStats,
   getAllRespondents,
   getCommunityAssignments,
   getCommunityProgress,
   exportCommunityAssignments,
   exportRespondentData,
   exportKnowledgeTests,
-  exportPerceptions
+  exportPerceptions,
+  deleteAllData  // ✅ ADD THIS
 };

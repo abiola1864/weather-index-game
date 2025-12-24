@@ -656,25 +656,85 @@ const getCoupleDecisions = async (req, res) => {
 };
 
 // ===== PERCEPTION (NEW: FOR COUPLE SESSION) =====
-
+// ===== SAVE PERCEPTION ASSESSMENT (COUPLE SESSION) =====
 const savePerception = async (req, res) => {
   try {
-    const perceptionData = req.body;
+    console.log('📝 Saving perception assessment...');
+    console.log('Request body:', req.body);
     
-    console.log('📥 Saving perception data for session:', perceptionData.sessionId);
+    const {
+      sessionId,
+      bundleInfluence,
+      insuranceUnderstanding,
+      willingnessToPay,
+      recommendToOthers,
+      perceivedFairness,
+      trustInPayout,
+      bundleValuePerception,
+      futureUseLikelihood
+    } = req.body;
     
-    const perception = new Perception(perceptionData);
+    // Validate required fields
+    if (!sessionId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Session ID is required'
+      });
+    }
+    
+    // Find the session to get respondentId and householdId
+    const session = await GameSession.findOne({ sessionId });
+    
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        message: `Session not found: ${sessionId}`
+      });
+    }
+    
+    console.log('✅ Session found:', session.sessionId);
+    console.log('  - respondentId:', session.respondentId);
+    console.log('  - householdId:', session.householdId);
+    
+    // Create perception record with all required fields
+    const perception = new Perception({
+      respondentId: session.respondentId,  // ✅ Get from session
+      sessionId: sessionId,
+      householdId: session.householdId,    // ✅ Get from session
+      bundleInfluence: parseInt(bundleInfluence),
+      insuranceUnderstanding: parseInt(insuranceUnderstanding),
+      willingnessToPay: willingnessToPay === true || willingnessToPay === 'true',
+      recommendToOthers: parseInt(recommendToOthers),
+      perceivedFairness: parseInt(perceivedFairness),
+      trustInPayout: parseInt(trustInPayout),
+      bundleValuePerception: parseInt(bundleValuePerception),
+      futureUseLikelihood: parseInt(futureUseLikelihood)
+    });
+    
     await perception.save();
     
-    console.log('✅ Perception data saved:', perception._id);
-
+    console.log('✅ Perception assessment saved:', perception._id);
+    
     res.status(201).json({
       success: true,
-      message: 'Perception data saved successfully',
+      message: 'Perception assessment saved successfully',
       data: perception
     });
+    
   } catch (error) {
     console.error('❌ Error saving perception:', error);
+    console.error('Error stack:', error.stack);
+    
+    // More detailed error for validation issues
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: messages
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Failed to save perception data',
@@ -682,6 +742,8 @@ const savePerception = async (req, res) => {
     });
   }
 };
+
+
 
 const getPerception = async (req, res) => {
   try {
