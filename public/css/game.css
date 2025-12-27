@@ -2267,3 +2267,393 @@ select:invalid:focus {
     .screen { page-break-inside: avoid; }
     * { animation: none !important; transition: none !important; }
 }
+
+
+/* ===== CONNECTION STATUS & SYNC CONTROLS ===== */
+.connection-controls {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+    animation: slideInRight 0.5s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.connection-status i {
+    font-size: 12px;
+}
+
+.status-online {
+    color: #4CAF50;
+    border: 2px solid #4CAF50;
+}
+
+.status-online i {
+    color: #4CAF50;
+    animation: pulse 2s infinite;
+}
+
+.status-offline {
+    color: #F44336;
+    border: 2px solid #F44336;
+}
+
+.status-offline i {
+    color: #F44336;
+}
+
+.status-syncing {
+    color: #FF9800;
+    border: 2px solid #FF9800;
+}
+
+.status-syncing i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.sync-btn,
+.export-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+.sync-btn:hover:not(:disabled),
+.export-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 152, 0, 0.4);
+}
+
+.sync-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: linear-gradient(135deg, #BDBDBD, #9E9E9E);
+}
+
+.export-btn {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+.export-btn:hover {
+    box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .connection-controls {
+        top: 60px;
+        right: 10px;
+        gap: 8px;
+    }
+    
+    .connection-status,
+    .sync-btn,
+    .export-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+    
+    .sync-btn span,
+    .export-btn span {
+        display: none;
+    }
+    
+    .sync-btn i,
+    .export-btn i {
+        margin: 0;
+    }
+}
+
+
+/* ===== CONNECTION CONTROLS - PROFESSIONAL REDESIGN ===== */
+.connection-controls-redesigned {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 9999;
+    animation: slideInUp 0.5s ease;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Status Badge */
+.status-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    border: 2px solid #E0E0E0;
+}
+
+.status-badge i {
+    font-size: 16px;
+}
+
+/* Online Status */
+.status-online {
+    border-color: #4CAF50;
+    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+}
+
+.status-online i {
+    color: #4CAF50;
+    animation: pulse 2s infinite;
+}
+
+.status-online #statusText {
+    color: #2E7D32;
+}
+
+/* Offline Status */
+.status-offline {
+    border-color: #F44336;
+    background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
+}
+
+.status-offline i {
+    color: #F44336;
+}
+
+.status-offline #statusText {
+    color: #C62828;
+}
+
+/* Syncing Status */
+.status-syncing {
+    border-color: #FF9800;
+    background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+}
+
+.status-syncing i {
+    color: #FF9800;
+    animation: spin 1s linear infinite;
+}
+
+.status-syncing #statusText {
+    color: #E65100;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(0.95); }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Action Buttons Container */
+.action-buttons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Action Button Base */
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 16px 20px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    min-width: 200px;
+    font-family: inherit;
+}
+
+.action-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25);
+}
+
+.action-btn:active:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.action-btn i {
+    font-size: 24px;
+    min-width: 24px;
+}
+
+.btn-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.btn-label {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.btn-count {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-top: 2px;
+}
+
+/* Sync Button - Prominent Orange */
+.sync-btn-redesigned {
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    color: white;
+}
+
+.sync-btn-redesigned i {
+    color: white;
+}
+
+.sync-btn-redesigned:hover:not(:disabled) {
+    background: linear-gradient(135deg, #FB8C00, #EF6C00);
+}
+
+.sync-btn-redesigned:disabled {
+    background: linear-gradient(135deg, #BDBDBD, #9E9E9E);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Export Button - Professional Blue */
+.export-btn-redesigned {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    color: white;
+}
+
+.export-btn-redesigned i {
+    color: white;
+}
+
+.export-btn-redesigned:hover {
+    background: linear-gradient(135deg, #1E88E5, #1565C0);
+}
+
+/* Hide class */
+.hidden {
+    display: none !important;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .connection-controls-redesigned {
+        bottom: 15px;
+        right: 15px;
+        left: 15px;
+        max-width: calc(100% - 30px);
+    }
+    
+    .status-badge {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+    
+    .action-btn {
+        padding: 14px 18px;
+        min-width: 180px;
+    }
+    
+    .btn-label {
+        font-size: 15px;
+    }
+    
+    .btn-count {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    .action-buttons-container {
+        flex-direction: row;
+        gap: 10px;
+    }
+    
+    .action-btn {
+        flex: 1;
+        min-width: 0;
+        padding: 12px 16px;
+        gap: 10px;
+    }
+    
+    .action-btn i {
+        font-size: 20px;
+    }
+    
+    .btn-label {
+        font-size: 14px;
+    }
+    
+    .btn-count {
+        display: none;
+    }
+}

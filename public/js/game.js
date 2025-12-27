@@ -3486,11 +3486,14 @@ function updateDemographicsScreenLang() {
 // Add to your game.js
 // ===== CONNECTION STATUS MANAGEMENT =====
 // ===== CONNECTION STATUS MANAGEMENT =====
+// ===== CONNECTION STATUS MANAGEMENT =====
+// ===== CONNECTION STATUS MANAGEMENT - REDESIGNED =====
 function updateConnectionStatus() {
     const statusEl = document.getElementById('connectionStatus');
     const statusText = document.getElementById('statusText');
     const syncBtn = document.getElementById('syncButton');
     const exportBtn = document.getElementById('exportButton');
+    const syncCount = document.getElementById('syncCount');
     
     if (!statusEl || !statusText) {
         console.warn('⚠️ Connection status elements not found');
@@ -3498,34 +3501,63 @@ function updateConnectionStatus() {
     }
     
     const syncStatus = window.offlineStorage.getSyncStatus();
+    const pendingCount = syncStatus.pendingItems || 0;
     
+    console.log('📊 Connection Status Update:', {
+        isOnline: syncStatus.isOnline,
+        pendingItems: pendingCount,
+        offlineDataSize: syncStatus.offlineDataSize
+    });
+    
+    // Update status badge
     if (syncStatus.isOnline) {
-        statusEl.className = 'connection-status status-online';
+        statusEl.className = 'status-badge status-online';
         
-        if (syncStatus.pendingItems > 0) {
-            statusText.innerHTML = `Online <span style="color: #FF9800; font-weight: 700;">(${syncStatus.pendingItems} pending)</span>`;
-            if (syncBtn) {
-                syncBtn.style.display = 'flex';
-                const syncBtnText = document.getElementById('syncButtonText');
-                if (syncBtnText) {
-                    syncBtnText.textContent = `Sync ${syncStatus.pendingItems} items`;
-                }
-            }
+        if (pendingCount > 0) {
+            statusText.innerHTML = `Online <strong>(${pendingCount} unsaved)</strong>`;
         } else {
-            statusText.textContent = 'Online - All synced';
-            if (syncBtn) syncBtn.style.display = 'none';
-        }
-        
-        if (exportBtn && syncStatus.offlineDataSize > 1000) {
-            exportBtn.style.display = 'flex';
+            statusText.textContent = 'Online - All synced ✓';
         }
     } else {
-        statusEl.className = 'connection-status status-offline';
-        statusText.textContent = 'Offline - Data saved locally';
-        if (syncBtn) syncBtn.style.display = 'none';
-        if (exportBtn) exportBtn.style.display = 'flex';
+        statusEl.className = 'status-badge status-offline';
+        statusText.textContent = 'Offline - Saving locally';
+    }
+    
+    // Show/hide sync button
+    if (syncBtn) {
+        if (syncStatus.isOnline && pendingCount > 0) {
+            syncBtn.classList.remove('hidden');
+            syncBtn.style.display = 'flex';
+            
+            if (syncCount) {
+                syncCount.textContent = `${pendingCount} ${pendingCount === 1 ? 'item' : 'items'}`;
+            }
+            
+            console.log('✅ Sync button VISIBLE - Pending:', pendingCount);
+        } else {
+            syncBtn.classList.add('hidden');
+            syncBtn.style.display = 'none';
+            console.log('❌ Sync button HIDDEN - Online:', syncStatus.isOnline, 'Pending:', pendingCount);
+        }
+    }
+    
+    // Show/hide export button
+    if (exportBtn) {
+        const hasData = syncStatus.offlineDataSize > 1000 || pendingCount > 0;
+        
+        if (hasData) {
+            exportBtn.classList.remove('hidden');
+            exportBtn.style.display = 'flex';
+        } else {
+            exportBtn.classList.add('hidden');
+            exportBtn.style.display = 'none';
+        }
     }
 }
+
+
+
+
 
 async function manualSync() {
     const syncBtn = document.getElementById('syncButton');
@@ -3533,64 +3565,74 @@ async function manualSync() {
     const statusText = document.getElementById('statusText');
     
     if (!syncBtn || !statusEl || !statusText) {
-        console.error('❌ Sync UI elements not found');
-        alert('Sync button not found. Please refresh the page.');
+        alert('⚠️ Sync button not found. Please refresh the page.');
+        return;
+    }
+    
+    // Check if online first
+    if (!navigator.onLine) {
+        alert('📴 You are offline. Please connect to the internet to sync data.');
         return;
     }
     
     try {
         console.log('🔄 Starting manual sync...');
         
-        // Update UI to show syncing
+        // Disable button and show syncing state
+        syncBtn.disabled = true;
         statusEl.className = 'connection-status status-syncing';
         statusText.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Syncing...';
-        syncBtn.disabled = true;
         
         // Perform sync
         const result = await window.offlineStorage.syncOfflineData();
         
-        if (result.success) {
-            console.log('✅ Sync completed:', result);
+        if (result.success && result.results) {
+            console.log('✅ Sync completed:', result.results);
             
-            // Success feedback
-            statusText.innerHTML = '<i class="fas fa-check"></i> Synced successfully!';
+            const { successful, failed, total } = result.results;
             
-            // Show detailed results
-            if (result.results) {
-                console.log('📊 Sync results:', result.results);
+            if (successful > 0) {
+                // Show success message
+                showToast(`✅ Successfully synced ${successful} of ${total} items to database!`, 'success');
                 
-                if (result.results.successful > 0) {
-                    showToast(`✅ Successfully synced ${result.results.successful} items to database!`, 'success');
-                }
+                // Update status
+                statusText.innerHTML = '<i class="fas fa-check"></i> Sync complete!';
                 
-                if (result.results.failed > 0) {
-                    showToast(`⚠️ ${result.results.failed} items failed to sync. Check console for details.`, 'warning');
-                    console.error('Failed items:', result.results.errors);
-                }
-                
-                if (result.results.successful === 0 && result.results.failed === 0) {
-                    showToast('ℹ️ No items to sync', 'info');
-                }
-            } else {
-                showToast('✅ Data synced successfully!', 'success');
+                // Auto-hide sync button after success
+                setTimeout(() => {
+                    updateConnectionStatus();
+                }, 2000);
             }
             
-            // Reset UI after 2 seconds
-            setTimeout(() => {
-                updateConnectionStatus();
-            }, 2000);
+            if (failed > 0) {
+                showToast(`⚠️ ${failed} items failed to sync. Please try again or contact support.`, 'warning');
+                console.error('Failed items:', result.results.errors);
+            }
+            
+            if (successful === 0 && failed === 0) {
+                showToast('ℹ️ No new data to sync', 'info');
+            }
+            
         } else {
             throw new Error(result.message || 'Sync failed');
         }
+        
     } catch (error) {
         console.error('❌ Sync error:', error);
         statusText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Sync failed';
-        showToast('❌ Failed to sync data: ' + error.message, 'error');
         
-        // Reset UI after 3 seconds
+        // User-friendly error messages
+        if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+            alert('❌ Connection error. Please check your internet and try again.');
+        } else {
+            alert('❌ Sync failed: ' + error.message + '\n\nPlease try again or contact support.');
+        }
+        
+        // Reset UI after error
         setTimeout(() => {
             updateConnectionStatus();
         }, 3000);
+        
     } finally {
         syncBtn.disabled = false;
     }
@@ -4158,12 +4200,14 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log(`📋 Total steps: ${TOTAL_STEPS}`);
     console.log(`📄 Demographics pages: ${DEMOGRAPHICS_PAGES}`);
 
-
-      // ✅ ADD THIS LINE - Initialize auto-sync
+    // ✅ Initialize auto-sync
     setupAutoSync();
     
-    // ✅ ADD THIS LINE - Update connection status on load
+    // ✅ Update connection status on load
     updateConnectionStatus();
+    
+    // ✅ ADD THIS LINE - Update status every 30 seconds
+    setInterval(updateConnectionStatus, 30000);
 
     
 

@@ -527,20 +527,38 @@ select:invalid:focus {
 
     <!-- 🆕 ADD THIS SECTION HERE -->
 <!-- Connection Status & Sync Controls -->
-<div class="connection-controls">
-    <div id="connectionStatus" class="connection-status">
-        <i class="fas fa-circle"></i>
+<!-- Connection Status & Sync Controls - REDESIGNED -->
+<div class="connection-controls-redesigned">
+    <!-- Status Badge -->
+    <div id="connectionStatus" class="status-badge">
+        <i class="fas fa-wifi"></i>
         <span id="statusText">Checking...</span>
     </div>
-    <button id="syncButton" class="sync-btn" onclick="manualSync()" style="display: none;">
-        <i class="fas fa-sync-alt"></i>
-        <span id="syncButtonText">Sync Now</span>
-    </button>
-    <button id="exportButton" class="export-btn" onclick="window.offlineStorage.exportOfflineData()" style="display: none;">
-        <i class="fas fa-download"></i>
-        <span>Backup Data</span>
-    </button>
+    
+    <!-- Action Buttons Container -->
+    <div class="action-buttons-container" id="actionButtonsContainer">
+        <!-- Sync Button -->
+        <button id="syncButton" class="action-btn sync-btn-redesigned" onclick="manualSync()">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <div class="btn-text">
+                <span class="btn-label">Sync Data</span>
+                <span class="btn-count" id="syncCount">0 items</span>
+            </div>
+        </button>
+        
+        <!-- Export Button -->
+        <button id="exportButton" class="action-btn export-btn-redesigned" onclick="window.offlineStorage.exportOfflineData()">
+            <i class="fas fa-download"></i>
+            <div class="btn-text">
+                <span class="btn-label">Backup</span>
+                <span class="btn-count">Download</span>
+            </div>
+        </button>
+    </div>
 </div>
+
+
+
 
 
 
