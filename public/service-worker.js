@@ -3,7 +3,7 @@
 // FIXED: Removed Font Awesome from cache
 // ===============================================
 // ===== SERVICE WORKER FOR OFFLINE SUPPORT =====
-const ONE_DAY_MS = 24 * 60 * 60 * 2590;
+const ONE_DAY_MS = 24 * 60 * 60 * 2190;
 const CACHE_VERSION = `v-${Date.now() + ONE_DAY_MS}`;
 const CACHE_NAME = `weather-game-${CACHE_VERSION}`;
 
