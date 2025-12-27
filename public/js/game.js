@@ -2583,465 +2583,465 @@ document.addEventListener('change', function(e) {
 
 // ===== EVENT LISTENERS =====
 // ===== CONSOLIDATED DOMContentLoaded - SINGLE BLOCK =====
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎮 Weather Index Insurance Game Loaded');
-    console.log(`📋 Total steps: ${TOTAL_STEPS}`);
-    console.log(`📄 Demographics pages: ${DEMOGRAPHICS_PAGES}`);
+// document.addEventListener('DOMContentLoaded', function() {
+//     console.log('🎮 Weather Index Insurance Game Loaded');
+//     console.log(`📋 Total steps: ${TOTAL_STEPS}`);
+//     console.log(`📄 Demographics pages: ${DEMOGRAPHICS_PAGES}`);
 
-    // ===== WELCOME SCREEN =====
-    const startBtn = document.getElementById('startBtn');
-    if (startBtn) {
-        startBtn.addEventListener('click', startDemographics);
-        console.log('✅ Start button listener registered');
-    }
+//     // ===== WELCOME SCREEN =====
+//     const startBtn = document.getElementById('startBtn');
+//     if (startBtn) {
+//         startBtn.addEventListener('click', startDemographics);
+//         console.log('✅ Start button listener registered');
+//     }
 
-    // ===== DEMOGRAPHICS NAVIGATION =====
-    const nextBtn = document.getElementById('demoNextBtn');
-    if (nextBtn) {
-        nextBtn.addEventListener('click', function() {
-            console.log(`▶️ Next clicked. Current page: ${currentDemoPage}`);
+//     // ===== DEMOGRAPHICS NAVIGATION =====
+//     const nextBtn = document.getElementById('demoNextBtn');
+//     if (nextBtn) {
+//         nextBtn.addEventListener('click', function() {
+//             console.log(`▶️ Next clicked. Current page: ${currentDemoPage}`);
             
-            if (validateCurrentDemoPage()) {
-                if (currentDemoPage < DEMOGRAPHICS_PAGES) {
-                    currentDemoPage++;
-                    showDemoPage(currentDemoPage);
-                } else {
-                    console.log('Already on last page');
-                }
-            }
-        });
-        console.log('✅ Next button listener registered');
-    }
+//             if (validateCurrentDemoPage()) {
+//                 if (currentDemoPage < DEMOGRAPHICS_PAGES) {
+//                     currentDemoPage++;
+//                     showDemoPage(currentDemoPage);
+//                 } else {
+//                     console.log('Already on last page');
+//                 }
+//             }
+//         });
+//         console.log('✅ Next button listener registered');
+//     }
     
-    const prevBtn = document.getElementById('demoPrevBtn');
-    if (prevBtn) {
-        prevBtn.addEventListener('click', function() {
-            console.log(`◀️ Previous clicked. Current page: ${currentDemoPage}`);
+//     const prevBtn = document.getElementById('demoPrevBtn');
+//     if (prevBtn) {
+//         prevBtn.addEventListener('click', function() {
+//             console.log(`◀️ Previous clicked. Current page: ${currentDemoPage}`);
             
-            if (currentDemoPage > 1) {
-                currentDemoPage--;
-                showDemoPage(currentDemoPage);
-            }
-        });
-        console.log('✅ Previous button listener registered');
-    }
+//             if (currentDemoPage > 1) {
+//                 currentDemoPage--;
+//                 showDemoPage(currentDemoPage);
+//             }
+//         });
+//         console.log('✅ Previous button listener registered');
+//     }
     
-    // Initialize demographics to page 1
-    showDemoPage(1);
+//     // Initialize demographics to page 1
+//     showDemoPage(1);
 
-    // ===== DEMOGRAPHICS FORM SUBMISSION (PARTNER 1) =====
-   // ===== DEMOGRAPHICS FORM SUBMISSION (PARTNER 1) =====
-const demoForm = document.getElementById('demographicsForm');
-if (demoForm) {
-    console.log('✅ Demographics form found');
+//     // ===== DEMOGRAPHICS FORM SUBMISSION (PARTNER 1) =====
+//    // ===== DEMOGRAPHICS FORM SUBMISSION (PARTNER 1) =====
+// const demoForm = document.getElementById('demographicsForm');
+// if (demoForm) {
+//     console.log('✅ Demographics form found');
     
-    demoForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+//     demoForm.addEventListener('submit', async (e) => {
+//         e.preventDefault();
         
-        console.log('📝 FORM SUBMIT TRIGGERED');
-        console.log('Current page:', currentDemoPage, '/', DEMOGRAPHICS_PAGES);
+//         console.log('📝 FORM SUBMIT TRIGGERED');
+//         console.log('Current page:', currentDemoPage, '/', DEMOGRAPHICS_PAGES);
         
-        // CRITICAL: Only process if on last page
-        if (currentDemoPage !== DEMOGRAPHICS_PAGES) {
-            console.log('⚠️ Not on last page - skipping');
-            return;
-        }
+//         // CRITICAL: Only process if on last page
+//         if (currentDemoPage !== DEMOGRAPHICS_PAGES) {
+//             console.log('⚠️ Not on last page - skipping');
+//             return;
+//         }
         
-        // Validate before proceeding
-        if (!validateCurrentDemoPage()) {
-            console.log('❌ Validation failed');
-            alert('Please fill in all required fields on this page.');
-            return;
-        }
+//         // Validate before proceeding
+//         if (!validateCurrentDemoPage()) {
+//             console.log('❌ Validation failed');
+//             alert('Please fill in all required fields on this page.');
+//             return;
+//         }
         
-        console.log('✅ Starting submission process...');
-        showLoading();
+//         console.log('✅ Starting submission process...');
+//         showLoading();
         
-        try {
-            const formData = new FormData(e.target);
+//         try {
+//             const formData = new FormData(e.target);
             
-            // Basic validation
-            const enumeratorName = formData.get('enumeratorName');
-            const communityName = formData.get('communityName');
-            const selectedRole = formData.get('role');
-            const selectedGender = formData.get('gender');
+//             // Basic validation
+//             const enumeratorName = formData.get('enumeratorName');
+//             const communityName = formData.get('communityName');
+//             const selectedRole = formData.get('role');
+//             const selectedGender = formData.get('gender');
             
-            if (!enumeratorName?.trim() || !communityName?.trim() || !selectedRole || !selectedGender) {
-                throw new Error('Missing required basic information');
-            }
+//             if (!enumeratorName?.trim() || !communityName?.trim() || !selectedRole || !selectedGender) {
+//                 throw new Error('Missing required basic information');
+//             }
             
-            // Collect crops
-            const crops = Array.from(document.querySelectorAll('input[name="crops"]:checked'))
-                .map(cb => cb.value);
+//             // Collect crops
+//             const crops = Array.from(document.querySelectorAll('input[name="crops"]:checked'))
+//                 .map(cb => cb.value);
             
-            if (crops.length === 0) {
-                showLoading(false);
-                alert('⚠️ Please select at least one crop on Page 5');
-                currentDemoPage = 5;
-                showDemoPage(5);
-                return;
-            }
+//             if (crops.length === 0) {
+//                 showLoading(false);
+//                 alert('⚠️ Please select at least one crop on Page 5');
+//                 currentDemoPage = 5;
+//                 showDemoPage(5);
+//                 return;
+//             }
             
-            // Collect assets
-            const assets = {
-                radio: formData.get('asset_radio') === '1',
-                tv: formData.get('asset_tv') === '1',
-                refrigerator: formData.get('asset_refrigerator') === '1',
-                bicycle: formData.get('asset_bicycle') === '1',
-                motorbike: formData.get('asset_motorbike') === '1',
-                mobilePhone: formData.get('asset_mobilePhone') === '1',
-                generator: formData.get('asset_generator') === '1',
-                plough: formData.get('asset_plough') === '1'
-            };
+//             // Collect assets
+//             const assets = {
+//                 radio: formData.get('asset_radio') === '1',
+//                 tv: formData.get('asset_tv') === '1',
+//                 refrigerator: formData.get('asset_refrigerator') === '1',
+//                 bicycle: formData.get('asset_bicycle') === '1',
+//                 motorbike: formData.get('asset_motorbike') === '1',
+//                 mobilePhone: formData.get('asset_mobilePhone') === '1',
+//                 generator: formData.get('asset_generator') === '1',
+//                 plough: formData.get('asset_plough') === '1'
+//             };
             
-            const livestock = {
-                cattle: parseInt(formData.get('livestock_cattle')) || 0,
-                goats: parseInt(formData.get('livestock_goats')) || 0,
-                sheep: parseInt(formData.get('livestock_sheep')) || 0,
-                poultry: parseInt(formData.get('livestock_poultry')) || 0
-            };
+//             const livestock = {
+//                 cattle: parseInt(formData.get('livestock_cattle')) || 0,
+//                 goats: parseInt(formData.get('livestock_goats')) || 0,
+//                 sheep: parseInt(formData.get('livestock_sheep')) || 0,
+//                 poultry: parseInt(formData.get('livestock_poultry')) || 0
+//             };
             
-            const improvedInputs = {
-                certifiedSeed: formData.get('input_certifiedSeed') === '1',
-                fertilizer: formData.get('input_fertilizer') === '1',
-                pesticides: formData.get('input_pesticides') === '1',
-                irrigation: formData.get('input_irrigation') === '1'
-            };
+//             const improvedInputs = {
+//                 certifiedSeed: formData.get('input_certifiedSeed') === '1',
+//                 fertilizer: formData.get('input_fertilizer') === '1',
+//                 pesticides: formData.get('input_pesticides') === '1',
+//                 irrigation: formData.get('input_irrigation') === '1'
+//             };
             
-            const shocks = {
-                drought: formData.get('shock_drought') === '1',
-                flood: formData.get('shock_flood') === '1',
-                pestsDisease: formData.get('shock_pestsDisease') === '1',
-                cropPriceFall: formData.get('shock_cropPriceFall') === '1'
-            };
+//             const shocks = {
+//                 drought: formData.get('shock_drought') === '1',
+//                 flood: formData.get('shock_flood') === '1',
+//                 pestsDisease: formData.get('shock_pestsDisease') === '1',
+//                 cropPriceFall: formData.get('shock_cropPriceFall') === '1'
+//             };
             
-            const borrowSources = [];
-            if (formData.get('borrowedMoney') === '1') {
-                if (formData.get('borrowSource_bank')) borrowSources.push('bank');
-                if (formData.get('borrowSource_microfinance')) borrowSources.push('microfinance');
-                if (formData.get('borrowSource_vsla')) borrowSources.push('vsla');
-                if (formData.get('borrowSource_familyFriends')) borrowSources.push('familyFriends');
-                if (formData.get('borrowSource_moneylender')) borrowSources.push('moneylender');
-            }
+//             const borrowSources = [];
+//             if (formData.get('borrowedMoney') === '1') {
+//                 if (formData.get('borrowSource_bank')) borrowSources.push('bank');
+//                 if (formData.get('borrowSource_microfinance')) borrowSources.push('microfinance');
+//                 if (formData.get('borrowSource_vsla')) borrowSources.push('vsla');
+//                 if (formData.get('borrowSource_familyFriends')) borrowSources.push('familyFriends');
+//                 if (formData.get('borrowSource_moneylender')) borrowSources.push('moneylender');
+//             }
             
-            // Build demographics object
-            gameState.demographics = {
-                householdId: gameState.householdId,
-                communityName: communityName.trim(),
-                enumeratorName: enumeratorName.trim(),
-                gender: selectedGender,
-                role: selectedRole,
-                language: gameState.language || 'english',
+//             // Build demographics object
+//             gameState.demographics = {
+//                 householdId: gameState.householdId,
+//                 communityName: communityName.trim(),
+//                 enumeratorName: enumeratorName.trim(),
+//                 gender: selectedGender,
+//                 role: selectedRole,
+//                 language: gameState.language || 'english',
                 
-                age: parseInt(formData.get('age')) || 18,
-                education: parseInt(formData.get('education')) || 0,
-                householdSize: parseInt(formData.get('householdSize')) || 1,
-                childrenUnder15: parseInt(formData.get('childrenUnder15')) || 0,
+//                 age: parseInt(formData.get('age')) || 18,
+//                 education: parseInt(formData.get('education')) || 0,
+//                 householdSize: parseInt(formData.get('householdSize')) || 1,
+//                 childrenUnder15: parseInt(formData.get('childrenUnder15')) || 0,
                 
-                assets: assets,
-                livestock: livestock,
+//                 assets: assets,
+//                 livestock: livestock,
                 
-                yearsOfFarming: parseInt(formData.get('farmingYears')) || 0,
-                landCultivated: parseFloat(formData.get('landSize')) || 0,
-                landAccessMethod: parseInt(formData.get('landAccessMethod')) || 1,
-                landAccessOther: formData.get('landAccessOther') || '',
-                mainCrops: crops,
-                numberOfCropsPlanted: parseInt(formData.get('numberOfCropsPlanted')) || 1,
-                lastSeasonIncome: parseFloat(formData.get('lastIncome')) || 0,
-                farmingInputExpenditure: parseFloat(formData.get('farmingInputExpenditure')) || 0,
+//                 yearsOfFarming: parseInt(formData.get('farmingYears')) || 0,
+//                 landCultivated: parseFloat(formData.get('landSize')) || 0,
+//                 landAccessMethod: parseInt(formData.get('landAccessMethod')) || 1,
+//                 landAccessOther: formData.get('landAccessOther') || '',
+//                 mainCrops: crops,
+//                 numberOfCropsPlanted: parseInt(formData.get('numberOfCropsPlanted')) || 1,
+//                 lastSeasonIncome: parseFloat(formData.get('lastIncome')) || 0,
+//                 farmingInputExpenditure: parseFloat(formData.get('farmingInputExpenditure')) || 0,
                 
-                improvedInputs: improvedInputs,
-                hasIrrigationAccess: formData.get('hasIrrigationAccess') === '1',
+//                 improvedInputs: improvedInputs,
+//                 hasIrrigationAccess: formData.get('hasIrrigationAccess') === '1',
                 
-                shocks: shocks,
-                estimatedLossLastYear: parseFloat(formData.get('estimatedLossLastYear')) || 0,
-                harvestLossPercentage: parseInt(formData.get('harvestLossPercentage')) || 0,
+//                 shocks: shocks,
+//                 estimatedLossLastYear: parseFloat(formData.get('estimatedLossLastYear')) || 0,
+//                 harvestLossPercentage: parseInt(formData.get('harvestLossPercentage')) || 0,
                 
-                hasSavings: formData.get('hasSavings') === '1',
-                savingsAmount: parseFloat(formData.get('savingsAmount')) || 0,
-                borrowedMoney: formData.get('borrowedMoney') === '1',
-                borrowSources: borrowSources,
-                hasOffFarmIncome: formData.get('hasOffFarmIncome') === '1',
-                offFarmIncomeAmount: parseFloat(formData.get('offFarmIncomeAmount')) || 0,
+//                 hasSavings: formData.get('hasSavings') === '1',
+//                 savingsAmount: parseFloat(formData.get('savingsAmount')) || 0,
+//                 borrowedMoney: formData.get('borrowedMoney') === '1',
+//                 borrowSources: borrowSources,
+//                 hasOffFarmIncome: formData.get('hasOffFarmIncome') === '1',
+//                 offFarmIncomeAmount: parseFloat(formData.get('offFarmIncomeAmount')) || 0,
                 
-                priorInsuranceKnowledge: formData.get('priorKnowledge') === '1',
-                purchasedInsuranceBefore: formData.get('purchasedInsuranceBefore') === '1',
-                insuranceType: formData.get('insuranceType') || '',
+//                 priorInsuranceKnowledge: formData.get('priorKnowledge') === '1',
+//                 purchasedInsuranceBefore: formData.get('purchasedInsuranceBefore') === '1',
+//                 insuranceType: formData.get('insuranceType') || '',
                 
-                trustFarmerGroup: parseInt(formData.get('trust_farmerGroup')) || 3,
-                trustNGO: parseInt(formData.get('trust_ngo')) || 3,
-                trustInsuranceProvider: parseInt(formData.get('trust_insuranceProvider')) || 3,
-                rainfallChangePerception: parseInt(formData.get('rainfallChangePerception')) || 3,
-                insurerPayoutTrust: parseInt(formData.get('insurerPayoutTrust')) || 3,
+//                 trustFarmerGroup: parseInt(formData.get('trust_farmerGroup')) || 3,
+//                 trustNGO: parseInt(formData.get('trust_ngo')) || 3,
+//                 trustInsuranceProvider: parseInt(formData.get('trust_insuranceProvider')) || 3,
+//                 rainfallChangePerception: parseInt(formData.get('rainfallChangePerception')) || 3,
+//                 insurerPayoutTrust: parseInt(formData.get('insurerPayoutTrust')) || 3,
                 
-                communityInsuranceDiscussion: false,
-                extensionVisits: false,
-                numberOfExtensionVisits: 0,
+//                 communityInsuranceDiscussion: false,
+//                 extensionVisits: false,
+//                 numberOfExtensionVisits: 0,
                 
-                memberOfFarmerGroup: formData.get('memberOfFarmerGroup') === '1',
-                farmerGroupName: formData.get('farmerGroupName') || '',
+//                 memberOfFarmerGroup: formData.get('memberOfFarmerGroup') === '1',
+//                 farmerGroupName: formData.get('farmerGroupName') || '',
                 
-                distanceToMarket: parseInt(formData.get('distanceToMarket')) || 0,
-                distanceToInsurer: parseInt(formData.get('distanceToInsurer')) || 0,
-                usesMobileMoney: formData.get('usesMobileMoney') === '1'
-            };
+//                 distanceToMarket: parseInt(formData.get('distanceToMarket')) || 0,
+//                 distanceToInsurer: parseInt(formData.get('distanceToInsurer')) || 0,
+//                 usesMobileMoney: formData.get('usesMobileMoney') === '1'
+//             };
             
-            gameState.gender = selectedGender;
-            gameState.role = selectedRole;
+//             gameState.gender = selectedGender;
+//             gameState.role = selectedRole;
             
-            console.log('✅ Demographics collected successfully!');
-            console.log('📊 Role:', selectedRole, '| Gender:', selectedGender);
-            console.log('📊 Crops:', crops);
+//             console.log('✅ Demographics collected successfully!');
+//             console.log('📊 Role:', selectedRole, '| Gender:', selectedGender);
+//             console.log('📊 Crops:', crops);
             
-            showLoading(false);
+//             showLoading(false);
             
-            // Move to Risk Assessment (Step 11)
-            currentStep = 11;
-            updateGlobalProgress(currentStep, TOTAL_STEPS);
+//             // Move to Risk Assessment (Step 11)
+//             currentStep = 11;
+//             updateGlobalProgress(currentStep, TOTAL_STEPS);
             
-            console.log('🎯 Moving to Risk Assessment...');
+//             console.log('🎯 Moving to Risk Assessment...');
             
-            setTimeout(() => {
-                showScreen('riskScreen');
-                console.log('✅ TRANSITIONED TO RISK SCREEN');
-            }, 100);
+//             setTimeout(() => {
+//                 showScreen('riskScreen');
+//                 console.log('✅ TRANSITIONED TO RISK SCREEN');
+//             }, 100);
             
-        } catch (error) {
-            showLoading(false);
-            console.error('❌ ERROR:', error.message);
-            console.error('Stack:', error.stack);
-            alert('Error submitting demographics: ' + error.message);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    });
+//         } catch (error) {
+//             showLoading(false);
+//             console.error('❌ ERROR:', error.message);
+//             console.error('Stack:', error.stack);
+//             alert('Error submitting demographics: ' + error.message);
+//             window.scrollTo({ top: 0, behavior: 'smooth' });
+//         }
+//     });
     
-    console.log('✅ Demographics form submission handler registered');
-}
+//     console.log('✅ Demographics form submission handler registered');
+// }
 
 
 
-    // ===== CONDITIONAL FIELD VISIBILITY =====
-    const hasSavingsRadios = document.querySelectorAll('[name="hasSavings"]');
-    hasSavingsRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            const group = document.getElementById('savingsAmountGroup');
-            if (group) {
-                group.style.display = this.value === '1' ? 'block' : 'none';
-            }
-        });
-    });
+//     // ===== CONDITIONAL FIELD VISIBILITY =====
+//     const hasSavingsRadios = document.querySelectorAll('[name="hasSavings"]');
+//     hasSavingsRadios.forEach(radio => {
+//         radio.addEventListener('change', function() {
+//             const group = document.getElementById('savingsAmountGroup');
+//             if (group) {
+//                 group.style.display = this.value === '1' ? 'block' : 'none';
+//             }
+//         });
+//     });
     
-    const borrowedMoneyRadios = document.querySelectorAll('[name="borrowedMoney"]');
-    borrowedMoneyRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            const group = document.getElementById('borrowingSourcesGroup');
-            if (group) {
-                group.style.display = this.value === '1' ? 'block' : 'none';
-            }
-        });
-    });
+//     const borrowedMoneyRadios = document.querySelectorAll('[name="borrowedMoney"]');
+//     borrowedMoneyRadios.forEach(radio => {
+//         radio.addEventListener('change', function() {
+//             const group = document.getElementById('borrowingSourcesGroup');
+//             if (group) {
+//                 group.style.display = this.value === '1' ? 'block' : 'none';
+//             }
+//         });
+//     });
     
-    const hasOffFarmRadios = document.querySelectorAll('[name="hasOffFarmIncome"]');
-    hasOffFarmRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            const group = document.getElementById('offFarmIncomeGroup');
-            if (group) {
-                group.style.display = this.value === '1' ? 'block' : 'none';
-            }
-        });
-    });
+//     const hasOffFarmRadios = document.querySelectorAll('[name="hasOffFarmIncome"]');
+//     hasOffFarmRadios.forEach(radio => {
+//         radio.addEventListener('change', function() {
+//             const group = document.getElementById('offFarmIncomeGroup');
+//             if (group) {
+//                 group.style.display = this.value === '1' ? 'block' : 'none';
+//             }
+//         });
+//     });
 
-    // ===== CROPS CHECKBOX VALIDATION =====
-    document.addEventListener('change', function(e) {
-        if (e.target.name === 'crops') {
-            const cropsCheckboxes = document.querySelectorAll('input[name="crops"]');
-            const anyChecked = Array.from(cropsCheckboxes).some(cb => cb.checked);
-            const cropsError = document.getElementById('cropsError');
+//     // ===== CROPS CHECKBOX VALIDATION =====
+//     document.addEventListener('change', function(e) {
+//         if (e.target.name === 'crops') {
+//             const cropsCheckboxes = document.querySelectorAll('input[name="crops"]');
+//             const anyChecked = Array.from(cropsCheckboxes).some(cb => cb.checked);
+//             const cropsError = document.getElementById('cropsError');
             
-            if (cropsError) {
-                cropsError.style.display = anyChecked ? 'none' : 'block';
-            }
-        }
-    });
+//             if (cropsError) {
+//                 cropsError.style.display = anyChecked ? 'none' : 'block';
+//             }
+//         }
+//     });
 
-    // ===== RISK FORM =====
-    const riskForm = document.getElementById('riskForm');
-    if (riskForm) {
-        riskForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showLoading();
+//     // ===== RISK FORM =====
+//     const riskForm = document.getElementById('riskForm');
+//     if (riskForm) {
+//         riskForm.addEventListener('submit', async (e) => {
+//             e.preventDefault();
+//             showLoading();
             
-            try {
-                const formData = new FormData(e.target);
-                gameState.demographics.riskPreference = parseInt(formData.get('riskChoice'));
-                gameState.demographics.riskComfort = parseInt(formData.get('riskComfort'));
-                gameState.demographics.decisionMaker = parseInt(formData.get('decisionMaker'));
+//             try {
+//                 const formData = new FormData(e.target);
+//                 gameState.demographics.riskPreference = parseInt(formData.get('riskChoice'));
+//                 gameState.demographics.riskComfort = parseInt(formData.get('riskComfort'));
+//                 gameState.demographics.decisionMaker = parseInt(formData.get('decisionMaker'));
                 
-                showLoading(false);
+//                 showLoading(false);
                 
-                currentStep = 12;
-                updateGlobalProgress(currentStep, TOTAL_STEPS);
-                showScreen('empowermentScreen');
-            } catch (error) {
-                showLoading(false);
-                console.error('Risk form error:', error);
-                alert('Error: ' + error.message);
-            }
-        });
-        console.log('✅ Risk form handler registered');
-    }
+//                 currentStep = 12;
+//                 updateGlobalProgress(currentStep, TOTAL_STEPS);
+//                 showScreen('empowermentScreen');
+//             } catch (error) {
+//                 showLoading(false);
+//                 console.error('Risk form error:', error);
+//                 alert('Error: ' + error.message);
+//             }
+//         });
+//         console.log('✅ Risk form handler registered');
+//     }
 
     
-    // ===== TUTORIAL =====
-    const tutorialPrevBtn = document.getElementById('tutorialPrevBtn');
-    if (tutorialPrevBtn) {
-        tutorialPrevBtn.addEventListener('click', previousTutorialCard);
-    }
+//     // ===== TUTORIAL =====
+//     const tutorialPrevBtn = document.getElementById('tutorialPrevBtn');
+//     if (tutorialPrevBtn) {
+//         tutorialPrevBtn.addEventListener('click', previousTutorialCard);
+//     }
     
-    const tutorialNextBtn = document.getElementById('tutorialNextBtn');
-    if (tutorialNextBtn) {
-        tutorialNextBtn.addEventListener('click', nextTutorialCard);
-    }
+//     const tutorialNextBtn = document.getElementById('tutorialNextBtn');
+//     if (tutorialNextBtn) {
+//         tutorialNextBtn.addEventListener('click', nextTutorialCard);
+//     }
     
-    const tutorialFinishBtn = document.getElementById('tutorialFinishBtn');
-    if (tutorialFinishBtn) {
-        tutorialFinishBtn.addEventListener('click', startGameAfterTutorial);
-    }
+//     const tutorialFinishBtn = document.getElementById('tutorialFinishBtn');
+//     if (tutorialFinishBtn) {
+//         tutorialFinishBtn.addEventListener('click', startGameAfterTutorial);
+//     }
 
-    const cardStack = document.getElementById('tutorialCardStack');
-    if (cardStack) {
-        cardStack.addEventListener('touchstart', handleTouchStart, false);
-        cardStack.addEventListener('touchend', handleTouchEnd, false);
-    }
+//     const cardStack = document.getElementById('tutorialCardStack');
+//     if (cardStack) {
+//         cardStack.addEventListener('touchstart', handleTouchStart, false);
+//         cardStack.addEventListener('touchend', handleTouchEnd, false);
+//     }
 
-    // ===== GAME ALLOCATION INPUTS =====
-    ['insuranceSpend', 'inputSpend', 'educationSpend', 'consumptionSpend'].forEach(inputId => {
-        const input = document.getElementById(inputId);
-        if (input) input.addEventListener('input', updateAllocation);
-    });
+//     // ===== GAME ALLOCATION INPUTS =====
+//     ['insuranceSpend', 'inputSpend', 'educationSpend', 'consumptionSpend'].forEach(inputId => {
+//         const input = document.getElementById(inputId);
+//         if (input) input.addEventListener('input', updateAllocation);
+//     });
 
-    // ===== NEXT SEASON BUTTON =====
-    const nextSeasonBtn = document.getElementById('nextRoundBtn');
-    if (nextSeasonBtn) {
-        nextSeasonBtn.addEventListener('click', nextSeason);
-        nextSeasonBtn.innerHTML = '<span>Continue to Next Season</span><i class="fas fa-arrow-right"></i>';
-    }
+//     // ===== NEXT SEASON BUTTON =====
+//     const nextSeasonBtn = document.getElementById('nextRoundBtn');
+//     if (nextSeasonBtn) {
+//         nextSeasonBtn.addEventListener('click', nextSeason);
+//         nextSeasonBtn.innerHTML = '<span>Continue to Next Season</span><i class="fas fa-arrow-right"></i>';
+//     }
 
-    // ===== RESTART BUTTON =====
-    const restartBtn = document.getElementById('restartBtn');
-    if (restartBtn) {
-        restartBtn.addEventListener('click', restartGame);
-    }
+//     // ===== RESTART BUTTON =====
+//     const restartBtn = document.getElementById('restartBtn');
+//     if (restartBtn) {
+//         restartBtn.addEventListener('click', restartGame);
+//     }
 
-    // ===== ALLOCATION FORM =====
+//     // ===== ALLOCATION FORM =====
   
 
-    // ===== KNOWLEDGE FORM =====
-// ===== FIX 2: CORRECT KNOWLEDGE TEST SUBMISSION =====
-// Find the knowledge form handler (around line 4430) and replace it:
+//     // ===== KNOWLEDGE FORM =====
+// // ===== FIX 2: CORRECT KNOWLEDGE TEST SUBMISSION =====
+// // Find the knowledge form handler (around line 4430) and replace it:
 
-// ===== KNOWLEDGE FORM =====
-const knowledgeForm = document.getElementById('knowledgeForm');
-if (knowledgeForm) {
-    knowledgeForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+// // ===== KNOWLEDGE FORM =====
+// const knowledgeForm = document.getElementById('knowledgeForm');
+// if (knowledgeForm) {
+//     knowledgeForm.addEventListener('submit', async (e) => {
+//         e.preventDefault();
         
-        if (isSubmittingKnowledge) {
-            console.log('⚠️ Already submitting knowledge test');
-            return;
-        }
+//         if (isSubmittingKnowledge) {
+//             console.log('⚠️ Already submitting knowledge test');
+//             return;
+//         }
         
-        isSubmittingKnowledge = true;
-        showLoading();
+//         isSubmittingKnowledge = true;
+//         showLoading();
         
-        try {
-            const formData = new FormData(e.target);
+//         try {
+//             const formData = new FormData(e.target);
             
-            // ✅ CORRECT FORMAT: Use proper field names expected by server
-            const testData = {
-                respondentId: gameState.respondentId,
-                sessionId: gameState.sessionId,  // ✅ ADDED: Required by server
-                q1_indexBased: formData.get('q1') === 'true',
-                q2_areaWide: formData.get('q2') === 'true',
-                q3_profitGuarantee: formData.get('q3') === 'false',
-                q4_upfrontCost: formData.get('q4') === 'true',
-                q5_basisRisk: formData.get('q5') === 'true'
-            };
+//             // ✅ CORRECT FORMAT: Use proper field names expected by server
+//             const testData = {
+//                 respondentId: gameState.respondentId,
+//                 sessionId: gameState.sessionId,  // ✅ ADDED: Required by server
+//                 q1_indexBased: formData.get('q1') === 'true',
+//                 q2_areaWide: formData.get('q2') === 'true',
+//                 q3_profitGuarantee: formData.get('q3') === 'false',
+//                 q4_upfrontCost: formData.get('q4') === 'true',
+//                 q5_basisRisk: formData.get('q5') === 'true'
+//             };
             
-            console.log('📝 Submitting knowledge test:', testData);
+//             console.log('📝 Submitting knowledge test:', testData);
             
-            await apiCall('/knowledge/submit', 'POST', testData);
+//             await apiCall('/knowledge/submit', 'POST', testData);
             
-            // ✅ ADDED: Mark session as complete
-            await apiCall(`/session/${gameState.sessionId}/complete`, 'PUT');
+//             // ✅ ADDED: Mark session as complete
+//             await apiCall(`/session/${gameState.sessionId}/complete`, 'PUT');
             
-            console.log('✅ Knowledge test submitted and session completed');
+//             console.log('✅ Knowledge test submitted and session completed');
             
-            showLoading(false);
+//             showLoading(false);
             
-            // Show results - this will determine next step
-            await showResults();
+//             // Show results - this will determine next step
+//             await showResults();
             
-        } catch (error) {
-            showLoading(false);
-            isSubmittingKnowledge = false;
-            console.error('❌ Knowledge form error:', error);
-            alert('Error submitting knowledge test: ' + error.message);
-        } finally {
-            isSubmittingKnowledge = false;
-        }
-    });
-    console.log('✅ Knowledge form handler registered');
-}
+//         } catch (error) {
+//             showLoading(false);
+//             isSubmittingKnowledge = false;
+//             console.error('❌ Knowledge form error:', error);
+//             alert('Error submitting knowledge test: ' + error.message);
+//         } finally {
+//             isSubmittingKnowledge = false;
+//         }
+//     });
+//     console.log('✅ Knowledge form handler registered');
+// }
 
-    // ===== COUPLE PRE-QUESTIONS =====
-    const couplePreForm = document.getElementById('couplePreQuestionsForm');
-    if (couplePreForm) {
-        couplePreForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            // ... your existing couple pre-questions handler
-        });
-    }
+//     // ===== COUPLE PRE-QUESTIONS =====
+//     const couplePreForm = document.getElementById('couplePreQuestionsForm');
+//     if (couplePreForm) {
+//         couplePreForm.addEventListener('submit', async (e) => {
+//             e.preventDefault();
+//             // ... your existing couple pre-questions handler
+//         });
+//     }
 
-    // ===== PERCEPTION FORM =====
-    const perceptionForm = document.getElementById('perceptionForm');
-    if (perceptionForm) {
-        perceptionForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            // ... your existing perception form handler
-        });
-    }
+//     // ===== PERCEPTION FORM =====
+//     const perceptionForm = document.getElementById('perceptionForm');
+//     if (perceptionForm) {
+//         perceptionForm.addEventListener('submit', async (e) => {
+//             e.preventDefault();
+//             // ... your existing perception form handler
+//         });
+//     }
 
-    // ===== SECOND PARTNER BUTTONS =====
-    // const startSecondBtn = document.getElementById('startSecondPartnerBtn');
-    // if (startSecondBtn) {
-    //     startSecondBtn.addEventListener('click', startSecondPartner);
-    //     console.log('✅ Second partner button listener registered');
-    // }
+//     // ===== SECOND PARTNER BUTTONS =====
+//     // const startSecondBtn = document.getElementById('startSecondPartnerBtn');
+//     // if (startSecondBtn) {
+//     //     startSecondBtn.addEventListener('click', startSecondPartner);
+//     //     console.log('✅ Second partner button listener registered');
+//     // }
     
-    const startCouplePromptBtn = document.getElementById('startCouplePromptBtn');
-    if (startCouplePromptBtn) {
-        startCouplePromptBtn.addEventListener('click', startCouplePreQuestions);
-    }
+//     const startCouplePromptBtn = document.getElementById('startCouplePromptBtn');
+//     if (startCouplePromptBtn) {
+//         startCouplePromptBtn.addEventListener('click', startCouplePreQuestions);
+//     }
 
-    // ===== LANGUAGE TOGGLE =====
-    const langBtn = document.getElementById('languageBtn');
-    if (langBtn) {
-        langBtn.addEventListener('click', () => {
-            const newLang = gameState.language === 'english' ? 'dagbani' : 'english';
-            updateLanguage(newLang);
-        });
-        console.log('✅ Language toggle button listener registered');
-    }
+//     // ===== LANGUAGE TOGGLE =====
+//     const langBtn = document.getElementById('languageBtn');
+//     if (langBtn) {
+//         langBtn.addEventListener('click', () => {
+//             const newLang = gameState.language === 'english' ? 'dagbani' : 'english';
+//             updateLanguage(newLang);
+//         });
+//         console.log('✅ Language toggle button listener registered');
+//     }
 
-    // ===== CONNECTION STATUS =====
-    window.addEventListener('online', updateConnectionStatus);
-    window.addEventListener('offline', updateConnectionStatus);
-    updateConnectionStatus();
+//     // ===== CONNECTION STATUS =====
+//     window.addEventListener('online', updateConnectionStatus);
+//     window.addEventListener('offline', updateConnectionStatus);
+//     updateConnectionStatus();
 
-    console.log('✅ All event listeners registered');
-    console.log('🎮 Game ready!');
-});
+//     console.log('✅ All event listeners registered');
+//     console.log('🎮 Game ready!');
+// });
 
 
 
@@ -3485,6 +3485,7 @@ function updateDemographicsScreenLang() {
 
 // Add to your game.js
 // ===== CONNECTION STATUS MANAGEMENT =====
+// ===== CONNECTION STATUS MANAGEMENT =====
 function updateConnectionStatus() {
     const statusEl = document.getElementById('connectionStatus');
     const statusText = document.getElementById('statusText');
@@ -3511,11 +3512,10 @@ function updateConnectionStatus() {
                 }
             }
         } else {
-            statusText.textContent = 'Online';
+            statusText.textContent = 'Online - All synced';
             if (syncBtn) syncBtn.style.display = 'none';
         }
         
-        // Show export button if there's offline data
         if (exportBtn && syncStatus.offlineDataSize > 1000) {
             exportBtn.style.display = 'flex';
         }
@@ -3526,6 +3526,132 @@ function updateConnectionStatus() {
         if (exportBtn) exportBtn.style.display = 'flex';
     }
 }
+
+async function manualSync() {
+    const syncBtn = document.getElementById('syncButton');
+    const statusEl = document.getElementById('connectionStatus');
+    const statusText = document.getElementById('statusText');
+    
+    if (!syncBtn || !statusEl || !statusText) {
+        console.error('❌ Sync UI elements not found');
+        alert('Sync button not found. Please refresh the page.');
+        return;
+    }
+    
+    try {
+        console.log('🔄 Starting manual sync...');
+        
+        // Update UI to show syncing
+        statusEl.className = 'connection-status status-syncing';
+        statusText.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Syncing...';
+        syncBtn.disabled = true;
+        
+        // Perform sync
+        const result = await window.offlineStorage.syncOfflineData();
+        
+        if (result.success) {
+            console.log('✅ Sync completed:', result);
+            
+            // Success feedback
+            statusText.innerHTML = '<i class="fas fa-check"></i> Synced successfully!';
+            
+            // Show detailed results
+            if (result.results) {
+                console.log('📊 Sync results:', result.results);
+                
+                if (result.results.successful > 0) {
+                    showToast(`✅ Successfully synced ${result.results.successful} items to database!`, 'success');
+                }
+                
+                if (result.results.failed > 0) {
+                    showToast(`⚠️ ${result.results.failed} items failed to sync. Check console for details.`, 'warning');
+                    console.error('Failed items:', result.results.errors);
+                }
+                
+                if (result.results.successful === 0 && result.results.failed === 0) {
+                    showToast('ℹ️ No items to sync', 'info');
+                }
+            } else {
+                showToast('✅ Data synced successfully!', 'success');
+            }
+            
+            // Reset UI after 2 seconds
+            setTimeout(() => {
+                updateConnectionStatus();
+            }, 2000);
+        } else {
+            throw new Error(result.message || 'Sync failed');
+        }
+    } catch (error) {
+        console.error('❌ Sync error:', error);
+        statusText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Sync failed';
+        showToast('❌ Failed to sync data: ' + error.message, 'error');
+        
+        // Reset UI after 3 seconds
+        setTimeout(() => {
+            updateConnectionStatus();
+        }, 3000);
+    } finally {
+        syncBtn.disabled = false;
+    }
+}
+
+
+
+// ===== AUTO-SYNC WHEN COMING BACK ONLINE =====
+function setupAutoSync() {
+    window.addEventListener('online', async function() {
+        console.log('🌐 Connection restored!');
+        updateConnectionStatus();
+        
+        // Wait 2 seconds for connection to stabilize
+        setTimeout(async () => {
+            const syncStatus = window.offlineStorage.getSyncStatus();
+            
+            if (syncStatus.pendingItems > 0) {
+                console.log(`📤 AUTO-SYNCING ${syncStatus.pendingItems} items...`);
+                
+                const statusText = document.getElementById('statusText');
+                if (statusText) {
+                    statusText.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Auto-syncing...';
+                }
+                
+                try {
+                    const result = await window.offlineStorage.syncOfflineData();
+                    
+                    if (result.success && result.results) {
+                        console.log('✅ Auto-sync complete:', result.results);
+                        
+                        if (result.results.successful > 0) {
+                            showToast(`✅ Auto-synced ${result.results.successful} items to database!`, 'success');
+                        }
+                        
+                        if (result.results.failed > 0) {
+                            showToast(`⚠️ ${result.results.failed} items failed. Click "Sync Now" to retry.`, 'warning');
+                        }
+                    }
+                    
+                    updateConnectionStatus();
+                } catch (error) {
+                    console.error('❌ Auto-sync failed:', error);
+                    showToast('⚠️ Auto-sync failed. Click "Sync Now" to retry.', 'warning');
+                    updateConnectionStatus();
+                }
+            } else {
+                console.log('✅ No pending items to sync');
+            }
+        }, 2000);
+    });
+    
+    window.addEventListener('offline', function() {
+        console.log('📴 Connection lost - will save locally');
+        updateConnectionStatus();
+    });
+}
+
+
+
+
 
 async function manualSync() {
     const syncBtn = document.getElementById('syncButton');
@@ -4031,6 +4157,15 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🎮 Weather Index Insurance Game Loaded');
     console.log(`📋 Total steps: ${TOTAL_STEPS}`);
     console.log(`📄 Demographics pages: ${DEMOGRAPHICS_PAGES}`);
+
+
+      // ✅ ADD THIS LINE - Initialize auto-sync
+    setupAutoSync();
+    
+    // ✅ ADD THIS LINE - Update connection status on load
+    updateConnectionStatus();
+
+    
 
     // ===== WELCOME SCREEN =====
     const startBtn = document.getElementById('startBtn');
