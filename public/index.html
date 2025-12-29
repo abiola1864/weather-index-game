@@ -706,49 +706,59 @@ select:invalid:focus {
             </div>
 
             <!-- PAGE 3: Household Assets (8 checkboxes) -->
-            <div class="demo-page" id="demoPage3">
-                <h3 style="color: #2E7D32; margin-bottom: 20px;">
-                    <i class="fas fa-home"></i> Household Assets
-                </h3>
-                
-                <div class="form-group">
-                    <label>What assets does your household own? (Select all that apply)</label>
-                    <div class="checkbox-group" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
-                            <input type="checkbox" name="asset_radio" value="1"> 
-                            <i class="fas fa-broadcast-tower"></i> Radio
-                        </label>
-                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
-                            <input type="checkbox" name="asset_tv" value="1"> 
-                            <i class="fas fa-tv"></i> TV
-                        </label>
-                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
-                            <input type="checkbox" name="asset_refrigerator" value="1"> 
-                            <i class="fas fa-snowflake"></i> Refrigerator
-                        </label>
-                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
-                            <input type="checkbox" name="asset_bicycle" value="1"> 
-                            <i class="fas fa-bicycle"></i> Bicycle
-                        </label>
-                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
-                            <input type="checkbox" name="asset_motorbike" value="1"> 
-                            <i class="fas fa-motorcycle"></i> Motorbike
-                        </label>
-                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
-                            <input type="checkbox" name="asset_mobilePhone" value="1"> 
-                            <i class="fas fa-mobile-alt"></i> Mobile phone
-                        </label>
-                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
-                            <input type="checkbox" name="asset_generator" value="1"> 
-                            <i class="fas fa-plug"></i> Generator
-                        </label>
-                        <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
-                            <input type="checkbox" name="asset_plough" value="1"> 
-                            <i class="fas fa-tractor"></i> Plough
-                        </label>
-                    </div>
-                </div>
-            </div>
+           <!-- PAGE 3: Household Assets (8 checkboxes) -->
+<div class="demo-page" id="demoPage3">
+    <h3 style="color: #2E7D32; margin-bottom: 20px;">
+        <i class="fas fa-home"></i> 
+        <span data-translate="demographics.householdAssets">Household Assets</span>
+    </h3>
+    
+    <div class="form-group">
+        <label data-translate="demographics.assetsQuestion">What assets does your household own? (Select all that apply)</label>
+        <div class="checkbox-group" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+            <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                <input type="checkbox" name="asset_radio" value="1"> 
+                <i class="fas fa-broadcast-tower"></i> 
+                <span data-translate="demographics.radio">Radio</span>
+            </label>
+            <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                <input type="checkbox" name="asset_tv" value="1"> 
+                <i class="fas fa-tv"></i> 
+                <span data-translate="demographics.tv">TV</span>
+            </label>
+            <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                <input type="checkbox" name="asset_refrigerator" value="1"> 
+                <i class="fas fa-snowflake"></i> 
+                <span data-translate="demographics.refrigerator">Refrigerator</span>
+            </label>
+            <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                <input type="checkbox" name="asset_bicycle" value="1"> 
+                <i class="fas fa-bicycle"></i> 
+                <span data-translate="demographics.bicycle">Bicycle</span>
+            </label>
+            <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                <input type="checkbox" name="asset_motorbike" value="1"> 
+                <i class="fas fa-motorcycle"></i> 
+                <span data-translate="demographics.motorbike">Motorbike</span>
+            </label>
+            <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                <input type="checkbox" name="asset_mobilePhone" value="1"> 
+                <i class="fas fa-mobile-alt"></i> 
+                <span data-translate="demographics.mobilePhone">Mobile phone</span>
+            </label>
+            <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                <input type="checkbox" name="asset_generator" value="1"> 
+                <i class="fas fa-plug"></i> 
+                <span data-translate="demographics.generator">Generator</span>
+            </label>
+            <label style="padding: 15px; background: #f5f5f5; border-radius: 8px;">
+                <input type="checkbox" name="asset_plough" value="1"> 
+                <i class="fas fa-tractor"></i> 
+                <span data-translate="demographics.plough">Plough</span>
+            </label>
+        </div>
+    </div>
+</div>
 
             <!-- PAGE 4: Farming Experience (3 fields) -->
             <div class="demo-page" id="demoPage4">
@@ -793,11 +803,11 @@ select:invalid:focus {
     <div class="form-group">
         <label>Main Crops (select all that apply) <span style="color: red;">*</span></label>
         <div class="checkbox-group" id="cropsCheckboxGroup" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-            <label><input type="checkbox" name="crops" value="maize"> 🌽 Maize</label>
-            <label><input type="checkbox" name="crops" value="rice"> 🍚 Rice</label>
-            <label><input type="checkbox" name="crops" value="soybeans"> 🫘 Soybeans</label>
-            <label><input type="checkbox" name="crops" value="groundnuts"> 🥜 Groundnuts</label>
-            <label><input type="checkbox" name="crops" value="other"> ➕ Other</label>
+          <label><input type="checkbox" name="crops" value="maize"> 🌽 <span data-translate="demographics.maize">Maize</span></label>
+<label><input type="checkbox" name="crops" value="rice"> 🍚 <span data-translate="demographics.rice">Rice</span></label>
+<label><input type="checkbox" name="crops" value="soybeans"> 🫘 <span data-translate="demographics.soybeans">Soybeans</span></label>
+<label><input type="checkbox" name="crops" value="groundnuts"> 🥜 <span data-translate="demographics.groundnuts">Groundnuts</span></label>
+<label><input type="checkbox" name="crops" value="other"> ➕ <span data-translate="demographics.other">Other</span></label>
         </div>
         <div id="cropsError" style="display: none; color: #D32F2F; margin-top: 8px; font-size: 14px; font-weight: 600;">
             ⚠️ Please select at least one crop
@@ -832,9 +842,9 @@ select:invalid:focus {
                     <label>How many livestock does your household own?</label>
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
                         <div style="background: #f5f5f5; padding: 20px; border-radius: 10px;">
-                            <label style="font-size: 16px; font-weight: 600; display: block; margin-bottom: 10px;">
-                                🐄 Cattle:
-                            </label>
+                          <label style="font-size: 16px; font-weight: 600; display: block; margin-bottom: 10px;">
+    🐄 <span data-translate="demographics.cattle">Cattle</span>:
+</label>
                             <input type="number" name="livestock_cattle" min="0" value="0" style="width: 100%;">
                         </div>
                         <div style="background: #f5f5f5; padding: 20px; border-radius: 10px;">
@@ -868,10 +878,13 @@ select:invalid:focus {
                 <div class="form-group">
                     <label>Which improved inputs did you use last season? (Select all)</label>
                     <div class="checkbox-group" style="display: grid; gap: 10px;">
-                        <label style="padding: 12px; background: #f5f5f5; border-radius: 8px;">
-                            <input type="checkbox" name="input_certifiedSeed" value="1"> 
-                            🌱 Certified/Improved seed
-                        </label>
+                       <label style="padding: 12px; background: #f5f5f5; border-radius: 8px;"><label style="padding: 12px; background: #fff3cd; border-radius: 8px;">
+
+                        
+                       </label>
+    <input type="checkbox" name="input_certifiedSeed" value="1"> 
+    🌱 <span data-translate="demographics.certifiedSeed">Certified/Improved seed</span>
+</label>
                         <label style="padding: 12px; background: #f5f5f5; border-radius: 8px;">
                             <input type="checkbox" name="input_fertilizer" value="1"> 
                             🧪 Chemical fertilizer
@@ -905,10 +918,10 @@ select:invalid:focus {
                 <div class="form-group">
                     <label>What shocks have you experienced in the past 3 years? (Select all)</label>
                     <div class="checkbox-group" style="display: grid; gap: 10px;">
-                        <label style="padding: 12px; background: #fff3cd; border-radius: 8px;">
-                            <input type="checkbox" name="shock_drought" value="1"> 
-                            🌵 Drought
-                        </label>
+                    <label style="padding: 12px; background: #fff3cd; border-radius: 8px;">
+    <input type="checkbox" name="shock_drought" value="1"> 
+    🌵 <span data-translate="demographics.drought">Drought</span>
+</label>
                         <label style="padding: 12px; background: #cfe2ff; border-radius: 8px;">
                             <input type="checkbox" name="shock_flood" value="1"> 
                             🌊 Flood
@@ -965,7 +978,7 @@ select:invalid:focus {
                 <div class="form-group" id="borrowingSourcesGroup" style="display: none;">
                     <label>Where did you borrow from? (Select all):</label>
                     <div class="checkbox-group">
-                        <label><input type="checkbox" name="borrowSource_bank"> 🏦 Bank</label>
+                
                         <label><input type="checkbox" name="borrowSource_microfinance"> 💼 Microfinance</label>
                         <label><input type="checkbox" name="borrowSource_vsla"> 👥 VSLA/Savings group</label>
                         <label><input type="checkbox" name="borrowSource_familyFriends"> 👪 Family/Friends</label>
