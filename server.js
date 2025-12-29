@@ -285,32 +285,32 @@ const startServer = async () => {
   });
 
   // ===== GRACEFUL SHUTDOWN =====
-  process.on('SIGTERM', () => {
-    console.log('');
-    console.log('⚠️  SIGTERM received. Shutting down gracefully...');
-    server.close(() => {
-      console.log('✅ HTTP server closed');
-      mongoose.connection.close(false, () => {
-        console.log('✅ MongoDB connection closed');
-        console.log('👋 Server shutdown complete');
-        process.exit(0);
-      });
+// ===== GRACEFUL SHUTDOWN =====
+process.on('SIGTERM', () => {
+  console.log('');
+  console.log('⚠️  SIGTERM received. Shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ HTTP server closed');
+    mongoose.connection.close(false, () => {  // ❌ OLD API
+      console.log('✅ MongoDB connection closed');
+      console.log('👋 Server shutdown complete');
+      process.exit(0);
     });
   });
-
-  process.on('SIGINT', () => {
-    console.log('');
-    console.log('⚠️  SIGINT received. Shutting down gracefully...');
-    server.close(() => {
-      console.log('✅ HTTP server closed');
-    mongoose.connection.close().then(() => {
-    console.log('✅ MongoDB connection closed');
-    console.log('👋 Server shutdown complete');
-    process.exit(0);
 });
+
+process.on('SIGINT', () => {
+  console.log('');
+  console.log('⚠️  SIGINT received. Shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ HTTP server closed');
+    mongoose.connection.close().then(() => {  // ✅ NEW API but missing error handling
+      console.log('✅ MongoDB connection closed');
+      console.log('👋 Server shutdown complete');
+      process.exit(0);
     });
   });
-
+});
   process.on('uncaughtException', (error) => {
     console.error('❌ Uncaught Exception:', error);
     process.exit(1);
