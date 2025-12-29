@@ -287,6 +287,13 @@ const TRANSLATIONS = {
             insuranceReturn: "You paid {paid} GHS → Got {received} GHS back = {multiplier}x return!",
             takeTime: "Take your time to review the results before continuing"
         },
+
+        outcome: {
+    harvest: "Harvest Outcome",
+    insurance: "Insurance Payout",
+    finalIncome: "Final Income",
+    continue: "Continue to Next Season"
+},
         
         seasons: {
             s1Name: "Planting Season - March",
@@ -694,6 +701,13 @@ const TRANSLATIONS = {
             rememberInfo: "Lahiri: Yi be chɛm chɛŋa bee. Pahi ni yi chɛ chɛŋa ni yi ti dɔɣi.",
             startSession: "Ti Dɔɣi Bee Ayi"
         },
+
+        outcome: {
+    harvest: "Puuni Ni Yi Nya",
+    insurance: "Insurance Mali",
+    finalIncome: "Mali Zaa",
+    continue: "Ti Kpeeni Din"
+},
         
         results: {
             title: "Ayi Ti Pahi!",
@@ -723,22 +737,28 @@ const TRANSLATIONS = {
 
 // Helper function to get translation
 
+// ===== IMPROVED t() HELPER FUNCTION =====
+// ===== IMPROVED t() HELPER FUNCTION WITH PROPER FALLBACK =====
 function t(key, params = {}) {
     const lang = gameState.language || 'english';
     const keys = key.split('.');
     let value = TRANSLATIONS[lang];
     
+    // Navigate through nested keys
     for (const k of keys) {
         if (value && value[k] !== undefined) {
             value = value[k];
         } else {
-            // Fallback to English
+            // ✅ FIX: Fallback to English if key doesn't exist in current language
+            console.warn(`⚠️ Translation missing: ${key} in ${lang}, falling back to English`);
             value = TRANSLATIONS.english;
             for (const ek of keys) {
                 if (value && value[ek] !== undefined) {
                     value = value[ek];
                 } else {
-                    return key;
+                    // ✅ If English also missing, return the key itself as last resort
+                    console.error(`❌ Translation missing in both languages: ${key}`);
+                    return key; // Return key so you can see what's missing
                 }
             }
             break;
@@ -754,6 +774,9 @@ function t(key, params = {}) {
     
     return value;
 }
+
+
+
 
 
 function getSeasonStory(seasonNumber) {
@@ -3079,8 +3102,12 @@ function handleSwipe() {
 // ===== LANGUAGE TOGGLE FUNCTION =====
 // ===== UPDATED updateLanguage FUNCTION =====
 // Replace the existing updateLanguage function with this complete version
+// ===== UPDATED updateLanguage FUNCTION - COMPLETE FIX =====
 function updateLanguage(language) {
     console.log('🌍 Changing language to:', language);
+    console.log('📋 Current gameState.language:', gameState.language);
+    console.log('📚 TRANSLATIONS available for:', Object.keys(TRANSLATIONS));
+    
     gameState.language = language;
     
     // Update language button
@@ -3089,38 +3116,51 @@ function updateLanguage(language) {
         currentLangEl.textContent = language === 'english' ? 'English' : 'Dagbani';
     }
     
+    // ✅ ADD THIS DEBUG CODE
+    console.log('🔍 Testing translation:');
+    console.log('  welcome.title (EN):', TRANSLATIONS.english.welcome.title);
+    console.log('  welcome.title (Dagbani):', TRANSLATIONS.dagbani.welcome.title);
+    console.log('  t("welcome.title"):', t('welcome.title'));
+    
     // Update all data-translate attributes globally
-    document.querySelectorAll('[data-translate]').forEach(el => {
+    const elements = document.querySelectorAll('[data-translate]');
+    console.log('📝 Found', elements.length, 'elements with data-translate');
+    
+    let updatedCount = 0;
+    elements.forEach(el => {
         const key = el.getAttribute('data-translate');
         const translation = t(key);
         
-        // Handle different element types
-        if (el.tagName === 'BUTTON') {
-            const span = el.querySelector('span');
-            if (span) {
-                span.textContent = translation;
-            } else if (!el.querySelector('i')) {
+        console.log(`  Translating: ${key} → "${translation}"`); // ✅ ADD THIS
+        
+        // ... rest of the forEach
+        if (translation && translation !== key) {
+            if (el.tagName === 'BUTTON') {
+                const span = el.querySelector('span');
+                if (span) {
+                    span.textContent = translation;
+                    updatedCount++;
+                }
+            } else {
                 el.textContent = translation;
+                updatedCount++;
             }
-        } else if (el.querySelector('input') || el.querySelector('select')) {
-            // Skip labels that contain inputs/selects
-            return;
-        } else {
-            el.textContent = translation;
         }
     });
     
+    console.log('✅ Updated', updatedCount, 'elements');
+    
+
     // Update specific screens with complex structures
     updateWelcomeScreenLang();
-    updateExtendedDemographicsLang();  // NEW
-    updateDemographicsScreenLang();
+    updateDemographicsScreenLang(); // ✅ Use this, NOT updateExtendedDemographicsLang
     updateRiskScreenLang();
     updateEmpowermentScreenLang();
     updateKnowledgeScreenLang();
     updatePerceptionScreenLang();
     updateCoupleQuestionsLang();
     updateResultsScreenLang();
-    updateProgressText();  // NEW
+    updateProgressText();
     
     // Refresh current screen if needed
     if (gameState.currentScreen === 'gameScreen') {
@@ -3133,6 +3173,8 @@ function updateLanguage(language) {
     
     console.log('✅ Language updated to:', language);
 }
+
+
 
 
 
@@ -3379,16 +3421,18 @@ function updateLabelLang(inputId, text) {
 // Find the existing language button listener and replace it with:
 
 // Inside DOMContentLoaded:
+// ===== LANGUAGE TOGGLE ===== (in DOMContentLoaded)
 const langBtn = document.getElementById('languageBtn');
 if (langBtn) {
     langBtn.addEventListener('click', () => {
-        const newLang = gameState.language === 'english' ? 'dagbani' : 'english';
+        const currentLang = gameState.language || 'english';
+        const newLang = currentLang === 'english' ? 'dagbani' : 'english';
+        
+        console.log('🔄 Language change:', currentLang, '→', newLang); // ✅ ADD THIS
         updateLanguage(newLang);
     });
     console.log('✅ Language toggle button listener registered');
 }
-
-
 
 
 
@@ -4939,15 +4983,15 @@ if (knowledgeForm) {
         restartBtn.addEventListener('click', restartGame);
     }
 
-    // ===== LANGUAGE TOGGLE =====
-    const langBtn = document.getElementById('languageBtn');
-    if (langBtn) {
-        langBtn.addEventListener('click', () => {
-            const newLang = gameState.language === 'english' ? 'dagbani' : 'english';
-            updateLanguage(newLang);
-        });
-        console.log('✅ Language toggle button listener registered');
-    }
+    // // ===== LANGUAGE TOGGLE =====
+    // const langBtn = document.getElementById('languageBtn');
+    // if (langBtn) {
+    //     langBtn.addEventListener('click', () => {
+    //         const newLang = gameState.language === 'english' ? 'dagbani' : 'english';
+    //         updateLanguage(newLang);
+    //     });
+    //     console.log('✅ Language toggle button listener registered');
+    // }
 
     // ===== CONNECTION STATUS =====
     window.addEventListener('online', updateConnectionStatus);
