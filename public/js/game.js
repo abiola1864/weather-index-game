@@ -102,15 +102,15 @@ const TRANSLATIONS = {
             childrenUnder15: "Number of children under 15",
             
             // Page 3: Assets
-           assetsQuestion: "Di lahira ni yi doo nya? (Chɛ zaa)",  // Already correct! "What things does your household own? (Select all)"
+           assetsQuestion: "What things does your household own? (Select all)",
 radio: "Radio",              // Keep as "Radio" (universally understood)
 tv: "TV",                   // Keep as "TV" (universally understood) 
 refrigerator: "Fridge",     // Or "Koom zaɣim" (cold box), but "Fridge" is commonly used
-bicycle: "Basikol",         // ✅ Already correct!
-motorbike: "Moto",          // Or "Moto basikol"
-mobilePhone: "Telephone",   // Or keep as "Mobile"
+bicycle: "Bicycle",         // ✅ Already correct!
+motorbike: "MotorBike",          // Or "Moto basikol"
+mobilePhone: "Mobile Phone",   // Or keep as "Mobile"
 generator: "Generator",     // Or "Laɣim masini" (light machine)
-plough: "Tukula",   
+plough: "Plough",   
             
             // Page 4: Farming Experience
             farmingYears: "Years of Farming Experience",
