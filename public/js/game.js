@@ -4808,46 +4808,58 @@ if (allocForm) {
     }
 
     // ===== KNOWLEDGE FORM =====
-    const knowledgeForm = document.getElementById('knowledgeForm');
-    if (knowledgeForm) {
-        knowledgeForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+  // ===== KNOWLEDGE FORM - FIXED =====
+const knowledgeForm = document.getElementById('knowledgeForm');
+if (knowledgeForm) {
+    knowledgeForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (isSubmittingKnowledge) {
+            console.log('⚠️ Already submitting knowledge test');
+            return;
+        }
+        
+        isSubmittingKnowledge = true;
+        showLoading();
+        
+        try {
+            const formData = new FormData(e.target);
             
-            if (isSubmittingKnowledge) {
-                console.log('Already submitting knowledge test...');
-                return;
-            }
+            // ✅ CORRECT FORMAT: Flat structure with specific field names
+            const testData = {
+                respondentId: gameState.respondentId,
+                sessionId: gameState.sessionId,
+                q1_indexBased: formData.get('q1') === 'true',
+                q2_areaWide: formData.get('q2') === 'true',
+                q3_profitGuarantee: formData.get('q3') === 'false',
+                q4_upfrontCost: formData.get('q4') === 'true',
+                q5_basisRisk: formData.get('q5') === 'true'
+            };
             
-            isSubmittingKnowledge = true;
-            showLoading();
+            console.log('📝 Submitting knowledge test:', testData);
             
-            try {
-                const formData = new FormData(e.target);
-                const answers = {
-                    q1: formData.get('q1') === 'true',
-                    q2: formData.get('q2') === 'true',
-                    q3: formData.get('q3') === 'false',
-                    q4: formData.get('q4') === 'true',
-                    q5: formData.get('q5') === 'true'
-                };
-                
-                await apiCall('/knowledge/submit', 'POST', {
-                    respondentId: gameState.respondentId,
-                    answers: answers
-                });
-                
-                showLoading(false);
-                await showResults();
-                
-            } catch (error) {
-                showLoading(false);
-                console.error('Knowledge test error:', error);
-                alert('Error submitting knowledge test: ' + error.message);
-            } finally {
-                isSubmittingKnowledge = false;
-            }
-        });
-    }
+            await apiCall('/knowledge/submit', 'POST', testData);
+            
+            // ✅ Mark session as complete
+            await apiCall(`/session/${gameState.sessionId}/complete`, 'PUT');
+            
+            console.log('✅ Knowledge test submitted and session completed');
+            
+            showLoading(false);
+            await showResults();
+            
+        } catch (error) {
+            showLoading(false);
+            console.error('❌ Knowledge form error:', error);
+            alert('Error submitting knowledge test: ' + error.message);
+        } finally {
+            isSubmittingKnowledge = false;
+        }
+    });
+    console.log('✅ Knowledge form handler registered');
+}
+
+
 
     // ===== COUPLE PRE-QUESTIONS =====
     const couplePreForm = document.getElementById('couplePreQuestionsForm');
