@@ -102,15 +102,15 @@ const TRANSLATIONS = {
             childrenUnder15: "Number of children under 15",
             
             // Page 3: Assets
-            assetsQuestion: "What assets does your household own? (Select all that apply)",
-            radio: "Radio",
-            tv: "TV",
-            refrigerator: "Refrigerator",
-            bicycle: "Bicycle",
-            motorbike: "Motorbike",
-            mobilePhone: "Mobile phone",
-            generator: "Generator",
-            plough: "Plough",
+           assetsQuestion: "Di lahira ni yi doo nya? (Chɛ zaa)",  // Already correct! "What things does your household own? (Select all)"
+radio: "Radio",              // Keep as "Radio" (universally understood)
+tv: "TV",                   // Keep as "TV" (universally understood) 
+refrigerator: "Fridge",     // Or "Koom zaɣim" (cold box), but "Fridge" is commonly used
+bicycle: "Basikol",         // ✅ Already correct!
+motorbike: "Moto",          // Or "Moto basikol"
+mobilePhone: "Telephone",   // Or keep as "Mobile"
+generator: "Generator",     // Or "Laɣim masini" (light machine)
+plough: "Tukula",   
             
             // Page 4: Farming Experience
             farmingYears: "Years of Farming Experience",
@@ -3212,21 +3212,25 @@ function updateCheckboxesLang(name, valueTextMap) {
     });
 }
 
+
 function updateRadiosLang(name, valueTextMap) {
-    document.querySelectorAll(`input[name="${name}"]`).forEach(radio => {
+    const radios = document.querySelectorAll(`input[type="radio"][name="${name}"]`);
+    if (radios.length === 0) {
+        console.warn(`⚠️ Radio group not found: ${name}`);
+        return;
+    }
+    
+    radios.forEach(radio => {
         const label = radio.closest('label');
-        if (label && valueTextMap[radio.value]) {
-            // Preserve the radio button, update only the text
-            const textNode = Array.from(label.childNodes).find(node => node.nodeType === 3);
-            if (textNode) {
-                textNode.textContent = ' ' + valueTextMap[radio.value];
-            } else {
-                label.appendChild(document.createTextNode(' ' + valueTextMap[radio.value]));
-            }
+        if (label && valueTextMap[radio.value] !== undefined) {
+            // Preserve the radio input, update only the text
+            label.innerHTML = '';
+            label.appendChild(radio);
+            label.appendChild(document.createTextNode(' ' + valueTextMap[radio.value]));
         }
     });
+    console.log(`✅ Updated radio group: ${name} (${radios.length} options)`);
 }
-
 
 
 
@@ -3387,8 +3391,11 @@ function testTranslations() {
 // ===== 12. HELPER FUNCTIONS FOR LANGUAGE UPDATE =====
 
 function updateSelectLang(selectId, options) {
-    const select = document.getElementById(selectId);
-    if (!select) return;
+    const select = document.getElementById(selectId) || document.querySelector(`[name="${selectId}"]`);
+    if (!select) {
+        console.warn(`⚠️ Select not found: ${selectId}`);
+        return;
+    }
     
     const currentValue = select.value;
     select.innerHTML = '';
@@ -3397,24 +3404,73 @@ function updateSelectLang(selectId, options) {
         const option = document.createElement('option');
         option.value = opt.value;
         option.textContent = opt.text;
+        if (opt.disabled) option.disabled = true;
         select.appendChild(option);
     });
     
     select.value = currentValue;
+    console.log(`✅ Updated select: ${selectId}`);
 }
 
+
+
 function updateLabelLang(inputId, text) {
-    const input = document.getElementById(inputId);
-    if (!input) return;
+    const input = document.getElementById(inputId) || document.querySelector(`[name="${inputId}"]`);
+    if (!input) {
+        console.warn(`⚠️ Input not found: ${inputId}`);
+        return;
+    }
     
     const formGroup = input.closest('.form-group');
-    if (formGroup) {
-        const label = formGroup.querySelector('label:first-of-type');
-        if (label && !label.querySelector('input') && !label.querySelector('select')) {
-            label.textContent = text;
+    if (!formGroup) {
+        console.warn(`⚠️ Form group not found for: ${inputId}`);
+        return;
+    }
+    
+    const label = formGroup.querySelector('label:first-of-type');
+    if (!label) {
+        console.warn(`⚠️ Label not found for: ${inputId}`);
+        return;
+    }
+    
+    // Don't update if label contains an input/select (it's a checkbox/radio label)
+    if (label.querySelector('input') || label.querySelector('select')) {
+        console.log(`⏭️ Skipping checkbox/radio label: ${inputId}`);
+        return;
+    }
+    
+    // Preserve icon and required marker
+    const icon = label.querySelector('i');
+    const required = label.querySelector('span[style*="red"]');
+    
+    // Clear and rebuild label
+    label.innerHTML = '';
+    
+    if (icon) {
+        label.appendChild(icon);
+        label.appendChild(document.createTextNode(' '));
+    }
+    
+    label.appendChild(document.createTextNode(text));
+    
+    if (required) {
+        label.appendChild(document.createTextNode(' '));
+        label.appendChild(required);
+    } else {
+        // Add required marker if the input has required attribute
+        if (input.hasAttribute('required')) {
+            const reqSpan = document.createElement('span');
+            reqSpan.style.color = 'red';
+            reqSpan.textContent = ' *';
+            label.appendChild(reqSpan);
         }
     }
+    
+    console.log(`✅ Updated label for: ${inputId}`);
 }
+
+
+
 
 
 // ===== 13. UPDATE LANGUAGE BUTTON LISTENER IN DOMContentLoaded =====
@@ -3460,33 +3516,95 @@ function updateWelcomeScreenLang() {
 }
 
 
+// ===== COMPLETE DEMOGRAPHICS TRANSLATION FUNCTION =====
+// Replace the existing updateDemographicsScreenLang() function with this:
+
 function updateDemographicsScreenLang() {
-    // Update screen title and labels
-    const title = document.querySelector('#demographicsScreen h2');
-    if (title) title.textContent = t('demographics.title');
+    console.log('🌍 Updating demographics screen language...');
     
-    // Update all form labels
-    updateLabelLang('gender', t('demographics.gender'));
-    updateLabelLang('role', t('demographics.role'));
-    updateLabelLang('age', t('demographics.age'));
-    updateLabelLang('education', t('demographics.education'));
-    updateLabelLang('farmingYears', t('demographics.farmingYears'));
-    updateLabelLang('landSize', t('demographics.land'));
-    updateLabelLang('lastIncome', t('demographics.income'));
+    // ===== UPDATE ALL PAGE HEADINGS =====
+    const pageHeadings = {
+        1: 'demographics.basicInfo',
+        2: 'demographics.educationHousehold',
+        3: 'demographics.householdAssets',
+        4: 'demographics.farmingExperience',
+        5: 'demographics.cropsIncome',
+        6: 'demographics.livestock',
+        7: 'demographics.farmInputs',
+        8: 'demographics.shocksLosses',
+        9: 'demographics.savingsCredit',
+        10: 'demographics.insuranceTrust'
+    };
     
-    // Update select options
+    Object.entries(pageHeadings).forEach(([pageNum, key]) => {
+        const heading = document.querySelector(`#demoPage${pageNum} h3`);
+        if (heading) {
+            const icon = heading.querySelector('i');
+            const iconHTML = icon ? icon.outerHTML + ' ' : '';
+            const span = heading.querySelector('span[data-translate]');
+            if (span) {
+                span.textContent = t(key);
+            } else {
+                heading.innerHTML = iconHTML + t(key);
+            }
+        }
+    });
+    
+    // ===== PAGE 1: BASIC INFO =====
+    console.log('📄 Updating Page 1: Basic Info...');
+    
+    // Enumerator Name label
+    updateFieldLabel('enumeratorName', t('demographics.enumeratorName'));
+    
+    // Update enumerator select placeholder
+    const enumeratorSelect = document.getElementById('enumeratorName');
+    if (enumeratorSelect) {
+        const firstOption = enumeratorSelect.querySelector('option[value=""]');
+        if (firstOption) {
+            firstOption.textContent = t('demographics.selectEnumerator');
+        }
+    }
+    
+    // Community Name label
+    updateFieldLabel('communityName', t('demographics.communityName'));
+    
+    // Update community select options
+    const communitySelect = document.getElementById('communityName');
+    if (communitySelect) {
+        const firstOption = communitySelect.querySelector('option[value=""]');
+        if (firstOption) {
+            if (firstOption.textContent.includes('Loading')) {
+                firstOption.textContent = t('demographics.loadingCommunities');
+            } else {
+                firstOption.textContent = t('demographics.selectCommunity');
+            }
+        }
+    }
+    
+    // Gender label and options
+    updateFieldLabel('gender', t('demographics.gender'));
     updateSelectLang('gender', [
         { value: '', text: t('common.select') },
         { value: 'male', text: t('demographics.male') },
         { value: 'female', text: t('demographics.female') }
     ]);
     
+    // Role label and options
+    updateFieldLabel('role', t('demographics.role'));
     updateSelectLang('role', [
         { value: '', text: t('common.select') },
         { value: 'husband', text: t('demographics.husband') },
         { value: 'wife', text: t('demographics.wife') }
     ]);
     
+    // Age label
+    updateFieldLabel('age', t('demographics.age'));
+    
+    // ===== PAGE 2: EDUCATION & HOUSEHOLD =====
+    console.log('📄 Updating Page 2: Education & Household...');
+    
+    // Education label and ALL options
+    updateFieldLabel('education', t('demographics.education'));
     updateSelectLang('education', [
         { value: '', text: t('common.select') },
         { value: '0', text: t('demographics.noSchooling') },
@@ -3496,34 +3614,598 @@ function updateDemographicsScreenLang() {
         { value: '4', text: t('demographics.tertiary') }
     ]);
     
-    // Update crop checkboxes
-    updateCheckboxesLang('crops', {
-        'maize': t('demographics.maize'),
-        'rice': t('demographics.rice'),
-        'soybeans': t('demographics.soybeans'),
-        'groundnuts': t('demographics.groundnuts'),
-        'other': t('demographics.other')
+    // Household size label
+    updateFieldLabel('householdSize', t('demographics.householdSize'));
+    
+    // Children under 15 label
+    updateFieldLabel('childrenUnder15', t('demographics.childrenUnder15'));
+    
+    // ===== PAGE 3: HOUSEHOLD ASSETS =====
+    console.log('📄 Updating Page 3: Household Assets...');
+    
+    // Assets question
+    const assetsQuestion = document.querySelector('#demoPage3 .form-group > label:first-child');
+    if (assetsQuestion && !assetsQuestion.querySelector('input')) {
+        assetsQuestion.innerHTML = t('demographics.assetsQuestion');
+    }
+    
+    // All asset checkboxes
+    updateAssetLabel('asset_radio', t('demographics.radio'), '📻');
+    updateAssetLabel('asset_tv', t('demographics.tv'), '📺');
+    updateAssetLabel('asset_refrigerator', t('demographics.refrigerator'), '❄️');
+    updateAssetLabel('asset_bicycle', t('demographics.bicycle'), '🚲');
+    updateAssetLabel('asset_motorbike', t('demographics.motorbike'), '🏍️');
+    updateAssetLabel('asset_mobilePhone', t('demographics.mobilePhone'), '📱');
+    updateAssetLabel('asset_generator', t('demographics.generator'), '⚡');
+    updateAssetLabel('asset_plough', t('demographics.plough'), '🚜');
+    
+    // ===== PAGE 4: FARMING EXPERIENCE =====
+    console.log('📄 Updating Page 4: Farming Experience...');
+    
+    // Farming years label
+    updateFieldLabel('farmingYears', t('demographics.farmingYears'));
+    
+    // Land size label
+    updateFieldLabel('landSize', t('demographics.land'));
+    
+    // Land access method label and ALL options
+    updateFieldLabel('landAccessMethod', t('demographics.landAccessMethod'));
+    updateSelectLang('landAccessMethod', [
+        { value: '', text: t('common.select') },
+        { value: '1', text: t('demographics.ownLand') },
+        { value: '2', text: t('demographics.rentLease') },
+        { value: '3', text: t('demographics.borrowedFamily') },
+        { value: '4', text: t('demographics.sharecropping') },
+        { value: '5', text: t('demographics.otherAccess') }
+    ]);
+    
+    // ===== PAGE 5: CROPS & INCOME =====
+    console.log('📄 Updating Page 5: Crops & Income...');
+    
+    // Crops question
+    const cropsLabel = document.querySelector('#demoPage5 .form-group > label:first-child');
+    if (cropsLabel && !cropsLabel.querySelector('input')) {
+        const req = cropsLabel.querySelector('span[style*="red"]');
+        cropsLabel.innerHTML = t('demographics.crops');
+        if (req) cropsLabel.appendChild(req);
+        else cropsLabel.innerHTML += ' <span style="color: red;">*</span>';
+    }
+    
+    // All crop checkboxes
+    updateCropLabel('maize', t('demographics.maize'), '🌽');
+    updateCropLabel('rice', t('demographics.rice'), '🍚');
+    updateCropLabel('soybeans', t('demographics.soybeans'), '🫘');
+    updateCropLabel('groundnuts', t('demographics.groundnuts'), '🥜');
+    updateCropLabel('other', t('demographics.other'), '➕');
+    
+    // Other labels
+    updateFieldLabel('numberOfCropsPlanted', t('demographics.cropsPlanted'));
+    updateFieldLabel('lastIncome', t('demographics.income'));
+    updateFieldLabel('farmingInputExpenditure', t('demographics.farmingInputExpenditure'));
+    
+    // ===== PAGE 6: LIVESTOCK =====
+    console.log('📄 Updating Page 6: Livestock...');
+    
+    const livestockQuestion = document.querySelector('#demoPage6 .form-group > label:first-child');
+    if (livestockQuestion) {
+        livestockQuestion.textContent = t('demographics.livestockQuestion');
+    }
+    
+    updateLivestockLabel('livestock_cattle', t('demographics.cattle'), '🐄');
+    updateLivestockLabel('livestock_goats', 'Goats', '🐐');
+    updateLivestockLabel('livestock_sheep', 'Sheep', '🐑');
+    updateLivestockLabel('livestock_poultry', 'Poultry', '🐔');
+    
+    // ===== PAGE 7: FARM INPUTS & TECHNOLOGY =====
+    console.log('📄 Updating Page 7: Farm Inputs...');
+    
+    const improvedInputsQuestion = document.querySelector('#demoPage7 .form-group > label:first-child');
+    if (improvedInputsQuestion && !improvedInputsQuestion.querySelector('input')) {
+        improvedInputsQuestion.textContent = t('demographics.improvedInputsQuestion');
+    }
+    
+    updateInputLabel('input_certifiedSeed', t('demographics.certifiedSeed'), '🌱');
+    updateInputLabel('input_fertilizer', t('demographics.chemicalFertilizer'), '🧪');
+    updateInputLabel('input_pesticides', t('demographics.pesticides'), '🐛');
+    updateInputLabel('input_irrigation', t('demographics.irrigation'), '💧');
+    
+    // Irrigation access label and YES/NO options
+    updateFieldLabel('hasIrrigationAccess', t('demographics.hasIrrigationAccess'));
+    updateRadiosLang('hasIrrigationAccess', {
+        '0': t('common.no'),
+        '1': t('common.yes')
     });
     
-    // Update Yes/No radio buttons
+    // ===== PAGE 8: SHOCKS & LOSSES =====
+    console.log('📄 Updating Page 8: Shocks & Losses...');
+    
+    const shocksQuestion = document.querySelector('#demoPage8 .form-group > label:first-child');
+    if (shocksQuestion && !shocksQuestion.querySelector('input')) {
+        shocksQuestion.textContent = t('demographics.shocksQuestion');
+    }
+    
+    updateShockLabel('shock_drought', t('demographics.drought'), '🌵');
+    updateShockLabel('shock_flood', 'Flood', '🌊');
+    updateShockLabel('shock_pestsDisease', 'Pests/Disease', '🐛');
+    updateShockLabel('shock_cropPriceFall', 'Crop price fall', '📉');
+    
+    updateFieldLabel('estimatedLossLastYear', t('demographics.estimatedLoss'));
+    updateFieldLabel('harvestLossPercentage', t('demographics.harvestLossPercentage'));
+    
+    // ===== PAGE 9: SAVINGS & CREDIT =====
+    console.log('📄 Updating Page 9: Savings & Credit...');
+    
+    // Has savings label and YES/NO
+    updateFieldLabel('hasSavings', t('demographics.hasSavings'));
+    updateRadiosLang('hasSavings', {
+        '0': t('common.no'),
+        '1': t('common.yes')
+    });
+    
+    updateFieldLabel('savingsAmount', t('demographics.savingsAmount'));
+    
+    // Borrowed money label and YES/NO
+    updateFieldLabel('borrowedMoney', t('demographics.borrowedMoney'));
+    updateRadiosLang('borrowedMoney', {
+        '0': t('common.no'),
+        '1': t('common.yes')
+    });
+    
+    // Borrow sources
+    const borrowSourcesLabel = document.querySelector('#borrowingSourcesGroup > label:first-child');
+    if (borrowSourcesLabel) {
+        borrowSourcesLabel.textContent = t('demographics.borrowingSources');
+    }
+    
+    updateBorrowSourceLabel('borrowSource_microfinance', t('demographics.microfinance'), '💼');
+    updateBorrowSourceLabel('borrowSource_vsla', t('demographics.vsla'), '👥');
+    updateBorrowSourceLabel('borrowSource_familyFriends', t('demographics.familyFriends'), '👪');
+    updateBorrowSourceLabel('borrowSource_moneylender', t('demographics.moneylender'), '💰');
+    
+    // Off-farm income label and YES/NO
+    updateFieldLabel('hasOffFarmIncome', t('demographics.hasOffFarmIncome'));
+    updateRadiosLang('hasOffFarmIncome', {
+        '0': t('common.no'),
+        '1': t('common.yes')
+    });
+    
+    updateFieldLabel('offFarmIncomeAmount', t('demographics.offFarmAmount'));
+    
+    // ===== PAGE 10: INSURANCE & TRUST =====
+    console.log('📄 Updating Page 10: Insurance & Trust...');
+    
+    // Prior knowledge label and YES/NO
+    updateFieldLabel('priorKnowledge', t('demographics.priorKnowledge'));
     updateRadiosLang('priorKnowledge', {
         '1': t('common.yes'),
         '0': t('common.no')
     });
     
-    // Update crop label
-    const cropLabel = document.querySelector('label[data-translate="demographics.crops"]');
-    if (cropLabel) cropLabel.childNodes[0].textContent = t('demographics.crops');
+    // Purchased insurance label and YES/NO
+    updateFieldLabel('purchasedInsuranceBefore', t('demographics.purchasedInsurance'));
+    updateRadiosLang('purchasedInsuranceBefore', {
+        '0': t('common.no'),
+        '1': t('common.yes')
+    });
     
-    // Update prior knowledge label
-    const priorLabel = document.querySelector('label[data-translate="demographics.priorKnowledge"]');
-    if (priorLabel) priorLabel.childNodes[0].textContent = t('demographics.priorKnowledge');
+    // Trust questions
+    updateTrustQuestionLabel('trust_insuranceProvider', t('demographics.trustInsuranceProvider'));
+    updateTrustQuestionLabel('trust_farmerGroup', t('demographics.trustFarmerGroups'));
+    updateTrustQuestionLabel('trust_ngo', t('demographics.trustNGOs'));
     
-    // Update continue button
-    const continueBtn = document.querySelector('#demographicsForm .btn-primary span');
-    if (continueBtn) continueBtn.textContent = t('common.continue');
+    // Additional trust questions (NEW - added in your HTML)
+    updateTrustQuestionLabel('rainfallChangePerception', 'Do you think rainfall patterns have changed in recent years? (1 = Not at all, 5 = Very much)');
+    updateTrustQuestionLabel('insurerPayoutTrust', 'How much do you trust that insurance companies will pay out when needed? (1 = Not at all, 5 = Fully)');
+    
+    // Other fields
+    updateFieldLabel('distanceToMarket', t('demographics.distanceMarket'));
+    updateFieldLabel('distanceToInsurer', t('demographics.distanceInsurer'));
+    
+    // Uses mobile money label and YES/NO
+    updateFieldLabel('usesMobileMoney', t('demographics.usesMobileMoney'));
+    updateRadiosLang('usesMobileMoney', {
+        '0': t('common.no'),
+        '1': t('common.yes')
+    });
+    
+    // Member of farmer group label and YES/NO
+    updateFieldLabel('memberOfFarmerGroup', t('demographics.farmerGroupMember'));
+    updateRadiosLang('memberOfFarmerGroup', {
+        '0': t('common.no'),
+        '1': t('common.yes')
+    });
+    
+    // ===== UPDATE NAVIGATION BUTTONS =====
+    const prevBtn = document.querySelector('#demoPrevBtn span');
+    if (prevBtn) prevBtn.textContent = t('demographics.back');
+    
+    const nextBtn = document.querySelector('#demoNextBtn span');
+    if (nextBtn) nextBtn.textContent = t('demographics.continue');
+    
+    const submitBtn = document.querySelector('#demoSubmitBtn span');
+    if (submitBtn) submitBtn.textContent = t('demographics.continueRisk');
+    
+    console.log('✅ Demographics screen language updated - ALL options included!');
 }
 
+
+
+function updateFieldLabel(fieldName, text) {
+    const input = document.querySelector(`[name="${fieldName}"]`) || document.getElementById(fieldName);
+    if (!input) {
+        console.warn(`⚠️ Field not found: ${fieldName}`);
+        return;
+    }
+    
+    const formGroup = input.closest('.form-group');
+    if (!formGroup) return;
+    
+    const label = formGroup.querySelector('label:first-of-type');
+    if (!label || label.querySelector('input') || label.querySelector('select')) return;
+    
+    const icon = label.querySelector('i');
+    const req = label.querySelector('span[style*="red"]');
+    const isRequired = input.hasAttribute('required');
+    
+    label.innerHTML = '';
+    
+    if (icon) {
+        label.appendChild(icon);
+        label.appendChild(document.createTextNode(' '));
+    }
+    
+    label.appendChild(document.createTextNode(text));
+    
+    if (req || isRequired) {
+        const reqSpan = document.createElement('span');
+        reqSpan.style.color = 'red';
+        reqSpan.textContent = ' *';
+        label.appendChild(reqSpan);
+    }
+}
+
+
+
+
+
+
+// ===== HELPER FUNCTIONS FOR SPECIFIC LABEL TYPES =====
+
+
+
+function updateAssetLabel(name, text, emoji) {
+    const checkbox = document.querySelector(`input[name="${name}"]`);
+    if (!checkbox) {
+        console.warn(`⚠️ Asset checkbox not found: ${name}`);
+        return;
+    }
+    
+    const label = checkbox.closest('label');
+    if (!label) return;
+    
+    // Find or create the icon element
+    let icon = label.querySelector('i');
+    const iconHTML = icon ? icon.outerHTML : '';
+    
+    // Find the span with data-translate
+    let span = label.querySelector('span[data-translate]');
+    
+    if (span) {
+        // Just update the text content of existing span
+        span.textContent = text;
+    } else {
+        // Rebuild the entire label structure
+        label.innerHTML = '';
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(' '));
+        
+        if (iconHTML) {
+            label.insertAdjacentHTML('beforeend', iconHTML);
+            label.appendChild(document.createTextNode(' '));
+        }
+        
+        span = document.createElement('span');
+        span.setAttribute('data-translate', `demographics.${name.replace('asset_', '')}`);
+        span.textContent = text;
+        label.appendChild(span);
+    }
+    
+    console.log(`✅ Updated asset: ${name}`);
+}
+
+function updateCropLabel(value, text, emoji) {
+    const checkbox = document.querySelector(`input[name="crops"][value="${value}"]`);
+    if (!checkbox) {
+        console.warn(`⚠️ Crop checkbox not found: ${value}`);
+        return;
+    }
+    
+    const label = checkbox.closest('label');
+    if (!label) return;
+    
+    // Find the span with data-translate
+    let span = label.querySelector('span[data-translate]');
+    
+    if (span) {
+        // Just update the text content of existing span
+        span.textContent = text;
+    } else {
+        // Rebuild the entire label structure
+        label.innerHTML = '';
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(' ' + emoji + ' '));
+        
+        span = document.createElement('span');
+        span.setAttribute('data-translate', `demographics.${value}`);
+        span.textContent = text;
+        label.appendChild(span);
+    }
+    
+    console.log(`✅ Updated crop: ${value}`);
+}
+
+
+
+
+
+
+function updateLivestockLabel(name, text, emoji) {
+    const input = document.querySelector(`input[name="${name}"]`);
+    if (!input) {
+        console.warn(`⚠️ Livestock input not found: ${name}`);
+        return;
+    }
+    
+    const container = input.closest('div[style*="background: #f5f5f5"]');
+    if (!container) return;
+    
+    const label = container.querySelector('label');
+    if (!label) return;
+    
+    // Find the span with data-translate
+    let span = label.querySelector('span[data-translate]');
+    
+    if (span) {
+        // Just update the text content of existing span
+        span.textContent = text;
+    } else {
+        // Rebuild with span
+        label.innerHTML = `${emoji} `;
+        
+        span = document.createElement('span');
+        span.setAttribute('data-translate', `demographics.${name.replace('livestock_', '')}`);
+        span.textContent = text;
+        label.appendChild(span);
+        label.appendChild(document.createTextNode(':'));
+    }
+    
+    console.log(`✅ Updated livestock: ${name}`);
+}
+
+function updateInputLabel(name, text, emoji) {
+    const checkbox = document.querySelector(`input[name="${name}"]`);
+    if (!checkbox) {
+        console.warn(`⚠️ Input checkbox not found: ${name}`);
+        return;
+    }
+    
+    const label = checkbox.closest('label');
+    if (!label) return;
+    
+    // Find the span with data-translate
+    let span = label.querySelector('span[data-translate]');
+    
+    if (span) {
+        // Just update the text content of existing span
+        span.textContent = text;
+    } else {
+        // Rebuild the entire label structure
+        label.innerHTML = '';
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(' ' + emoji + ' '));
+        
+        span = document.createElement('span');
+        span.setAttribute('data-translate', `demographics.${name.replace('input_', '')}`);
+        span.textContent = text;
+        label.appendChild(span);
+    }
+    
+    console.log(`✅ Updated input: ${name}`);
+}
+
+
+
+
+
+
+function updateShockLabel(name, text, emoji) {
+    const checkbox = document.querySelector(`input[name="${name}"]`);
+    if (!checkbox) {
+        console.warn(`⚠️ Shock checkbox not found: ${name}`);
+        return;
+    }
+    
+    const label = checkbox.closest('label');
+    if (!label) return;
+    
+    // Find the span with data-translate
+    let span = label.querySelector('span[data-translate]');
+    
+    if (span) {
+        // Just update the text content of existing span
+        span.textContent = text;
+    } else {
+        // Rebuild the entire label structure
+        label.innerHTML = '';
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(' ' + emoji + ' '));
+        
+        span = document.createElement('span');
+        span.setAttribute('data-translate', `demographics.${name.replace('shock_', '')}`);
+        span.textContent = text;
+        label.appendChild(span);
+    }
+    
+    console.log(`✅ Updated shock: ${name}`);
+}
+
+
+function updateBorrowSourceLabel(name, text, emoji) {
+    const checkbox = document.querySelector(`input[name="${name}"]`);
+    if (!checkbox) {
+        console.warn(`⚠️ Borrow source checkbox not found: ${name}`);
+        return;
+    }
+    
+    const label = checkbox.closest('label');
+    if (!label) return;
+    
+    // Rebuild the entire label structure
+    label.innerHTML = '';
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(' ' + emoji + ' ' + text));
+    
+    console.log(`✅ Updated borrow source: ${name}`);
+}
+
+function updateTrustQuestionLabel(name, text) {
+    const radio = document.querySelector(`input[name="${name}"]`);
+    if (!radio) {
+        console.warn(`⚠️ Trust question not found: ${name}`);
+        return;
+    }
+    
+    const formGroup = radio.closest('.form-group');
+    if (!formGroup) return;
+    
+    const label = formGroup.querySelector('label:first-child');
+    if (!label || label.querySelector('input')) return;
+    
+    label.innerHTML = text + ' <span style="color: red;">*</span>';
+    
+    console.log(`✅ Updated trust question: ${name}`);
+}
+
+function updateFieldLabel(fieldName, text) {
+    const input = document.querySelector(`[name="${fieldName}"]`) || document.getElementById(fieldName);
+    if (!input) {
+        console.warn(`⚠️ Field not found: ${fieldName}`);
+        return;
+    }
+    
+    const formGroup = input.closest('.form-group');
+    if (!formGroup) return;
+    
+    const label = formGroup.querySelector('label:first-of-type');
+    if (!label || label.querySelector('input') || label.querySelector('select')) return;
+    
+    const icon = label.querySelector('i');
+    const iconHTML = icon ? icon.outerHTML : '';
+    const req = label.querySelector('span[style*="red"]');
+    const isRequired = input.hasAttribute('required');
+    
+    label.innerHTML = '';
+    
+    if (iconHTML) {
+        label.insertAdjacentHTML('beforeend', iconHTML);
+        label.appendChild(document.createTextNode(' '));
+    }
+    
+    label.appendChild(document.createTextNode(text));
+    
+    if (req || isRequired) {
+        label.appendChild(document.createTextNode(' '));
+        const reqSpan = document.createElement('span');
+        reqSpan.style.color = 'red';
+        reqSpan.textContent = '*';
+        label.appendChild(reqSpan);
+    }
+    
+    console.log(`✅ Updated field label: ${fieldName}`);
+}
+
+function updateSelectLang(selectId, options) {
+    const select = document.getElementById(selectId) || document.querySelector(`[name="${selectId}"]`);
+    if (!select) {
+        console.warn(`⚠️ Select not found: ${selectId}`);
+        return;
+    }
+    
+    const currentValue = select.value;
+    select.innerHTML = '';
+    
+    options.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt.value;
+        option.textContent = opt.text;
+        if (opt.disabled) option.disabled = true;
+        select.appendChild(option);
+    });
+    
+    select.value = currentValue;
+    console.log(`✅ Updated select: ${selectId} (${options.length} options)`);
+}
+
+function updateRadiosLang(name, valueTextMap) {
+    const radios = document.querySelectorAll(`input[type="radio"][name="${name}"]`);
+    if (radios.length === 0) {
+        console.warn(`⚠️ Radio group not found: ${name}`);
+        return;
+    }
+    
+    radios.forEach(radio => {
+        const label = radio.closest('label');
+        if (label && valueTextMap[radio.value] !== undefined) {
+            // Preserve the radio input, update only the text
+            label.innerHTML = '';
+            label.appendChild(radio);
+            label.appendChild(document.createTextNode(' ' + valueTextMap[radio.value]));
+        }
+    });
+    console.log(`✅ Updated radio group: ${name} (${radios.length} options)`);
+}
+
+function updateCheckboxesLang(name, valueTextMap) {
+    document.querySelectorAll(`input[name="${name}"]`).forEach(cb => {
+        const label = cb.closest('label');
+        if (label && valueTextMap[cb.value]) {
+            // Find span with data-translate
+            const span = label.querySelector('span[data-translate]');
+            if (span) {
+                span.textContent = valueTextMap[cb.value];
+            } else {
+                // Preserve the checkbox and icon, update only the text
+                const icon = label.querySelector('i');
+                const iconHTML = icon ? icon.outerHTML : '';
+                const textNode = Array.from(label.childNodes).find(node => node.nodeType === 3);
+                
+                label.innerHTML = '';
+                label.appendChild(cb);
+                label.appendChild(document.createTextNode(' '));
+                if (iconHTML) {
+                    label.insertAdjacentHTML('beforeend', iconHTML);
+                    label.appendChild(document.createTextNode(' '));
+                }
+                label.appendChild(document.createTextNode(valueTextMap[cb.value]));
+            }
+        }
+    });
+}
+
+
+
+function updateTrustQuestionLabel(name, text) {
+    const radio = document.querySelector(`input[name="${name}"]`);
+    if (!radio) return;
+    
+    const formGroup = radio.closest('.form-group');
+    if (formGroup) {
+        const label = formGroup.querySelector('label:first-child');
+        if (label) {
+            label.innerHTML = text + ' <span style="color: red;">*</span>';
+        }
+    }
+}
 
 
 
