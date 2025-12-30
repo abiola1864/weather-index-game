@@ -2011,6 +2011,23 @@ select:invalid:focus {
                     <div id="insightsContent"></div>
                 </div>
 
+                    <!-- 🆕 ADD THIS PROMINENT SYNC NOTICE -->
+        <div id="resultsSyncNotice" style="display: none; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; padding: 20px; border-radius: 15px; margin: 20px 0; text-align: center;">
+            <h3 style="margin: 0 0 10px 0;">
+                <i class="fas fa-cloud-upload-alt"></i> Data Not Yet Uploaded
+            </h3>
+            <p style="margin: 0 0 15px 0; font-size: 16px;">
+                Your game data is saved on this device but hasn't been uploaded to the server yet.
+            </p>
+            <button onclick="manualSync()" class="btn-primary btn-large" style="background: white; color: #F57C00;">
+                <i class="fas fa-sync-alt"></i>
+                <span>Upload Now</span>
+            </button>
+        </div>
+        
+
+        
+
                 <button class="btn-primary btn-large" id="restartBtn">
                     <i class="fas fa-redo"></i>
                     <span data-translate="results.playAgain">Play Again</span>

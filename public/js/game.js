@@ -2426,6 +2426,7 @@ async function startCoupleSession() {
 
 
 
+// ===== SHOW RESULTS - COMPLETE REVISED VERSION =====
 async function showResults() {
     try {
         showLoading();
@@ -2441,11 +2442,13 @@ async function showResults() {
         const session = await apiCall(`/session/${gameState.sessionId}`);
         const knowledge = await apiCall(`/knowledge/${gameState.respondentId}`);
         
+        // Update results display
         document.getElementById('totalEarnings').textContent = session.totalEarnings + ' GHS';
         document.getElementById('totalInsurance').textContent = session.totalInsuranceSpent + ' GHS';
         document.getElementById('totalPayouts').textContent = session.totalPayoutsReceived + ' GHS';
         document.getElementById('knowledgeScore').textContent = knowledge.knowledgeScore + '/5';
         
+        // Generate insights
         let insights = '<ul style="text-align: left; max-width: 600px; margin: 0 auto; font-size: 16px; line-height: 1.8;">';
         const insuranceRate = session.totalInsuranceSpent / (session.totalEarnings + session.totalInsuranceSpent);
         
@@ -2471,7 +2474,7 @@ async function showResults() {
         showLoading(false);
         showScreen('resultsScreen');
         
-        // ===== FIXED DETECTION LOGIC =====
+        // ===== DETERMINE GAME FLOW =====
         
         // CASE 1: Couple session completed - GAME OVER
         if (gameState.sessionType === 'couple_joint') {
@@ -2483,6 +2486,9 @@ async function showResults() {
                 restartBtn.style.display = 'inline-flex';
                 restartBtn.innerHTML = '<i class="fas fa-redo"></i><span>Start New Game</span>';
             }
+            
+            // 🆕 CHECK FOR PENDING SYNC DATA
+            await checkAndHandlePendingSync();
             return;
         }
         
@@ -2542,6 +2548,162 @@ async function showResults() {
     }
 }
 
+// 🆕 NEW HELPER FUNCTION: Check and Handle Pending Sync
+async function checkAndHandlePendingSync() {
+    console.log('');
+    console.log('🔍 ========================================');
+    console.log('🔍 CHECKING FOR PENDING SYNC DATA');
+    console.log('🔍 ========================================');
+    
+    try {
+        // Get current sync status
+        const syncStatus = window.offlineStorage.getSyncStatus();
+        
+        console.log('📊 Sync Status:', {
+            isOnline: syncStatus.isOnline,
+            pendingItems: syncStatus.pendingItems,
+            lastSync: syncStatus.lastSync
+        });
+        
+        // Find or create sync notice element
+        let syncNotice = document.getElementById('resultsSyncNotice');
+        
+        if (!syncNotice) {
+            // Create sync notice if it doesn't exist
+            const resultsContainer = document.querySelector('#resultsScreen .results-container');
+            const restartBtn = document.getElementById('restartBtn');
+            
+            if (resultsContainer && restartBtn) {
+                syncNotice = document.createElement('div');
+                syncNotice.id = 'resultsSyncNotice';
+                syncNotice.style.cssText = `
+                    display: none;
+                    background: linear-gradient(135deg, #FF9800, #F57C00);
+                    color: white;
+                    padding: 25px;
+                    border-radius: 15px;
+                    margin: 30px 0;
+                    text-align: center;
+                    box-shadow: 0 8px 20px rgba(255, 152, 0, 0.3);
+                    animation: pulse 2s ease-in-out infinite;
+                `;
+                
+                syncNotice.innerHTML = `
+                    <div style="font-size: 48px; margin-bottom: 15px;">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h3 style="margin: 0 0 15px 0; font-size: 24px; font-weight: 700;">
+                        Data Not Yet Uploaded to Server
+                    </h3>
+                    <p style="margin: 0 0 20px 0; font-size: 18px; line-height: 1.6;">
+                        Your game data is safely saved on this device, but hasn't been uploaded to the central database yet.
+                        <br>
+                        <strong>Please upload now to ensure your data is backed up!</strong>
+                    </p>
+                    <div id="syncItemsCount" style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 16px; font-weight: 600;">
+                        <i class="fas fa-database"></i> <span id="pendingCount">0</span> items waiting to upload
+                    </div>
+                    <button onclick="manualSync()" class="btn-primary btn-large" style="background: white; color: #F57C00; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Upload to Server Now</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <p style="margin: 15px 0 0 0; font-size: 14px; opacity: 0.9;">
+                        <i class="fas fa-info-circle"></i> This will send your data to the central database for safekeeping
+                    </p>
+                `;
+                
+                // Insert before restart button
+                resultsContainer.insertBefore(syncNotice, restartBtn);
+                console.log('✅ Created sync notice element');
+            }
+        }
+        
+        // Update pending count
+        const pendingCountEl = document.getElementById('pendingCount');
+        if (pendingCountEl) {
+            pendingCountEl.textContent = syncStatus.pendingItems;
+        }
+        
+        // Show/hide sync notice based on pending items
+        if (syncStatus.pendingItems > 0) {
+            console.log('⚠️ FOUND PENDING DATA - Showing sync notice');
+            console.log(`   ${syncStatus.pendingItems} items need to be uploaded`);
+            
+            if (syncNotice) {
+                syncNotice.style.display = 'block';
+            }
+            
+            // Try auto-sync if online
+            if (syncStatus.isOnline) {
+                console.log('🌐 Online detected - Attempting auto-sync...');
+                
+                // Show loading indicator
+                const syncBtn = syncNotice?.querySelector('button');
+                if (syncBtn) {
+                    syncBtn.disabled = true;
+                    syncBtn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i><span>Uploading...</span>';
+                }
+                
+                try {
+                    const result = await window.offlineStorage.syncOfflineData();
+                    
+                    console.log('📊 Sync Result:', result);
+                    
+                    if (result.success && result.results && result.results.successful > 0) {
+                        console.log('✅ AUTO-SYNC SUCCESS!');
+                        console.log(`   Uploaded: ${result.results.successful} items`);
+                        
+                        showToast(`✅ Successfully uploaded ${result.results.successful} items to server!`, 'success');
+                        
+                        // Hide sync notice
+                        if (syncNotice) {
+                            syncNotice.style.display = 'none';
+                        }
+                        
+                        // Update connection status
+                        updateConnectionStatus();
+                        
+                    } else if (result.results && result.results.failed > 0) {
+                        console.warn('⚠️ Some items failed to sync');
+                        showToast(`⚠️ ${result.results.failed} items failed to upload. Please try again.`, 'warning');
+                        
+                        // Re-enable button
+                        if (syncBtn) {
+                            syncBtn.disabled = false;
+                            syncBtn.innerHTML = '<i class="fas fa-sync-alt"></i><span>Try Upload Again</span><i class="fas fa-arrow-right"></i>';
+                        }
+                    }
+                } catch (syncError) {
+                    console.error('❌ Auto-sync failed:', syncError);
+                    showToast('⚠️ Auto-upload failed. Please click "Upload to Server Now" button.', 'warning');
+                    
+                    // Re-enable button
+                    if (syncBtn) {
+                        syncBtn.disabled = false;
+                        syncBtn.innerHTML = '<i class="fas fa-sync-alt"></i><span>Upload to Server Now</span><i class="fas fa-arrow-right"></i>';
+                    }
+                }
+            } else {
+                console.log('📴 Offline - Cannot auto-sync');
+                showToast('📴 You are offline. Data will sync when connection is restored.', 'info');
+            }
+            
+        } else {
+            console.log('✅ No pending data to sync');
+            if (syncNotice) {
+                syncNotice.style.display = 'none';
+            }
+        }
+        
+        console.log('🔍 ========================================');
+        console.log('');
+        
+    } catch (error) {
+        console.error('❌ Error checking pending sync:', error);
+        // Don't block the results screen if sync check fails
+    }
+}
 
 
 

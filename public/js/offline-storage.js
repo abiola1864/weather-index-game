@@ -487,17 +487,24 @@ async function syncOfflineData() {
 }
 
 // Get sync status
+// Get sync status
+// offline-storage.js - Line 328
 function getSyncStatus() {
     const offlineData = getOfflineData();
     const syncStatus = localStorage.getItem(SYNC_STATUS_KEY);
     
+    // ✅ Only count unsynced items
+    const unsyncedItems = (offlineData?.pending_sync || []).filter(item => !item.synced);
+    
     return {
         isOnline: isOnline(),
-        pendingItems: offlineData?.pending_sync?.length || 0,
+        pendingItems: unsyncedItems.length,  // ✅ FIX
         lastSync: syncStatus ? JSON.parse(syncStatus) : null,
         offlineDataSize: offlineData ? JSON.stringify(offlineData).length : 0
     };
 }
+
+
 
 // ===== EXPORT & UTILITY FUNCTIONS =====
 

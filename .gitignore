@@ -20,3 +20,5 @@ logs/
 *.sqlite
 tmp/
 temp/
+google-credentials.json
+*.json.backup
