@@ -4212,32 +4212,54 @@ function updateTrustQuestionLabel(name, text) {
 // Add to your game.js
 // ===== CONNECTION STATUS MANAGEMENT =====
 // ===== CONNECTION STATUS MANAGEMENT =====
+// ===== CONNECTION STATUS MANAGEMENT =====
 function updateConnectionStatus() {
+    console.log('🔍 === updateConnectionStatus called ===');
+    
     const statusEl = document.getElementById('connectionStatus');
     const statusText = document.getElementById('statusText');
     const syncBtn = document.getElementById('syncButton');
     const exportBtn = document.getElementById('exportButton');
     
+    console.log('📋 Elements found:', {
+        statusEl: !!statusEl,
+        statusText: !!statusText,
+        syncBtn: !!syncBtn,
+        exportBtn: !!exportBtn
+    });
+    
     if (!statusEl || !statusText) {
-        console.warn('⚠️ Connection status elements not found');
+        console.error('❌ CRITICAL: Connection status elements not found!');
         return;
     }
     
     const syncStatus = window.offlineStorage.getSyncStatus();
     
+    console.log('📊 Sync status:', syncStatus);
+    console.log('🌐 Navigator online:', navigator.onLine);
+    console.log('📦 Pending items:', syncStatus.pendingItems);
+    
     if (syncStatus.isOnline) {
         statusEl.className = 'connection-status status-online';
         
         if (syncStatus.pendingItems > 0) {
+            console.log('⚠️ FOUND PENDING ITEMS:', syncStatus.pendingItems);
+            
             statusText.innerHTML = `Online <span style="color: #FF9800; font-weight: 700;">(${syncStatus.pendingItems} pending)</span>`;
+            
             if (syncBtn) {
                 syncBtn.style.display = 'flex';
+                console.log('✅ Sync button should now be visible');
+                
                 const syncBtnText = document.getElementById('syncButtonText');
                 if (syncBtnText) {
                     syncBtnText.textContent = `Sync ${syncStatus.pendingItems} items`;
                 }
+            } else {
+                console.error('❌ Sync button element not found!');
             }
         } else {
+            console.log('✅ No pending items');
             statusText.textContent = 'Online - All synced';
             if (syncBtn) syncBtn.style.display = 'none';
         }
@@ -4246,12 +4268,19 @@ function updateConnectionStatus() {
             exportBtn.style.display = 'flex';
         }
     } else {
+        console.log('📴 OFFLINE MODE');
         statusEl.className = 'connection-status status-offline';
         statusText.textContent = 'Offline - Data saved locally';
         if (syncBtn) syncBtn.style.display = 'none';
         if (exportBtn) exportBtn.style.display = 'flex';
     }
+    
+    console.log('🔍 === updateConnectionStatus complete ===');
 }
+
+
+
+
 
 async function manualSync() {
     const syncBtn = document.getElementById('syncButton');
@@ -4324,57 +4353,120 @@ async function manualSync() {
 
 
 
+
+// ===== DEBUG: CHECK OFFLINE DATA =====
+// ===== DEBUG: CHECK OFFLINE DATA =====
+function checkOfflineData() {
+    console.log('');
+    console.log('📦 ========================================');
+    console.log('📦 OFFLINE DATA CHECK');
+    console.log('📦 ========================================');
+    
+    const data = localStorage.getItem('farm_game_offline_data');
+    if (data) {
+        const parsed = JSON.parse(data);
+        console.log('📊 Offline Data Summary:', {
+            deviceId: parsed.deviceId,
+            respondents: parsed.respondents?.length || 0,
+            sessions: parsed.sessions?.length || 0,
+            rounds: parsed.rounds?.length || 0,
+            knowledge: parsed.knowledge?.length || 0,
+            perception: parsed.perception?.length || 0,
+            pendingSync: parsed.pending_sync?.length || 0,
+            lastSyncAttempt: parsed.lastSyncAttempt
+        });
+        
+        if (parsed.pending_sync && parsed.pending_sync.length > 0) {
+            console.log('📤 Pending sync items:');
+            parsed.pending_sync.forEach((item, index) => {
+                console.log(`  ${index + 1}. ${item.type} - ${item.synced ? '✅ Synced' : '⏳ Pending'}`);
+                console.log(`     Endpoint: ${item.endpoint}`);
+                console.log(`     Method: ${item.method}`);
+                console.log(`     Timestamp: ${item.timestamp}`);
+            });
+        } else {
+            console.log('✅ No pending items');
+        }
+        
+        return parsed;
+    } else {
+        console.log('❌ No offline data found');
+        return null;
+    }
+}
+
+// Make it available globally for console debugging
+window.checkOfflineData = checkOfflineData;
+
+
+
+
+// ===== AUTO-SYNC WHEN COMING BACK ONLINE =====
 // ===== AUTO-SYNC WHEN COMING BACK ONLINE =====
 function setupAutoSync() {
+    console.log('🔧 Setting up auto-sync listeners...');
+    
     window.addEventListener('online', async function() {
-        console.log('🌐 Connection restored!');
+        console.log('');
+        console.log('🌐 ========================================');
+        console.log('🌐 CONNECTION RESTORED!');
+        console.log('🌐 ========================================');
+        
+        // Update UI immediately
         updateConnectionStatus();
         
         // Wait 2 seconds for connection to stabilize
-        setTimeout(async () => {
-            const syncStatus = window.offlineStorage.getSyncStatus();
+        console.log('⏳ Waiting 2 seconds for connection to stabilize...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        const syncStatus = window.offlineStorage.getSyncStatus();
+        console.log('📊 Sync status after reconnection:', syncStatus);
+        
+        if (syncStatus.pendingItems > 0) {
+            console.log(`📤 AUTO-SYNCING ${syncStatus.pendingItems} items...`);
             
-            if (syncStatus.pendingItems > 0) {
-                console.log(`📤 AUTO-SYNCING ${syncStatus.pendingItems} items...`);
+            const statusText = document.getElementById('statusText');
+            if (statusText) {
+                statusText.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Auto-syncing...';
+            }
+            
+            try {
+                const result = await window.offlineStorage.syncOfflineData();
                 
-                const statusText = document.getElementById('statusText');
-                if (statusText) {
-                    statusText.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Auto-syncing...';
-                }
+                console.log('✅ Auto-sync result:', result);
                 
-                try {
-                    const result = await window.offlineStorage.syncOfflineData();
-                    
-                    if (result.success && result.results) {
-                        console.log('✅ Auto-sync complete:', result.results);
-                        
-                        if (result.results.successful > 0) {
-                            showToast(`✅ Auto-synced ${result.results.successful} items to database!`, 'success');
-                        }
-                        
-                        if (result.results.failed > 0) {
-                            showToast(`⚠️ ${result.results.failed} items failed. Click "Sync Now" to retry.`, 'warning');
-                        }
+                if (result.success && result.results) {
+                    if (result.results.successful > 0) {
+                        showToast(`✅ Auto-synced ${result.results.successful} items to database!`, 'success');
                     }
                     
-                    updateConnectionStatus();
-                } catch (error) {
-                    console.error('❌ Auto-sync failed:', error);
-                    showToast('⚠️ Auto-sync failed. Click "Sync Now" to retry.', 'warning');
-                    updateConnectionStatus();
+                    if (result.results.failed > 0) {
+                        showToast(`⚠️ ${result.results.failed} items failed. Click "Sync Now" to retry.`, 'warning');
+                        console.error('❌ Failed items:', result.results.errors);
+                    }
                 }
-            } else {
-                console.log('✅ No pending items to sync');
+                
+                updateConnectionStatus();
+            } catch (error) {
+                console.error('❌ Auto-sync failed:', error);
+                showToast('⚠️ Auto-sync failed. Click "Sync Now" to retry.', 'warning');
+                updateConnectionStatus();
             }
-        }, 2000);
+        } else {
+            console.log('✅ No pending items to sync');
+        }
     });
     
     window.addEventListener('offline', function() {
-        console.log('📴 Connection lost - will save locally');
+        console.log('');
+        console.log('📴 ========================================');
+        console.log('📴 CONNECTION LOST - OFFLINE MODE');
+        console.log('📴 ========================================');
         updateConnectionStatus();
     });
+    
+    console.log('✅ Auto-sync listeners registered');
 }
-
 
 
 
@@ -6330,4 +6422,67 @@ function goBackOnePage() {
         currentDemoPage--;
         showDemoPage(currentDemoPage);
     }
+}
+
+
+
+// ===== EXPORT OFFLINE DATA FROM DEVICE =====
+function exportOfflineData() {
+    console.log('📤 Exporting offline data...');
+    
+    const data = localStorage.getItem('farm_game_offline_data');
+    if (!data) {
+        alert('No offline data found on this device.\n\nThis could mean:\n• Data has already been synced to the server\n• No data has been collected offline on this device');
+        return;
+    }
+    
+    try {
+        const parsed = JSON.parse(data);
+        
+        // Create detailed export info
+        const exportInfo = {
+            exportedAt: new Date().toISOString(),
+            deviceId: parsed.deviceId,
+            lastSyncAttempt: parsed.lastSyncAttempt,
+            summary: {
+                totalRespondents: parsed.respondents?.length || 0,
+                totalSessions: parsed.sessions?.length || 0,
+                totalRounds: parsed.rounds?.length || 0,
+                totalKnowledge: parsed.knowledge?.length || 0,
+                totalPerception: parsed.perception?.length || 0,
+                pendingSync: parsed.pending_sync?.length || 0
+            },
+            fullData: parsed
+        };
+        
+        console.log('📊 Export summary:', exportInfo.summary);
+        
+        // Create download
+        const blob = new Blob([JSON.stringify(exportInfo, null, 2)], 
+            { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `offline-data-device-${parsed.deviceId}-${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showToast(`✅ Exported ${exportInfo.summary.totalRespondents} respondents from this device`, 'success');
+    } catch (error) {
+        console.error('❌ Export error:', error);
+        alert('Error exporting offline data: ' + error.message);
+    }
+}
+
+// Make it available globally for console debugging
+window.exportOfflineData = exportOfflineData;
+
+
+// ===== EXPORT OFFLINE DATA BUTTON =====
+const exportBtn = document.getElementById('exportButton');
+if (exportBtn) {
+    exportBtn.addEventListener('click', exportOfflineData);
+    console.log('✅ Export button listener registered');
 }
