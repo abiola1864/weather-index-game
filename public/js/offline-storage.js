@@ -7,6 +7,14 @@
 const OFFLINE_STORAGE_KEY = 'farm_game_offline_data';
 const SYNC_STATUS_KEY = 'farm_game_sync_status';
 
+// ✅ ADD THIS: Define API_BASE for offline storage
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000/api/game'
+    : window.location.origin + '/api/game';
+
+console.log('📡 Offline Storage API Base:', API_BASE);
+
+
 // ===== UTILITY FUNCTIONS =====
 
 // Check if online
@@ -63,24 +71,68 @@ function saveOfflineData(data) {
     console.log('💾 Offline data saved');
 }
 
-// Add to pending sync queue
-function addToPendingSync(type, endpoint, method, data) {
-    const offlineData = getOfflineData() || {};
-    if (!offlineData.pending_sync) offlineData.pending_sync = [];
-    
-    offlineData.pending_sync.push({
-        id: generateOfflineId(),
-        type,
-        endpoint,
-        method,
-        data,
-        timestamp: new Date().toISOString(),
-        synced: false
-    });
-    
-    saveOfflineData(offlineData);
-    console.log('📤 Added to sync queue:', type);
+
+
+// ===== DEFAULT COMMUNITIES =====
+function getDefaultCommunities() {
+    return [
+        // CONTROL GROUP
+        { communityName: 'Kpalsabogu', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Nyankpala', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Wantugu', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Tuunayili', district: 'Kumbungu', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Kpalguni', district: 'Kumbungu', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Kumbuyili', district: 'Kumbungu', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Zantani', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Kpanshegu', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Nabogo', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Tampion', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
+        
+        // FERTILIZER BUNDLE GROUP
+        { communityName: 'Voggu', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Kpendua', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Gbullung', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Zangbalun', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Gbulung', district: 'Kumbungu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Kasuliyili', district: 'Kumbungu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Kpanvo', district: 'Kumbungu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Nanton', district: 'Gushegu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Kpatinga', district: 'Gushegu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Nakpanduri', district: 'Gushegu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        
+        // SEEDLING BUNDLE GROUP
+        { communityName: 'Lingbunga', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Kpalbusi', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Wayamba', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Yoggu', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Tindan', district: 'Kumbungu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Gbulahagu', district: 'Kumbungu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Kpalguni II', district: 'Kumbungu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Zakpalsi', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Kpachi', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Gushegu', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 }
+    ];
 }
+
+
+// Add to pending sync queue
+// function addToPendingSync(type, endpoint, method, data) {
+//     const offlineData = getOfflineData() || {};
+//     if (!offlineData.pending_sync) offlineData.pending_sync = [];
+    
+//     offlineData.pending_sync.push({
+//         id: generateOfflineId(),
+//         type,
+//         endpoint,
+//         method,
+//         data,
+//         timestamp: new Date().toISOString(),
+//         synced: false
+//     });
+    
+//     saveOfflineData(offlineData);
+//     console.log('📤 Added to sync queue:', type);
+// }
 
 // ===== TREATMENT ASSIGNMENT =====
 
@@ -112,54 +164,24 @@ function assignTreatmentOffline() {
 // ===== MAIN OFFLINE HANDLER =====
 
 function handleOfflineStorage(endpoint, method, data) {
+    console.log('📴 OFFLINE MODE - Handling:', endpoint, method);
+    
+    // ✅ ALWAYS GET FRESH DATA
     let offlineData = getOfflineData();
     if (!offlineData) {
         initializeOfflineStorage();
         offlineData = getOfflineData();
     }
     
-    console.log('📴 OFFLINE MODE - Handling:', endpoint, method);
+    // ✅ ENSURE pending_sync EXISTS
+    if (!offlineData.pending_sync) {
+        offlineData.pending_sync = [];
+    }
     
     // ===== GET COMMUNITIES =====
     if (endpoint.includes('/communities') && method === 'GET') {
         console.log('📋 Returning default communities (offline)');
-        return [
-            // CONTROL GROUP
-            { communityName: 'Kpalsabogu', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
-            { communityName: 'Nyankpala', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
-            { communityName: 'Wantugu', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
-            { communityName: 'Tuunayili', district: 'Kumbungu', treatmentGroup: 'control', targetHouseholds: 10 },
-            { communityName: 'Kpalguni', district: 'Kumbungu', treatmentGroup: 'control', targetHouseholds: 10 },
-            { communityName: 'Kumbuyili', district: 'Kumbungu', treatmentGroup: 'control', targetHouseholds: 10 },
-            { communityName: 'Zantani', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
-            { communityName: 'Kpanshegu', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
-            { communityName: 'Nabogo', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
-            { communityName: 'Tampion', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
-            
-            // FERTILIZER BUNDLE GROUP
-            { communityName: 'Voggu', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-            { communityName: 'Kpendua', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-            { communityName: 'Gbullung', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-            { communityName: 'Zangbalun', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-            { communityName: 'Gbulung', district: 'Kumbungu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-            { communityName: 'Kasuliyili', district: 'Kumbungu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-            { communityName: 'Kpanvo', district: 'Kumbungu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-            { communityName: 'Nanton', district: 'Gushegu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-            { communityName: 'Kpatinga', district: 'Gushegu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-            { communityName: 'Nakpanduri', district: 'Gushegu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-            
-            // SEEDLING BUNDLE GROUP
-            { communityName: 'Lingbunga', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-            { communityName: 'Kpalbusi', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-            { communityName: 'Wayamba', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-            { communityName: 'Yoggu', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-            { communityName: 'Tindan', district: 'Kumbungu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-            { communityName: 'Gbulahagu', district: 'Kumbungu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-            { communityName: 'Kpalguni II', district: 'Kumbungu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-            { communityName: 'Zakpalsi', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-            { communityName: 'Kpachi', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-            { communityName: 'Gushegu', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 }
-        ];
+        return getDefaultCommunities();
     }
     
     // ===== RESPONDENT CREATION =====
@@ -176,40 +198,79 @@ function handleOfflineStorage(endpoint, method, data) {
             deviceId: offlineData.deviceId
         };
         
+        // ✅ FIX: Get fresh data before modifying
+        offlineData = getOfflineData();
+        if (!offlineData.respondents) offlineData.respondents = [];
+        if (!offlineData.pending_sync) offlineData.pending_sync = [];
+        
         offlineData.respondents.push(respondent);
-        addToPendingSync('respondent', endpoint, method, respondent);
+        
+        // ✅ Add to pending sync
+        offlineData.pending_sync.push({
+            id: generateOfflineId(),
+            type: 'respondent',
+            endpoint: endpoint,
+            method: method,
+            data: respondent,
+            timestamp: new Date().toISOString(),
+            synced: false,
+            syncedAt: null
+        });
+        
         saveOfflineData(offlineData);
         
         console.log('✅ Respondent created offline:', respondentId, 'Treatment:', treatmentGroup);
+        console.log('📤 Added to pending_sync. Total pending:', offlineData.pending_sync.length);
+        
         return respondent;
     }
     
-    // ===== SESSION START ===== 🆕 CRITICAL FIX
-    if (endpoint.includes('/session/start') && method === 'POST') {
-        const sessionId = generateOfflineId().replace('OFFLINE_', 'OFFLINE_SESSION_');
-        
-        const session = {
-            sessionId: sessionId, // ✅ CRITICAL: Must return this
-            respondentId: data.respondentId,
-            sessionType: data.sessionType,
-            treatmentGroup: offlineData.respondents?.[0]?.treatmentGroup || 'control',
-            startTime: new Date().toISOString(),
-            totalEarnings: 0,
-            totalInsuranceSpent: 0,
-            totalPayoutsReceived: 0,
-            rounds: [],
-            isComplete: false,
-            offline: true,
-            deviceId: offlineData.deviceId
-        };
-        
-        offlineData.sessions.push(session);
-        addToPendingSync('session', endpoint, method, session);
-        saveOfflineData(offlineData);
-        
-        console.log('✅ Session created offline with ID:', sessionId);
-        return session;
-    }
+    // ===== SESSION START =====
+  // ===== SESSION START =====
+if (endpoint.includes('/session/start') && method === 'POST') {
+    const sessionId = generateOfflineId().replace('OFFLINE_', 'OFFLINE_SESSION_');
+    
+    const session = {
+        sessionId: sessionId,
+        respondentId: data.respondentId,
+        sessionType: data.sessionType,
+        treatmentGroup: offlineData.respondents?.[0]?.treatmentGroup || 'control',
+        startTime: new Date().toISOString(),
+        totalEarnings: 0,
+        totalInsuranceSpent: 0,
+        totalPayoutsReceived: 0,
+        rounds: [],
+        isComplete: false,
+        offline: true,
+        deviceId: offlineData.deviceId
+    };
+    
+    // ✅ Get fresh data
+    offlineData = getOfflineData();
+    if (!offlineData.sessions) offlineData.sessions = [];
+    if (!offlineData.pending_sync) offlineData.pending_sync = [];
+    
+    offlineData.sessions.push(session);
+    
+    // ✅ CRITICAL: Add session creation to pending sync
+    offlineData.pending_sync.push({
+        id: generateOfflineId(),
+        type: 'session',  // ← Make sure this says 'session', not 'session_start'
+        endpoint: '/session/start',  // ← Use correct endpoint
+        method: 'POST',
+        data: session,
+        timestamp: new Date().toISOString(),
+        synced: false,
+        syncedAt: null
+    });
+    
+    saveOfflineData(offlineData);
+    
+    console.log('✅ Session created offline:', sessionId);
+    console.log('📤 Added to pending_sync. Total pending:', offlineData.pending_sync.length);
+    
+    return session;
+}
     
     // ===== ROUND SAVE =====
     if (endpoint.includes('/round/save') && method === 'POST') {
@@ -223,9 +284,15 @@ function handleOfflineStorage(endpoint, method, data) {
             deviceId: offlineData.deviceId
         };
         
+        // ✅ FIX: Get fresh data before modifying
+        offlineData = getOfflineData();
+        if (!offlineData.rounds) offlineData.rounds = [];
+        if (!offlineData.sessions) offlineData.sessions = [];
+        if (!offlineData.pending_sync) offlineData.pending_sync = [];
+        
         offlineData.rounds.push(round);
         
-        // ✅ UPDATE SESSION TOTALS
+        // Update session totals
         const session = offlineData.sessions.find(s => s.sessionId === data.sessionId);
         if (session) {
             session.totalEarnings = (session.totalEarnings || 0) + 
@@ -237,35 +304,60 @@ function handleOfflineStorage(endpoint, method, data) {
             
             if (!session.rounds) session.rounds = [];
             session.rounds.push(roundId);
-            
-            console.log('✅ Session totals updated:', {
-                earnings: session.totalEarnings,
-                insurance: session.totalInsuranceSpent,
-                payouts: session.totalPayoutsReceived
-            });
-        } else {
-            console.warn('⚠️ Session not found for round:', data.sessionId);
         }
         
-        addToPendingSync('round', endpoint, method, round);
+        // ✅ Add to pending sync
+        offlineData.pending_sync.push({
+            id: generateOfflineId(),
+            type: 'round',
+            endpoint: endpoint,
+            method: method,
+            data: round,
+            timestamp: new Date().toISOString(),
+            synced: false,
+            syncedAt: null
+        });
+        
         saveOfflineData(offlineData);
         
         console.log('✅ Round saved offline:', roundId);
+        console.log('📤 Added to pending_sync. Total pending:', offlineData.pending_sync.length);
+        
         return round;
     }
     
     // ===== SESSION COMPLETE =====
     if (endpoint.includes('/session/') && endpoint.includes('/complete') && method === 'PUT') {
         const sessionId = endpoint.split('/')[2];
+        
+        // ✅ FIX: Get fresh data before modifying
+        offlineData = getOfflineData();
+        if (!offlineData.sessions) offlineData.sessions = [];
+        if (!offlineData.pending_sync) offlineData.pending_sync = [];
+        
         const session = offlineData.sessions.find(s => s.sessionId === sessionId);
         
         if (session) {
             session.completedAt = new Date().toISOString();
             session.isComplete = true;
-            addToPendingSync('session_complete', endpoint, method, { sessionId });
+            
+            // ✅ Add to pending sync
+            offlineData.pending_sync.push({
+                id: generateOfflineId(),
+                type: 'session_complete',
+                endpoint: endpoint,
+                method: method,
+                data: { sessionId },
+                timestamp: new Date().toISOString(),
+                synced: false,
+                syncedAt: null
+            });
+            
             saveOfflineData(offlineData);
             
             console.log('✅ Session marked complete offline:', sessionId);
+            console.log('📤 Added to pending_sync. Total pending:', offlineData.pending_sync.length);
+            
             return session;
         }
         
@@ -277,7 +369,7 @@ function handleOfflineStorage(endpoint, method, data) {
     if (endpoint.includes('/knowledge/submit') && method === 'POST') {
         const knowledgeId = generateOfflineId();
         
-        // ✅ CALCULATE SCORE IMMEDIATELY
+        // Calculate score
         const answers = data.answers || data;
         const correctAnswers = [
             answers.q1_indexBased === true || answers.q1 === true,
@@ -296,11 +388,30 @@ function handleOfflineStorage(endpoint, method, data) {
             deviceId: offlineData.deviceId
         };
         
+        // ✅ FIX: Get fresh data before modifying
+        offlineData = getOfflineData();
+        if (!offlineData.knowledge) offlineData.knowledge = [];
+        if (!offlineData.pending_sync) offlineData.pending_sync = [];
+        
         offlineData.knowledge.push(knowledge);
-        addToPendingSync('knowledge', endpoint, method, knowledge);
+        
+        // ✅ Add to pending sync
+        offlineData.pending_sync.push({
+            id: generateOfflineId(),
+            type: 'knowledge',
+            endpoint: endpoint,
+            method: method,
+            data: knowledge,
+            timestamp: new Date().toISOString(),
+            synced: false,
+            syncedAt: null
+        });
+        
         saveOfflineData(offlineData);
         
         console.log('✅ Knowledge test saved offline, Score:', correctAnswers, '/5');
+        console.log('📤 Added to pending_sync. Total pending:', offlineData.pending_sync.length);
+        
         return knowledge;
     }
     
@@ -316,11 +427,30 @@ function handleOfflineStorage(endpoint, method, data) {
             deviceId: offlineData.deviceId
         };
         
+        // ✅ FIX: Get fresh data before modifying
+        offlineData = getOfflineData();
+        if (!offlineData.perception) offlineData.perception = [];
+        if (!offlineData.pending_sync) offlineData.pending_sync = [];
+        
         offlineData.perception.push(perception);
-        addToPendingSync('perception', endpoint, method, perception);
+        
+        // ✅ Add to pending sync
+        offlineData.pending_sync.push({
+            id: generateOfflineId(),
+            type: 'perception',
+            endpoint: endpoint,
+            method: method,
+            data: perception,
+            timestamp: new Date().toISOString(),
+            synced: false,
+            syncedAt: null
+        });
+        
         saveOfflineData(offlineData);
         
         console.log('✅ Perception data saved offline');
+        console.log('📤 Added to pending_sync. Total pending:', offlineData.pending_sync.length);
+        
         return perception;
     }
     
@@ -336,11 +466,30 @@ function handleOfflineStorage(endpoint, method, data) {
             deviceId: offlineData.deviceId
         };
         
+        // ✅ FIX: Get fresh data before modifying
+        offlineData = getOfflineData();
+        if (!offlineData.coupleInfo) offlineData.coupleInfo = [];
+        if (!offlineData.pending_sync) offlineData.pending_sync = [];
+        
         offlineData.coupleInfo.push(coupleInfo);
-        addToPendingSync('coupleInfo', endpoint, method, coupleInfo);
+        
+        // ✅ Add to pending sync
+        offlineData.pending_sync.push({
+            id: generateOfflineId(),
+            type: 'coupleInfo',
+            endpoint: endpoint,
+            method: method,
+            data: coupleInfo,
+            timestamp: new Date().toISOString(),
+            synced: false,
+            syncedAt: null
+        });
+        
         saveOfflineData(offlineData);
         
         console.log('✅ Couple info saved offline');
+        console.log('📤 Added to pending_sync. Total pending:', offlineData.pending_sync.length);
+        
         return coupleInfo;
     }
     
@@ -404,8 +553,44 @@ function handleOfflineStorage(endpoint, method, data) {
     };
 }
 
+
+
 // ===== SYNC FUNCTIONS =====
 
+// Sync offline data to server
+// ===== SYNC FUNCTIONS =====
+
+
+// ===== REBUILD ID MAPPINGS FROM SYNCED DATA =====
+function rebuildIdMappings() {
+    const offlineData = getOfflineData();
+    const mappings = {
+        respondents: {},
+        sessions: {}
+    };
+    
+    // Look through all synced items to rebuild mappings
+    if (offlineData.pending_sync) {
+        offlineData.pending_sync.forEach(item => {
+            // Only process already-synced items
+            if (item.synced && item.serverResponse) {
+                if (item.type === 'respondent' && item.data._id) {
+                    mappings.respondents[item.data._id] = item.serverResponse._id;
+                }
+                if (item.type === 'session' && item.data.sessionId) {
+                    mappings.sessions[item.data.sessionId] = item.serverResponse.sessionId;
+                }
+            }
+        });
+    }
+    
+    console.log('🔄 Rebuilt ID mappings:', mappings);
+    return mappings;
+}
+
+
+
+// Sync offline data to server
 // Sync offline data to server
 async function syncOfflineData() {
     if (!isOnline()) {
@@ -428,7 +613,9 @@ async function syncOfflineData() {
         errors: []
     };
     
-    // Sort by timestamp to maintain order
+    // ✅ CRITICAL: Rebuild ID mappings from previously synced items
+    const idMappings = rebuildIdMappings();
+    
     const sortedItems = offlineData.pending_sync.sort((a, b) => 
         new Date(a.timestamp) - new Date(b.timestamp)
     );
@@ -437,28 +624,69 @@ async function syncOfflineData() {
         if (item.synced) continue;
         
         try {
-            const response = await fetch(`${API_BASE}/api/game${item.endpoint}`, {
+            // ✅ Clean data before sending
+            const cleanData = prepareDataForSync(item.data, item.type, idMappings);
+            
+            // ✅ Map endpoint URLs for session_complete
+            let endpoint = item.endpoint;
+            if (item.type === 'session_complete') {
+                const offlineSessionMatch = endpoint.match(/session\/(OFFLINE_SESSION_[^/]+)/);
+                if (offlineSessionMatch && offlineSessionMatch[1]) {
+                    const offlineSessionId = offlineSessionMatch[1];
+                    const mappedSessionId = idMappings.sessions[offlineSessionId];
+                    
+                    if (mappedSessionId) {
+                        endpoint = endpoint.replace(offlineSessionId, mappedSessionId);
+                        console.log('✅ Mapped endpoint:', item.endpoint, '→', endpoint);
+                    } else {
+                        console.warn('⚠️ No session mapping found for:', offlineSessionId);
+                    }
+                }
+            }
+            
+            const fullUrl = `${API_BASE}${endpoint}`;
+            
+            console.log(`📤 Syncing ${item.type} to: ${fullUrl}`);
+            
+            const response = await fetch(fullUrl, {
                 method: item.method,
                 headers: { 
                     'Content-Type': 'application/json',
                     'X-Offline-Sync': 'true',
                     'X-Device-Id': offlineData.deviceId
                 },
-                body: JSON.stringify(item.data)
+                body: JSON.stringify(cleanData)
             });
             
             if (response.ok) {
+                const serverResponse = await response.json();
+                
+                // ✅ Store server response for rebuilding mappings later
+                item.serverResponse = serverResponse.data;
+                
+                // ✅ Store ID mappings for subsequent requests
+                if (item.type === 'respondent' && serverResponse.data) {
+                    idMappings.respondents[item.data._id] = serverResponse.data._id;
+                    console.log('✅ Mapped respondent:', item.data._id, '→', serverResponse.data._id);
+                }
+                
+                if (item.type === 'session' && serverResponse.data) {
+                    idMappings.sessions[item.data.sessionId] = serverResponse.data.sessionId;
+                    console.log('✅ Mapped session:', item.data.sessionId, '→', serverResponse.data.sessionId);
+                }
+                
                 item.synced = true;
                 item.syncedAt = new Date().toISOString();
                 results.successful++;
                 console.log('✅ Synced:', item.type, item.id);
             } else {
+                const errorText = await response.text();
                 results.failed++;
                 results.errors.push({
                     item: item.type,
-                    error: `HTTP ${response.status}`
+                    error: `HTTP ${response.status}: ${errorText}`
                 });
-                console.error('❌ Sync failed:', item.type, response.status);
+                console.error('❌ Sync failed:', item.type, response.status, errorText);
             }
         } catch (error) {
             results.failed++;
@@ -470,12 +698,11 @@ async function syncOfflineData() {
         }
     }
     
-    // Remove synced items
+    // Remove synced items and save
     offlineData.pending_sync = offlineData.pending_sync.filter(item => !item.synced);
     offlineData.lastSyncAttempt = new Date().toISOString();
     saveOfflineData(offlineData);
     
-    // Update sync status
     const syncStatus = {
         lastSync: new Date().toISOString(),
         results: results
@@ -486,19 +713,85 @@ async function syncOfflineData() {
     return { success: true, results };
 }
 
+
+
+// ✅ NEW FUNCTION: Prepare data for sync
+function prepareDataForSync(data, type, idMappings) {
+    const cleanData = { ...data };
+    
+    // Remove offline-generated IDs (let server generate proper MongoDB ObjectIds)
+    if (cleanData._id && cleanData._id.startsWith('OFFLINE_')) {
+        delete cleanData._id;
+    }
+    
+    // Map offline respondent IDs to server IDs
+    if (cleanData.respondentId && cleanData.respondentId.startsWith('OFFLINE_')) {
+        if (idMappings.respondents[cleanData.respondentId]) {
+            cleanData.respondentId = idMappings.respondents[cleanData.respondentId];
+        } else {
+            console.warn('⚠️ No mapping found for respondentId:', cleanData.respondentId);
+        }
+    }
+    
+    // Map offline session IDs to server IDs
+    if (cleanData.sessionId && cleanData.sessionId.startsWith('OFFLINE_')) {
+        if (idMappings.sessions[cleanData.sessionId]) {
+            cleanData.sessionId = idMappings.sessions[cleanData.sessionId];
+        } else {
+            console.warn('⚠️ No mapping found for sessionId:', cleanData.sessionId);
+        }
+    }
+    
+    // Remove offline and deviceId flags before sending to server
+    delete cleanData.offline;
+    delete cleanData.deviceId;
+    
+    return cleanData;
+}
+
+
+
 // Get sync status
 // Get sync status
-// offline-storage.js - Line 328
+// offline-storage.js - Line 328const response = await fetch(`${API_BASE}/
 function getSyncStatus() {
     const offlineData = getOfflineData();
     const syncStatus = localStorage.getItem(SYNC_STATUS_KEY);
     
-    // ✅ Only count unsynced items
-    const unsyncedItems = (offlineData?.pending_sync || []).filter(item => !item.synced);
+    console.log('🔍 === getSyncStatus DEBUG ===');
+    console.log('📦 Raw offline data:', offlineData);
+    
+    if (!offlineData) {
+        console.log('❌ No offline data at all');
+        return {
+            isOnline: isOnline(),
+            pendingItems: 0,
+            lastSync: syncStatus ? JSON.parse(syncStatus) : null,
+            offlineDataSize: 0
+        };
+    }
+    
+    if (!offlineData.pending_sync) {
+        console.log('⚠️ No pending_sync array (initializing)');
+        offlineData.pending_sync = [];
+        saveOfflineData(offlineData);
+    }
+    
+    // ✅ CRITICAL: Count items where synced is NOT true
+    const unsyncedItems = offlineData.pending_sync.filter(item => item.synced !== true);
+    
+    console.log('📊 Sync Analysis:');
+    console.log('  Total items:', offlineData.pending_sync.length);
+    console.log('  Unsynced items:', unsyncedItems.length);
+    console.log('  Item details:');
+    offlineData.pending_sync.forEach((item, i) => {
+        console.log(`    ${i + 1}. ${item.type} - synced: ${item.synced} | ${item.timestamp}`);
+    });
+    console.log('🔍 === END DEBUG ===');
     
     return {
         isOnline: isOnline(),
-        pendingItems: unsyncedItems.length,  // ✅ FIX
+        pendingItems: unsyncedItems.length,
         lastSync: syncStatus ? JSON.parse(syncStatus) : null,
         offlineDataSize: offlineData ? JSON.stringify(offlineData).length : 0
     };

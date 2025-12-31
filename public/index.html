@@ -697,6 +697,297 @@ select:invalid:focus {
         }
     }
 
+    /* ===== SIMPLE CONNECTION STATUS INDICATOR ===== */
+.connection-controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.connection-status {
+    background: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    border: 2px solid #E0E0E0;
+    position: relative;
+    overflow: hidden;
+}
+
+.connection-status::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #9E9E9E;
+}
+
+.connection-status.status-online::before {
+    background: #4CAF50;
+}
+
+.connection-status.status-offline::before {
+    background: #F44336;
+}
+
+.connection-status i.fa-circle {
+    font-size: 10px;
+    color: #9E9E9E;
+}
+
+.connection-status.status-online i.fa-circle {
+    color: #4CAF50;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.connection-status.status-offline i.fa-circle {
+    color: #F44336;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.connection-status #statusText {
+    color: #424242;
+    font-size: 13px;
+}
+
+@media (max-width: 768px) {
+    .connection-controls {
+        top: 10px;
+        right: 10px;
+    }
+    
+    .connection-status {
+        padding: 10px 16px;
+        font-size: 12px;
+    }
+}
+
+
+/* ===== WELCOME & RESULTS SYNC SECTIONS ===== */
+.welcome-sync-section,
+.results-sync-section {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 0 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.sync-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    border: 3px solid #E0E0E0;
+    transition: all 0.3s ease;
+}
+
+.sync-card.has-data {
+    border-color: #FF9800;
+    background: linear-gradient(135deg, #FFF8E1, #FFFFFF);
+}
+
+.sync-card.all-synced {
+    border-color: #4CAF50;
+    background: linear-gradient(135deg, #E8F5E9, #FFFFFF);
+}
+
+.sync-card.offline {
+    border-color: #F44336;
+    background: linear-gradient(135deg, #FFEBEE, #FFFFFF);
+}
+
+.sync-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(33, 150, 243, 0.3);
+}
+
+.sync-card.has-data .sync-icon {
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    animation: bounce 2s ease-in-out infinite;
+}
+
+.sync-card.all-synced .sync-icon {
+    background: linear-gradient(135deg, #4CAF50, #388E3C);
+}
+
+.sync-card.offline .sync-icon {
+    background: linear-gradient(135deg, #F44336, #D32F2F);
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.sync-icon i {
+    font-size: 40px;
+    color: white;
+}
+
+.sync-content {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.sync-content h3 {
+    font-size: 24px;
+    color: #2E7D32;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.sync-content p {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.sync-status-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    background: #F5F5F5;
+    border-radius: 25px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #666;
+}
+
+.sync-status-box i {
+    font-size: 18px;
+}
+
+.sync-card.has-data .sync-status-box {
+    background: #FFE0B2;
+    color: #E65100;
+}
+
+.sync-card.has-data .sync-status-box i {
+    color: #FF9800;
+}
+
+.sync-card.all-synced .sync-status-box {
+    background: #C8E6C9;
+    color: #1B5E20;
+}
+
+.sync-card.all-synced .sync-status-box i {
+    color: #4CAF50;
+}
+
+.sync-card.offline .sync-status-box {
+    background: #FFCDD2;
+    color: #B71C1C;
+}
+
+.sync-card.offline .sync-status-box i {
+    color: #F44336;
+}
+
+.sync-action-btn {
+    width: 100%;
+    padding: 18px 30px;
+    border: none;
+    border-radius: 50px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sync-action-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(33, 150, 243, 0.4);
+}
+
+.sync-action-btn:active:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.sync-action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: linear-gradient(135deg, #BDBDBD, #9E9E9E);
+}
+
+.sync-action-btn i {
+    font-size: 20px;
+}
+
+.sync-action-btn.syncing i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .welcome-sync-section,
+    .results-sync-section {
+        margin: 30px auto;
+    }
+    
+    .sync-card {
+        padding: 25px 20px;
+    }
+    
+    .sync-icon {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .sync-icon i {
+        font-size: 35px;
+    }
+    
+    .sync-content h3 {
+        font-size: 20px;
+    }
+    
+    .sync-content p {
+        font-size: 14px;
+    }
+    
+    .sync-action-btn {
+        padding: 16px 24px;
+        font-size: 16px;
+    }
+}
+
 
     </style>
 </head>
@@ -713,15 +1004,21 @@ select:invalid:focus {
 
     <!-- 🆕 ADD THIS SECTION HERE -->
 <!-- Connection Status & Sync Controls -->
+<!-- Connection Status & Sync Controls - REDESIGNED -->
 <div class="connection-controls">
+    <!-- Status Card -->
     <div id="connectionStatus" class="connection-status">
         <i class="fas fa-circle"></i>
         <span id="statusText">Checking...</span>
     </div>
+    
+    <!-- Sync Button -->
     <button id="syncButton" class="sync-btn" onclick="manualSync()" style="display: none;">
         <i class="fas fa-sync-alt"></i>
         <span id="syncButtonText">Sync Now</span>
     </button>
+    
+    <!-- Export Button -->
     <button id="exportButton" class="export-btn" onclick="window.offlineStorage.exportOfflineData()" style="display: none;">
         <i class="fas fa-download"></i>
         <span>Backup Data</span>
@@ -774,6 +1071,46 @@ select:invalid:focus {
                 </div>
             </div>
             
+
+            <!-- Sync Section on Welcome Screen -->
+
+            
+<!-- <div class="welcome-sync-section">
+    <div class="sync-card">
+        <div class="sync-icon">
+            <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <div class="sync-content">
+            <h3 id="welcomeSyncTitle">Upload Previous Data</h3>
+            <p id="welcomeSyncMessage">Check if there's data from previous sessions to upload</p>
+            <div id="welcomeSyncStatus" class="sync-status-box">
+                <i class="fas fa-check-circle"></i>
+                <span>Checking...</span>
+            </div>
+        </div>
+        <button type="button" id="welcomeSyncBtn" class="sync-action-btn" onclick="syncFromWelcome()">
+            <i class="fas fa-sync-alt"></i>
+            <span>Check & Upload</span>
+        </button>
+    </div>
+</div> -->
+
+
+
+
+
+<!-- TEMPORARY DEBUG BUTTON - Remove after testing -->
+<!-- <div style="text-align: center; margin: 20px;">
+    <button onclick="debugSyncStatus()" style="padding: 10px 20px; background: #757575; color: white; border: none; border-radius: 8px; cursor: pointer;">
+        🔍 Debug Sync Status
+    </button>
+</div> -->
+
+
+
+
+
+
             <button class="cta-button-large" id="startBtn">
                 <span data-translate="welcome.startBtn">Begin Your Journey</span>
                 <i class="fas fa-arrow-right"></i>
@@ -2012,18 +2349,26 @@ select:invalid:focus {
                 </div>
 
                     <!-- 🆕 ADD THIS PROMINENT SYNC NOTICE -->
-        <div id="resultsSyncNotice" style="display: none; background: linear-gradient(135deg, #FF9800, #F57C00); color: white; padding: 20px; border-radius: 15px; margin: 20px 0; text-align: center;">
-            <h3 style="margin: 0 0 10px 0;">
-                <i class="fas fa-cloud-upload-alt"></i> Data Not Yet Uploaded
-            </h3>
-            <p style="margin: 0 0 15px 0; font-size: 16px;">
-                Your game data is saved on this device but hasn't been uploaded to the server yet.
-            </p>
-            <button onclick="manualSync()" class="btn-primary btn-large" style="background: white; color: #F57C00;">
-                <i class="fas fa-sync-alt"></i>
-                <span>Upload Now</span>
-            </button>
+ <!-- Sync Section on Results Screen -->
+<div class="results-sync-section">
+    <div class="sync-card">
+        <div class="sync-icon">
+            <i class="fas fa-cloud-upload-alt"></i>
         </div>
+        <div class="sync-content">
+            <h3 id="resultsSyncTitle">Upload Game Data</h3>
+            <p id="resultsSyncMessage">Upload this game data to the server</p>
+            <div id="resultsSyncStatus" class="sync-status-box">
+                <i class="fas fa-check-circle"></i>
+                <span>Checking...</span>
+            </div>
+        </div>
+        <button type="button" id="resultsSyncBtn" class="sync-action-btn" onclick="syncFromResults()">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>Upload Now</span>
+        </button>
+    </div>
+</div>
         
 
         

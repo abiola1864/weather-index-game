@@ -2361,3 +2361,351 @@ select:invalid:focus {
         font-size: 10px;
     }
 }
+
+
+
+/* ===== IMPROVED CONNECTION CONTROLS ===== */
+.connection-controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 280px;
+}
+
+/* Connection Status Card - Redesigned */
+.connection-status {
+    background: white;
+    padding: 16px 20px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: 2px solid #E0E0E0;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Gradient bar on left side */
+.connection-status::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #9E9E9E;
+    transition: background 0.3s ease;
+}
+
+.connection-status.status-online::before {
+    background: linear-gradient(180deg, #4CAF50, #66BB6A);
+}
+
+.connection-status.status-offline::before {
+    background: linear-gradient(180deg, #F44336, #EF5350);
+}
+
+.connection-status.status-syncing::before {
+    background: linear-gradient(180deg, #2196F3, #42A5F5);
+    animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Status icon */
+.connection-status i.fa-circle {
+    font-size: 12px;
+    color: #9E9E9E;
+    transition: all 0.3s ease;
+}
+
+.connection-status.status-online i.fa-circle {
+    color: #4CAF50;
+    animation: pulse 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 4px rgba(76, 175, 80, 0.6));
+}
+
+.connection-status.status-offline i.fa-circle {
+    color: #F44336;
+}
+
+.connection-status.status-syncing i.fa-circle {
+    color: #2196F3;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Status text */
+.connection-status #statusText {
+    flex: 1;
+    color: #424242;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* Action Buttons - Modern Design */
+.sync-btn, .export-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    position: relative;
+    overflow: hidden;
+    min-height: 48px; /* Consistent height */
+}
+
+/* Sync Button */
+.sync-btn {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    color: white;
+}
+
+.sync-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.sync-btn:hover:not(:disabled)::before {
+    left: 100%;
+}
+
+.sync-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(33, 150, 243, 0.4);
+}
+
+.sync-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.sync-btn:disabled {
+    background: linear-gradient(135deg, #BDBDBD, #9E9E9E);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.sync-btn i {
+    font-size: 16px;
+    transition: transform 0.3s ease;
+}
+
+.sync-btn:hover:not(:disabled) i {
+    transform: rotate(180deg);
+}
+
+/* Export Button */
+.export-btn {
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    color: white;
+}
+
+.export-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.export-btn:hover::before {
+    left: 100%;
+}
+
+.export-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 152, 0, 0.4);
+}
+
+.export-btn:active {
+    transform: translateY(0);
+}
+
+.export-btn i {
+    font-size: 16px;
+    transition: transform 0.3s ease;
+}
+
+.export-btn:hover i {
+    transform: translateY(-2px);
+}
+
+/* Pending count badge */
+.pending-badge {
+    background: #FF9800;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-left: auto;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Mobile Responsive - Improved */
+@media (max-width: 768px) {
+    .connection-controls {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        gap: 10px;
+    }
+    
+    .connection-status {
+        padding: 14px 16px;
+        font-size: 13px;
+        border-radius: 12px;
+    }
+    
+    .connection-status #statusText {
+        font-size: 13px;
+    }
+    
+    .sync-btn, .export-btn {
+        font-size: 13px;
+        padding: 12px 16px;
+        min-height: 44px;
+    }
+    
+    .sync-btn i, .export-btn i {
+        font-size: 14px;
+    }
+}
+
+/* Compact mode for small screens */
+@media (max-width: 480px) {
+    .connection-controls {
+        top: 8px;
+        right: 8px;
+        left: 8px;
+        gap: 8px;
+    }
+    
+    .connection-status {
+        padding: 12px;
+        font-size: 12px;
+    }
+    
+    .connection-status i.fa-circle {
+        font-size: 10px;
+    }
+    
+    .sync-btn span, .export-btn span {
+        display: none; /* Hide text on very small screens */
+    }
+    
+    .sync-btn, .export-btn {
+        min-height: 40px;
+        padding: 10px;
+    }
+}
+
+/* Toast Notifications - Enhanced */
+.toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    background: rgba(0, 0, 0, 0.95);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 10000;
+    animation: slideUpToast 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    max-width: 90%;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.toast-success { 
+    background: linear-gradient(135deg, #4CAF50, #388E3C);
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+.toast-error { 
+    background: linear-gradient(135deg, #F44336, #D32F2F);
+    border-color: rgba(244, 67, 54, 0.3);
+}
+
+.toast-warning { 
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    border-color: rgba(255, 152, 0, 0.3);
+}
+
+.toast-info { 
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    border-color: rgba(33, 150, 243, 0.3);
+}
+
+.toast i {
+    margin-right: 8px;
+}
+
+@keyframes slideUpToast {
+    from { 
+        bottom: -60px; 
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px) scale(0.8);
+    }
+    to { 
+        bottom: 30px; 
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 768px) {
+    .toast {
+        bottom: 20px;
+        padding: 12px 20px;
+        font-size: 13px;
+        max-width: 85%;
+        border-radius: 10px;
+    }
+}

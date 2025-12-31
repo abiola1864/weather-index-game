@@ -776,7 +776,13 @@ function t(key, params = {}) {
 }
 
 
-
+// API_BASE is defined in offline-storage.js
+// If not available, define it here
+// if (typeof API_BASE === 'undefined') {
+//     var API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+//         ? 'http://localhost:3000/api/game'
+//         : window.location.origin + '/api/game';
+// }
 
 
 function getSeasonStory(seasonNumber) {
@@ -921,11 +927,7 @@ const BUNDLE_INFO = {
 
 
 // ===== API HELPER =====
-const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3000'
-    : window.location.origin;
 
-console.log('🌐 API Base URL:', API_BASE);
 
 
 
@@ -2547,6 +2549,10 @@ async function showResults() {
         alert('Error loading results: ' + error.message);
     }
 }
+
+
+
+
 
 // 🆕 NEW HELPER FUNCTION: Check and Handle Pending Sync
 async function checkAndHandlePendingSync() {
@@ -4375,71 +4381,390 @@ function updateTrustQuestionLabel(name, text) {
 // ===== CONNECTION STATUS MANAGEMENT =====
 // ===== CONNECTION STATUS MANAGEMENT =====
 // ===== CONNECTION STATUS MANAGEMENT =====
+// ===== SIMPLIFIED CONNECTION STATUS (NO AUTO-SYNC) =====
+// ===== CONNECTION STATUS MANAGEMENT =====
 function updateConnectionStatus() {
-    console.log('🔍 === updateConnectionStatus called ===');
-    
     const statusEl = document.getElementById('connectionStatus');
     const statusText = document.getElementById('statusText');
     const syncBtn = document.getElementById('syncButton');
     const exportBtn = document.getElementById('exportButton');
     
-    console.log('📋 Elements found:', {
-        statusEl: !!statusEl,
-        statusText: !!statusText,
-        syncBtn: !!syncBtn,
-        exportBtn: !!exportBtn
+    if (!statusEl || !statusText) return;
+    
+    const isOnline = navigator.onLine;
+    const syncStatus = window.offlineStorage.getSyncStatus();
+    const pendingItems = syncStatus.pendingItems;
+    
+    console.log('🔄 Connection Status Update:', {
+        isOnline,
+        pendingItems,
+        syncBtnExists: !!syncBtn
     });
     
-    if (!statusEl || !statusText) {
-        console.error('❌ CRITICAL: Connection status elements not found!');
+    // Update online/offline status
+    if (isOnline) {
+        statusEl.className = 'connection-status status-online';
+        statusText.innerHTML = `
+            <i class="fas fa-circle"></i>
+            <span>Online</span>
+        `;
+    } else {
+        statusEl.className = 'connection-status status-offline';
+        statusText.innerHTML = `
+            <i class="fas fa-circle"></i>
+            <span>Offline</span>
+        `;
+    }
+    
+    // Show/hide sync button based on pending items
+    if (syncBtn) {
+        if (pendingItems > 0 && isOnline) {
+            syncBtn.style.display = 'flex';
+            syncBtn.innerHTML = `
+                <i class="fas fa-sync-alt"></i>
+                <span>Sync ${pendingItems} item${pendingItems > 1 ? 's' : ''}</span>
+            `;
+            console.log('✅ Sync button shown');
+        } else if (pendingItems > 0 && !isOnline) {
+            syncBtn.style.display = 'flex';
+            syncBtn.disabled = true;
+            syncBtn.innerHTML = `
+                <i class="fas fa-wifi-slash"></i>
+                <span>${pendingItems} pending (offline)</span>
+            `;
+            console.log('⚠️ Sync button shown but disabled (offline)');
+        } else {
+            syncBtn.style.display = 'none';
+            console.log('❌ Sync button hidden (no pending items)');
+        }
+    }
+    
+    // Show/hide export button
+    if (exportBtn) {
+        if (pendingItems > 0) {
+            exportBtn.style.display = 'flex';
+        } else {
+            exportBtn.style.display = 'none';
+        }
+    }
+}
+
+
+
+// ===== UPDATE WELCOME SCREEN SYNC STATUS =====
+function updateWelcomeSyncStatus() {
+    const syncCard = document.querySelector('.welcome-sync-section .sync-card');
+    const syncTitle = document.getElementById('welcomeSyncTitle');
+    const syncMessage = document.getElementById('welcomeSyncMessage');
+    const syncStatusBox = document.getElementById('welcomeSyncStatus');
+    const syncBtn = document.getElementById('welcomeSyncBtn');
+    
+    if (!syncCard || !syncStatusBox || !syncBtn) {
+        console.warn('⚠️ Welcome sync elements not found');
         return;
     }
     
     const syncStatus = window.offlineStorage.getSyncStatus();
+    const isOnline = syncStatus.isOnline;
+    const pendingItems = syncStatus.pendingItems;
     
-    console.log('📊 Sync status:', syncStatus);
-    console.log('🌐 Navigator online:', navigator.onLine);
-    console.log('📦 Pending items:', syncStatus.pendingItems);
+    console.log('📊 Welcome Sync Status:', { isOnline, pendingItems });
     
-    if (syncStatus.isOnline) {
-        statusEl.className = 'connection-status status-online';
-        
-        if (syncStatus.pendingItems > 0) {
-            console.log('⚠️ FOUND PENDING ITEMS:', syncStatus.pendingItems);
-            
-            statusText.innerHTML = `Online <span style="color: #FF9800; font-weight: 700;">(${syncStatus.pendingItems} pending)</span>`;
-            
-            if (syncBtn) {
-                syncBtn.style.display = 'flex';
-                console.log('✅ Sync button should now be visible');
-                
-                const syncBtnText = document.getElementById('syncButtonText');
-                if (syncBtnText) {
-                    syncBtnText.textContent = `Sync ${syncStatus.pendingItems} items`;
-                }
-            } else {
-                console.error('❌ Sync button element not found!');
-            }
-        } else {
-            console.log('✅ No pending items');
-            statusText.textContent = 'Online - All synced';
-            if (syncBtn) syncBtn.style.display = 'none';
-        }
-        
-        if (exportBtn && syncStatus.offlineDataSize > 1000) {
-            exportBtn.style.display = 'flex';
-        }
+    // Reset classes
+    syncCard.className = 'sync-card';
+    
+    if (!isOnline) {
+        // OFFLINE
+        syncCard.classList.add('offline');
+        syncTitle.textContent = 'You Are Offline';
+        syncMessage.textContent = 'Connect to internet to upload data to server';
+        syncStatusBox.innerHTML = '<i class="fas fa-wifi-slash"></i><span>No Internet Connection</span>';
+        syncBtn.disabled = true;
+        syncBtn.innerHTML = '<i class="fas fa-wifi-slash"></i><span>Cannot Upload (Offline)</span>';
+    } else if (pendingItems > 0) {
+        // HAS DATA TO SYNC
+        syncCard.classList.add('has-data');
+        syncTitle.textContent = 'Data Ready to Upload';
+        syncMessage.textContent = `You have ${pendingItems} game${pendingItems > 1 ? 's' : ''} waiting to be uploaded to the server`;
+        syncStatusBox.innerHTML = `<i class="fas fa-exclamation-triangle"></i><span>${pendingItems} item${pendingItems > 1 ? 's' : ''} pending</span>`;
+        syncBtn.disabled = false;
+        syncBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><span>Upload Now</span>';
     } else {
-        console.log('📴 OFFLINE MODE');
-        statusEl.className = 'connection-status status-offline';
-        statusText.textContent = 'Offline - Data saved locally';
-        if (syncBtn) syncBtn.style.display = 'none';
-        if (exportBtn) exportBtn.style.display = 'flex';
+        // ALL SYNCED
+        syncCard.classList.add('all-synced');
+        syncTitle.textContent = 'All Data Uploaded';
+        syncMessage.textContent = 'No pending data to upload';
+        syncStatusBox.innerHTML = '<i class="fas fa-check-circle"></i><span>Everything Synced</span>';
+        syncBtn.disabled = true;
+        syncBtn.innerHTML = '<i class="fas fa-check"></i><span>Nothing to Upload</span>';
     }
-    
-    console.log('🔍 === updateConnectionStatus complete ===');
 }
 
+// ===== SYNC FROM WELCOME SCREEN =====
+async function syncFromWelcome() {
+    const syncBtn = document.getElementById('welcomeSyncBtn');
+    const syncCard = document.querySelector('.welcome-sync-section .sync-card');
+    const syncStatusBox = document.getElementById('welcomeSyncStatus');
+    
+    if (!syncBtn) return;
+    
+    try {
+        // Check if online
+        if (!navigator.onLine) {
+            showToast('📴 You are offline. Connect to internet to upload data.', 'warning');
+            return;
+        }
+        
+        // Get sync status
+        const syncStatus = window.offlineStorage.getSyncStatus();
+        
+        if (syncStatus.pendingItems === 0) {
+            showToast('✅ No data to upload', 'info');
+            return;
+        }
+        
+        console.log('🔄 Starting sync from welcome screen...');
+        
+        // Update UI to show syncing
+        syncBtn.disabled = true;
+        syncBtn.className = 'sync-action-btn syncing';
+        syncBtn.innerHTML = '<i class="fas fa-sync-alt"></i><span>Uploading...</span>';
+        syncStatusBox.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i><span>Uploading...</span>';
+        
+        // Perform sync
+        const result = await window.offlineStorage.syncOfflineData();
+        
+        console.log('✅ Sync result:', result);
+        
+        if (result.success && result.results) {
+            if (result.results.successful > 0) {
+                showToast(`✅ Successfully uploaded ${result.results.successful} item${result.results.successful > 1 ? 's' : ''}!`, 'success');
+            }
+            
+            if (result.results.failed > 0) {
+                showToast(`⚠️ ${result.results.failed} item${result.results.failed > 1 ? 's' : ''} failed to upload`, 'warning');
+            }
+        }
+        
+        // Update UI
+        setTimeout(() => {
+            updateWelcomeSyncStatus();
+            updateConnectionStatus();
+        }, 1000);
+        
+    } catch (error) {
+        console.error('❌ Sync error:', error);
+        showToast('❌ Upload failed: ' + error.message, 'error');
+        
+        // Reset button
+        syncBtn.disabled = false;
+        syncBtn.className = 'sync-action-btn';
+        syncBtn.innerHTML = '<i class="fas fa-sync-alt"></i><span>Try Again</span>';
+    }
+}
+
+// ===== UPDATE RESULTS SCREEN SYNC STATUS =====
+function updateResultsSyncStatus() {
+    const syncCard = document.querySelector('.results-sync-section .sync-card');
+    const syncTitle = document.getElementById('resultsSyncTitle');
+    const syncMessage = document.getElementById('resultsSyncMessage');
+    const syncStatusBox = document.getElementById('resultsSyncStatus');
+    const syncBtn = document.getElementById('resultsSyncBtn');
+    
+    if (!syncCard || !syncStatusBox || !syncBtn) {
+        console.warn('⚠️ Results sync elements not found');
+        return;
+    }
+    
+    const syncStatus = window.offlineStorage.getSyncStatus();
+    const isOnline = syncStatus.isOnline;
+    const pendingItems = syncStatus.pendingItems;
+    
+    console.log('📊 Results Sync Status:', { isOnline, pendingItems });
+    
+    // Reset classes
+    syncCard.className = 'sync-card';
+    
+    if (!isOnline) {
+        // OFFLINE
+        syncCard.classList.add('offline');
+        syncTitle.textContent = 'You Are Offline';
+        syncMessage.textContent = 'This game data is saved on this device. Connect to internet to upload to server.';
+        syncStatusBox.innerHTML = '<i class="fas fa-wifi-slash"></i><span>No Internet Connection</span>';
+        syncBtn.disabled = true;
+        syncBtn.innerHTML = '<i class="fas fa-wifi-slash"></i><span>Cannot Upload (Offline)</span>';
+    } else if (pendingItems > 0) {
+        // HAS DATA TO SYNC
+        syncCard.classList.add('has-data');
+        syncTitle.textContent = '⚠️ Data Not Uploaded Yet';
+        syncMessage.textContent = `This game data is saved locally. Upload now to ensure it's backed up to the server.`;
+        syncStatusBox.innerHTML = `<i class="fas fa-exclamation-triangle"></i><span>${pendingItems} item${pendingItems > 1 ? 's' : ''} pending</span>`;
+        syncBtn.disabled = false;
+        syncBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i><span>Upload Game Data Now</span>';
+    } else {
+        // ALL SYNCED
+        syncCard.classList.add('all-synced');
+        syncTitle.textContent = '✅ Data Uploaded Successfully';
+        syncMessage.textContent = 'This game data has been uploaded to the server';
+        syncStatusBox.innerHTML = '<i class="fas fa-check-circle"></i><span>Backed Up to Server</span>';
+        syncBtn.disabled = true;
+        syncBtn.innerHTML = '<i class="fas fa-check"></i><span>Already Uploaded</span>';
+    }
+}
+
+// ===== SYNC FROM RESULTS SCREEN =====
+async function syncFromResults() {
+    const syncBtn = document.getElementById('resultsSyncBtn');
+    const syncStatusBox = document.getElementById('resultsSyncStatus');
+    
+    if (!syncBtn) return;
+    
+    try {
+        // Check if online
+        if (!navigator.onLine) {
+            showToast('📴 You are offline. Connect to internet to upload data.', 'warning');
+            return;
+        }
+        
+        // Get sync status
+        const syncStatus = window.offlineStorage.getSyncStatus();
+        
+        if (syncStatus.pendingItems === 0) {
+            showToast('✅ No data to upload', 'info');
+            return;
+        }
+        
+        console.log('🔄 Starting sync from results screen...');
+        
+        // Update UI to show syncing
+        syncBtn.disabled = true;
+        syncBtn.className = 'sync-action-btn syncing';
+        syncBtn.innerHTML = '<i class="fas fa-sync-alt"></i><span>Uploading...</span>';
+        syncStatusBox.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i><span>Uploading...</span>';
+        
+        // Perform sync
+        const result = await window.offlineStorage.syncOfflineData();
+        
+        console.log('✅ Sync result:', result);
+        
+        if (result.success && result.results) {
+            if (result.results.successful > 0) {
+                showToast(`✅ Successfully uploaded ${result.results.successful} item${result.results.successful > 1 ? 's' : ''}!`, 'success');
+            }
+            
+            if (result.results.failed > 0) {
+                showToast(`⚠️ ${result.results.failed} item${result.results.failed > 1 ? 's' : ''} failed to upload`, 'warning');
+            }
+        }
+        
+        // Update UI
+       // Initial connection status check with delay
+setTimeout(() => {
+    updateConnectionStatus();
+    updateWelcomeSyncStatus();
+ 
+}, 500);
+
+// Also update on visibility change
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+        updateConnectionStatus();
+        if (document.getElementById('welcomeScreen').classList.contains('active')) {
+            updateWelcomeSyncStatus();
+        }
+        if (document.getElementById('resultsScreen').classList.contains('active')) {
+            updateResultsSyncStatus();
+        }
+    }
+});
+
+
+        
+    } catch (error) {
+        console.error('❌ Sync error:', error);
+        showToast('❌ Upload failed: ' + error.message, 'error');
+        
+        // Reset button
+        syncBtn.disabled = false;
+        syncBtn.className = 'sync-action-btn';
+        syncBtn.innerHTML = '<i class="fas fa-sync-alt"></i><span>Try Again</span>';
+    }
+}
+
+
+
+
+
+
+
+// ===== CHECK FOR PENDING SYNC ON WELCOME SCREEN =====
+function checkWelcomeScreenSync() {
+    console.log('🏠 Checking for pending sync on welcome screen...');
+    
+    const syncStatus = window.offlineStorage.getSyncStatus();
+    
+    if (syncStatus.pendingItems > 0) {
+        console.log(`⚠️ Found ${syncStatus.pendingItems} pending items on welcome screen`);
+        
+        // Check if notice already exists
+        let syncNotice = document.getElementById('welcomeSyncNotice');
+        
+        if (!syncNotice) {
+            // Create notice
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            const startBtn = document.getElementById('startBtn');
+            
+            if (welcomeScreen && startBtn) {
+                syncNotice = document.createElement('div');
+                syncNotice.id = 'welcomeSyncNotice';
+                syncNotice.style.cssText = `
+                    background: linear-gradient(135deg, #FF9800, #F57C00);
+                    color: white;
+                    padding: 25px;
+                    border-radius: 15px;
+                    margin: 30px auto;
+                    max-width: 600px;
+                    text-align: center;
+                    box-shadow: 0 8px 20px rgba(255, 152, 0, 0.3);
+                    animation: pulse 2s ease-in-out infinite;
+                `;
+                
+                syncNotice.innerHTML = `
+                    <div style="font-size: 48px; margin-bottom: 15px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3 style="margin: 0 0 15px 0; font-size: 24px; font-weight: 700;">
+                        ⚠️ Unsynced Data Found!
+                    </h3>
+                    <p style="margin: 0 0 20px 0; font-size: 18px; line-height: 1.6;">
+                        You have <strong>${syncStatus.pendingItems} items</strong> saved on this device that haven't been uploaded to the server yet.
+                        <br><br>
+                        <strong>Please upload before starting a new game!</strong>
+                    </p>
+                    <button onclick="manualSync()" class="btn-primary btn-large" style="background: white; color: #F57C00; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.2); margin-bottom: 15px;">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Upload ${syncStatus.pendingItems} Items to Server</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <p style="margin: 0; font-size: 14px; opacity: 0.9;">
+                        <i class="fas fa-info-circle"></i> You can also click "Sync Now" in the top-right corner anytime
+                    </p>
+                `;
+                
+                // Insert before start button
+                startBtn.parentNode.insertBefore(syncNotice, startBtn);
+                console.log('✅ Welcome screen sync notice created');
+            }
+        }
+    } else {
+        // Remove notice if no pending items
+        const existingNotice = document.getElementById('welcomeSyncNotice');
+        if (existingNotice) {
+            existingNotice.remove();
+            console.log('✅ Removed welcome screen sync notice (no pending data)');
+        }
+    }
+}
 
 
 
@@ -4450,7 +4775,7 @@ async function manualSync() {
     const statusText = document.getElementById('statusText');
     
     if (!syncBtn || !statusEl || !statusText) {
-        console.error('❌ Sync UI elements not found');
+        console.error('❌ Sync UI elements not found!');
         alert('Sync button not found. Please refresh the page.');
         return;
     }
@@ -4460,8 +4785,12 @@ async function manualSync() {
         
         // Update UI to show syncing
         statusEl.className = 'connection-status status-syncing';
-        statusText.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Syncing...';
+        statusText.innerHTML = `
+            <i class="fas fa-sync-alt fa-spin"></i>
+            <span>Syncing...</span>
+        `;
         syncBtn.disabled = true;
+        syncBtn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i><span>Syncing...</span>';
         
         // Perform sync
         const result = await window.offlineStorage.syncOfflineData();
@@ -4470,18 +4799,21 @@ async function manualSync() {
             console.log('✅ Sync completed:', result);
             
             // Success feedback
-            statusText.innerHTML = '<i class="fas fa-check"></i> Synced successfully!';
+            statusText.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                <span>Sync Complete!</span>
+            `;
             
             // Show detailed results
             if (result.results) {
                 console.log('📊 Sync results:', result.results);
                 
                 if (result.results.successful > 0) {
-                    showToast(`✅ Successfully synced ${result.results.successful} items to database!`, 'success');
+                    showToast(`✅ Successfully synced ${result.results.successful} item${result.results.successful > 1 ? 's' : ''}!`, 'success');
                 }
                 
                 if (result.results.failed > 0) {
-                    showToast(`⚠️ ${result.results.failed} items failed to sync. Check console for details.`, 'warning');
+                    showToast(`⚠️ ${result.results.failed} item${result.results.failed > 1 ? 's' : ''} failed to sync. Check console for details.`, 'warning');
                     console.error('Failed items:', result.results.errors);
                 }
                 
@@ -4495,13 +4827,18 @@ async function manualSync() {
             // Reset UI after 2 seconds
             setTimeout(() => {
                 updateConnectionStatus();
+                updateWelcomeSyncStatus();
+             
             }, 2000);
         } else {
             throw new Error(result.message || 'Sync failed');
         }
     } catch (error) {
         console.error('❌ Sync error:', error);
-        statusText.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Sync failed';
+        statusText.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Sync Failed</span>
+        `;
         showToast('❌ Failed to sync data: ' + error.message, 'error');
         
         // Reset UI after 3 seconds
@@ -4512,6 +4849,7 @@ async function manualSync() {
         syncBtn.disabled = false;
     }
 }
+
 
 
 
@@ -4565,70 +4903,74 @@ window.checkOfflineData = checkOfflineData;
 
 // ===== AUTO-SYNC WHEN COMING BACK ONLINE =====
 // ===== AUTO-SYNC WHEN COMING BACK ONLINE =====
-function setupAutoSync() {
-    console.log('🔧 Setting up auto-sync listeners...');
+
+
+
+
+// function setupAutoSync() {
+//     console.log('🔧 Setting up auto-sync listeners...');
     
-    window.addEventListener('online', async function() {
-        console.log('');
-        console.log('🌐 ========================================');
-        console.log('🌐 CONNECTION RESTORED!');
-        console.log('🌐 ========================================');
+//     window.addEventListener('online', async function() {
+//         console.log('');
+//         console.log('🌐 ========================================');
+//         console.log('🌐 CONNECTION RESTORED!');
+//         console.log('🌐 ========================================');
         
-        // Update UI immediately
-        updateConnectionStatus();
+//         // Update UI immediately
+//         updateConnectionStatus();
         
-        // Wait 2 seconds for connection to stabilize
-        console.log('⏳ Waiting 2 seconds for connection to stabilize...');
-        await new Promise(resolve => setTimeout(resolve, 2000));
+//         // Wait 2 seconds for connection to stabilize
+//         console.log('⏳ Waiting 2 seconds for connection to stabilize...');
+//         await new Promise(resolve => setTimeout(resolve, 2000));
         
-        const syncStatus = window.offlineStorage.getSyncStatus();
-        console.log('📊 Sync status after reconnection:', syncStatus);
+//         const syncStatus = window.offlineStorage.getSyncStatus();
+//         console.log('📊 Sync status after reconnection:', syncStatus);
         
-        if (syncStatus.pendingItems > 0) {
-            console.log(`📤 AUTO-SYNCING ${syncStatus.pendingItems} items...`);
+//         if (syncStatus.pendingItems > 0) {
+//             console.log(`📤 AUTO-SYNCING ${syncStatus.pendingItems} items...`);
             
-            const statusText = document.getElementById('statusText');
-            if (statusText) {
-                statusText.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Auto-syncing...';
-            }
+//             const statusText = document.getElementById('statusText');
+//             if (statusText) {
+//                 statusText.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Auto-syncing...';
+//             }
             
-            try {
-                const result = await window.offlineStorage.syncOfflineData();
+//             try {
+//                 const result = await window.offlineStorage.syncOfflineData();
                 
-                console.log('✅ Auto-sync result:', result);
+//                 console.log('✅ Auto-sync result:', result);
                 
-                if (result.success && result.results) {
-                    if (result.results.successful > 0) {
-                        showToast(`✅ Auto-synced ${result.results.successful} items to database!`, 'success');
-                    }
+//                 if (result.success && result.results) {
+//                     if (result.results.successful > 0) {
+//                         showToast(`✅ Auto-synced ${result.results.successful} items to database!`, 'success');
+//                     }
                     
-                    if (result.results.failed > 0) {
-                        showToast(`⚠️ ${result.results.failed} items failed. Click "Sync Now" to retry.`, 'warning');
-                        console.error('❌ Failed items:', result.results.errors);
-                    }
-                }
+//                     if (result.results.failed > 0) {
+//                         showToast(`⚠️ ${result.results.failed} items failed. Click "Sync Now" to retry.`, 'warning');
+//                         console.error('❌ Failed items:', result.results.errors);
+//                     }
+//                 }
                 
-                updateConnectionStatus();
-            } catch (error) {
-                console.error('❌ Auto-sync failed:', error);
-                showToast('⚠️ Auto-sync failed. Click "Sync Now" to retry.', 'warning');
-                updateConnectionStatus();
-            }
-        } else {
-            console.log('✅ No pending items to sync');
-        }
-    });
+//                 updateConnectionStatus();
+//             } catch (error) {
+//                 console.error('❌ Auto-sync failed:', error);
+//                 showToast('⚠️ Auto-sync failed. Click "Sync Now" to retry.', 'warning');
+//                 updateConnectionStatus();
+//             }
+//         } else {
+//             console.log('✅ No pending items to sync');
+//         }
+//     });
     
-    window.addEventListener('offline', function() {
-        console.log('');
-        console.log('📴 ========================================');
-        console.log('📴 CONNECTION LOST - OFFLINE MODE');
-        console.log('📴 ========================================');
-        updateConnectionStatus();
-    });
+//     window.addEventListener('offline', function() {
+//         console.log('');
+//         console.log('📴 ========================================');
+//         console.log('📴 CONNECTION LOST - OFFLINE MODE');
+//         console.log('📴 ========================================');
+//         updateConnectionStatus();
+//     });
     
-    console.log('✅ Auto-sync listeners registered');
-}
+//     console.log('✅ Auto-sync listeners registered');
+// }
 
 
 
@@ -5133,19 +5475,53 @@ function validateCurrentDemoPage() {
 
 // Add navigation button listeners in DOMContentLoaded
 // ===== EVENT LISTENERS =====
+// ===== EVENT LISTENERS =====
+// ===== CONSOLIDATED DOMContentLoaded - MANUAL SYNC ONLY =====
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🎮 Weather Index Insurance Game Loaded');
     console.log(`📋 Total steps: ${TOTAL_STEPS}`);
     console.log(`📄 Demographics pages: ${DEMOGRAPHICS_PAGES}`);
 
+setTimeout(() => {
+    if (document.getElementById('welcomeScreen').classList.contains('active')) {
+        console.log('📊 Initializing welcome screen sync status...');
+        updateWelcomeSyncStatus();
+    }
+}, 500);
 
-      // ✅ ADD THIS LINE - Initialize auto-sync
-    setupAutoSync();
+// Also update when coming back online
+// ===== FORCE UI REFRESH WHEN COMING ONLINE =====
+window.addEventListener('online', function() {
+    console.log('🌐 Connection restored - Refreshing UI...');
     
-    // ✅ ADD THIS LINE - Update connection status on load
-    updateConnectionStatus();
+    // Wait a moment for connection to stabilize
+    setTimeout(() => {
+        // Force refresh all status indicators
+        updateConnectionStatus();
+        updateWelcomeSyncStatus();
+        
+        // If on results screen, update that too
+        const resultsScreen = document.getElementById('resultsScreen');
+        if (resultsScreen && resultsScreen.classList.contains('active')) {
+            updateResultsSyncStatus();
+        }
+        
+        console.log('✅ UI refreshed - Sync buttons should now be enabled');
+    }, 500);
+});
 
+
+
+
+    window.addEventListener('offline', function() {
+        console.log('📴 Offline mode');
+        updateConnectionStatus();
+        showToast('📴 You are offline. Data will be saved locally.', 'info');
+    });
     
+    // Initial connection status check
+     updateConnectionStatus();
+
 
     // ===== WELCOME SCREEN =====
     const startBtn = document.getElementById('startBtn');
@@ -5155,72 +5531,68 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ===== DEMOGRAPHICS NAVIGATION =====
-   // ===== DEMOGRAPHICS NAVIGATION =====
-// Clone buttons to remove any existing listeners
-const nextBtn = document.getElementById('demoNextBtn');
-const prevBtn = document.getElementById('demoPrevBtn');
+    // Clone buttons to remove any existing listeners
+    const nextBtn = document.getElementById('demoNextBtn');
+    const prevBtn = document.getElementById('demoPrevBtn');
 
-if (nextBtn) {
-    // Remove old listeners by cloning
-    const newNextBtn = nextBtn.cloneNode(true);
-    nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
-    
-    newNextBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
+    if (nextBtn) {
+        // Remove old listeners by cloning
+        const newNextBtn = nextBtn.cloneNode(true);
+        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
         
-        console.log(`▶️ Next clicked. Current page: ${currentDemoPage}`);
+        newNextBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log(`▶️ Next clicked. Current page: ${currentDemoPage}`);
+            
+            if (validateCurrentDemoPage()) {
+                if (currentDemoPage < DEMOGRAPHICS_PAGES) {
+                    const newPage = currentDemoPage + 1;
+                    console.log(`✅ Navigating from page ${currentDemoPage} to ${newPage}`);
+                    currentDemoPage = newPage;
+                    showDemoPage(currentDemoPage);
+                } else {
+                    console.log('⚠️ Already on last page');
+                }
+            } else {
+                console.log('❌ Validation failed, staying on page', currentDemoPage);
+            }
+        }, false);
         
-        if (validateCurrentDemoPage()) {
-            if (currentDemoPage < DEMOGRAPHICS_PAGES) {
-                const newPage = currentDemoPage + 1;
+        console.log('✅ Next button listener registered (clean)');
+    }
+
+    if (prevBtn) {
+        // Remove old listeners by cloning
+        const newPrevBtn = prevBtn.cloneNode(true);
+        prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+        
+        newPrevBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log(`◀️ Previous clicked. Current page: ${currentDemoPage}`);
+            
+            if (currentDemoPage > 1) {
+                const newPage = currentDemoPage - 1;
                 console.log(`✅ Navigating from page ${currentDemoPage} to ${newPage}`);
                 currentDemoPage = newPage;
                 showDemoPage(currentDemoPage);
             } else {
-                console.log('⚠️ Already on last page');
+                console.log('⚠️ Already on first page');
             }
-        } else {
-            console.log('❌ Validation failed, staying on page', currentDemoPage);
-        }
-    }, false);
-    
-    console.log('✅ Next button listener registered (clean)');
-}
-
-if (prevBtn) {
-    // Remove old listeners by cloning
-    const newPrevBtn = prevBtn.cloneNode(true);
-    prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
-    
-    newPrevBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
+        }, false);
         
-        console.log(`◀️ Previous clicked. Current page: ${currentDemoPage}`);
-        
-        if (currentDemoPage > 1) {
-            const newPage = currentDemoPage - 1;
-            console.log(`✅ Navigating from page ${currentDemoPage} to ${newPage}`);
-            currentDemoPage = newPage;
-            showDemoPage(currentDemoPage);
-        } else {
-            console.log('⚠️ Already on first page');
-        }
-    }, false);
-    
-    console.log('✅ Previous button listener registered (clean)');
-}
+        console.log('✅ Previous button listener registered (clean)');
+    }
 
-// Initialize demographics to page 1
-showDemoPage(1);
-
-
-
+    // Initialize demographics to page 1
+    showDemoPage(1);
 
     // ===== DEMOGRAPHICS FORM SUBMISSION (PARTNER 1) =====
-const demoForm = document.getElementById('demographicsForm');
- if (demoForm) {
+    const demoForm = document.getElementById('demographicsForm');
+    if (demoForm) {
         console.log('✅ Demographics form found');
         
         demoForm.addEventListener('submit', async (e) => {
@@ -5247,24 +5619,24 @@ const demoForm = document.getElementById('demographicsForm');
                 const selectedRole = formData.get('role');
                 const selectedGender = formData.get('gender');
                 
-               if (!enumeratorName?.trim()) {
-    console.error('❌ Missing enumerator name');
-    console.log('📋 Available form data:', Array.from(formData.entries()));
-    throw new Error('Please enter enumerator name');
-}
+                if (!enumeratorName?.trim()) {
+                    console.error('❌ Missing enumerator name');
+                    console.log('📋 Available form data:', Array.from(formData.entries()));
+                    throw new Error('Please enter enumerator name');
+                }
 
-if (!communityName?.trim()) {
-    console.error('❌ Missing community name');
-    throw new Error('Please select a community');
-}
+                if (!communityName?.trim()) {
+                    console.error('❌ Missing community name');
+                    throw new Error('Please select a community');
+                }
 
-if (!selectedRole) {
-    throw new Error('Please select your role (Husband/Wife)');
-}
+                if (!selectedRole) {
+                    throw new Error('Please select your role (Husband/Wife)');
+                }
 
-if (!selectedGender) {
-    throw new Error('Please select your gender');
-}
+                if (!selectedGender) {
+                    throw new Error('Please select your gender');
+                }
                 
                 // ===== COLLECT DATA =====
                 const crops = Array.from(document.querySelectorAll('input[name="crops"]:checked'))
@@ -5504,133 +5876,155 @@ if (!selectedGender) {
 
 
 
- const empForm = document.getElementById('empowermentForm');
-if (empForm) {
-    empForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        showLoading();
-        
-        try {
-            const formData = new FormData(e.target);
-            gameState.empowermentScores = {
-                cropDecisions: parseInt(formData.get('q1')),
-                moneyDecisions: parseInt(formData.get('q2')),
-                inputDecisions: parseInt(formData.get('q3')),
-                opinionConsidered: parseInt(formData.get('q4')),
-                confidenceExpressing: parseInt(formData.get('q5'))
-            };
+    // Add this to DOMContentLoaded
+function updateWelcomeSyncStatus() {
+    const syncStatus = window.offlineStorage.getSyncStatus();
+    const welcomeSyncText = document.getElementById('welcomeSyncText');
+    const welcomeSyncBtn = document.getElementById('welcomeSyncBtn');
+    const welcomeSyncStatus = document.getElementById('welcomeSyncStatus');
+    
+    if (!welcomeSyncText || !welcomeSyncBtn || !welcomeSyncStatus) return;
+    
+    if (syncStatus.pendingItems > 0) {
+        welcomeSyncStatus.style.background = '#FFF3E0';
+        welcomeSyncText.innerHTML = `<i class="fas fa-exclamation-triangle" style="color: #FF9800;"></i> ${syncStatus.pendingItems} items need syncing`;
+        welcomeSyncBtn.innerHTML = '<i class="fas fa-sync-alt"></i><span>Sync ' + syncStatus.pendingItems + ' Items</span>';
+        welcomeSyncBtn.disabled = !syncStatus.isOnline;
+        welcomeSyncBtn.style.background = syncStatus.isOnline ? 
+            'linear-gradient(135deg, #2196F3, #1976D2)' : 
+            'linear-gradient(135deg, #9E9E9E, #757575)';
+    } else {
+        welcomeSyncStatus.style.background = '#E8F5E9';
+        welcomeSyncText.innerHTML = '<i class="fas fa-check-circle" style="color: #4CAF50;"></i> All data synced';
+        welcomeSyncBtn.innerHTML = '<i class="fas fa-check"></i><span>All Synced</span>';
+        welcomeSyncBtn.disabled = true;
+        welcomeSyncBtn.style.background = 'linear-gradient(135deg, #9E9E9E, #757575)';
+    }
+}
+
+// Call it on page load and after sync
+window.addEventListener('load', updateWelcomeSyncStatus);
+
+
+    // ===== EMPOWERMENT FORM =====
+    const empForm = document.getElementById('empowermentForm');
+    if (empForm) {
+        empForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            showLoading();
             
-            const respondentData = {
-                ...gameState.demographics,
-                empowermentScores: gameState.empowermentScores
-            };
-            
-            // Create respondent
-            const respondent = await apiCall('/respondent/create', 'POST', respondentData);
-            gameState.respondentId = respondent._id;
-            
-            if (gameState.treatmentGroup && respondent.treatmentGroup !== gameState.treatmentGroup) {
-                console.error('⚠️ WARNING: Treatment group mismatch!');
-            }
-            gameState.treatmentGroup = respondent.treatmentGroup;
-            
-            console.log(`✅ Respondent created: ${respondent._id}, Treatment: ${respondent.treatmentGroup}`);
-            
-            // ✅ FIXED: Better detection logic using localStorage
-            const savedHouseholdData = localStorage.getItem('weather_game_household');
-            let savedFirstId = null;
-            if (savedHouseholdData) {
-                try {
-                    const parsed = JSON.parse(savedHouseholdData);
-                    savedFirstId = parsed.firstRespondentId;
-                } catch (e) {
-                    console.warn('Could not parse saved household data');
-                }
-            }
-            
-            // Determine if this is first or second partner
-            let isFirstPartner;
-            
-            if (!gameState.firstRespondentId && !savedFirstId) {
-                // No first partner exists anywhere - this is first
-                isFirstPartner = true;
-            } else if (gameState.firstRespondentId && respondent._id === gameState.firstRespondentId) {
-                // Current respondent matches stored first partner (shouldn't happen but handle it)
-                isFirstPartner = true;
-            } else if (savedFirstId && respondent._id === savedFirstId) {
-                // Current respondent matches saved first partner (shouldn't happen but handle it)
-                isFirstPartner = true;
-            } else if (gameState.firstRespondentId || savedFirstId) {
-                // First partner exists and current doesn't match - this is second
-                isFirstPartner = false;
-            } else {
-                // Default to first partner
-                isFirstPartner = true;
-            }
-            
-            console.log('🔍 Partner detection:', {
-                currentId: respondent._id,
-                firstIdInState: gameState.firstRespondentId,
-                firstIdInStorage: savedFirstId,
-                isFirstPartner: isFirstPartner
-            });
-            
-            if (isFirstPartner) {
-                // This is the FIRST partner
-                gameState.firstRespondentId = respondent._id;
-                gameState.firstRespondentRole = gameState.role;
-                gameState.firstRespondentData = {
-                    role: gameState.role,
-                    gender: gameState.gender,
-                    treatmentGroup: gameState.treatmentGroup,
-                    demographics: { ...gameState.demographics }
+            try {
+                const formData = new FormData(e.target);
+                gameState.empowermentScores = {
+                    cropDecisions: parseInt(formData.get('q1')),
+                    moneyDecisions: parseInt(formData.get('q2')),
+                    inputDecisions: parseInt(formData.get('q3')),
+                    opinionConsidered: parseInt(formData.get('q4')),
+                    confidenceExpressing: parseInt(formData.get('q5'))
                 };
                 
-                // ✅ IMPORTANT: Clear any stale secondRespondentId
-                gameState.secondRespondentId = null;
+                const respondentData = {
+                    ...gameState.demographics,
+                    empowermentScores: gameState.empowermentScores
+                };
                 
-                console.log('🎯 FIRST PARTNER registered:', {
-                    id: gameState.firstRespondentId,
-                    role: gameState.firstRespondentRole
-                });
-            } else {
-                // This is the SECOND partner
-                gameState.secondRespondentId = respondent._id;
+                // Create respondent
+                const respondent = await apiCall('/respondent/create', 'POST', respondentData);
+                gameState.respondentId = respondent._id;
                 
-                console.log('🎯 SECOND PARTNER registered:', {
-                    id: gameState.secondRespondentId,
-                    role: gameState.role
+                if (gameState.treatmentGroup && respondent.treatmentGroup !== gameState.treatmentGroup) {
+                    console.error('⚠️ WARNING: Treatment group mismatch!');
+                }
+                gameState.treatmentGroup = respondent.treatmentGroup;
+                
+                console.log(`✅ Respondent created: ${respondent._id}, Treatment: ${respondent.treatmentGroup}`);
+                
+                // Better detection logic using localStorage
+                const savedHouseholdData = localStorage.getItem('weather_game_household');
+                let savedFirstId = null;
+                if (savedHouseholdData) {
+                    try {
+                        const parsed = JSON.parse(savedHouseholdData);
+                        savedFirstId = parsed.firstRespondentId;
+                    } catch (e) {
+                        console.warn('Could not parse saved household data');
+                    }
+                }
+                
+                // Determine if this is first or second partner
+                let isFirstPartner;
+                
+                if (!gameState.firstRespondentId && !savedFirstId) {
+                    isFirstPartner = true;
+                } else if (gameState.firstRespondentId && respondent._id === gameState.firstRespondentId) {
+                    isFirstPartner = true;
+                } else if (savedFirstId && respondent._id === savedFirstId) {
+                    isFirstPartner = true;
+                } else if (gameState.firstRespondentId || savedFirstId) {
+                    isFirstPartner = false;
+                } else {
+                    isFirstPartner = true;
+                }
+                
+                console.log('🔍 Partner detection:', {
+                    currentId: respondent._id,
+                    firstIdInState: gameState.firstRespondentId,
+                    firstIdInStorage: savedFirstId,
+                    isFirstPartner: isFirstPartner
                 });
+                
+                if (isFirstPartner) {
+                    gameState.firstRespondentId = respondent._id;
+                    gameState.firstRespondentRole = gameState.role;
+                    gameState.firstRespondentData = {
+                        role: gameState.role,
+                        gender: gameState.gender,
+                        treatmentGroup: gameState.treatmentGroup,
+                        demographics: { ...gameState.demographics }
+                    };
+                    gameState.secondRespondentId = null;
+                    
+                    console.log('🎯 FIRST PARTNER registered:', {
+                        id: gameState.firstRespondentId,
+                        role: gameState.firstRespondentRole
+                    });
+                } else {
+                    gameState.secondRespondentId = respondent._id;
+                    
+                    console.log('🎯 SECOND PARTNER registered:', {
+                        id: gameState.secondRespondentId,
+                        role: gameState.role
+                    });
+                }
+                
+                // Set session type based on role
+                if (gameState.role === 'husband') {
+                    gameState.sessionType = 'individual_husband';
+                } else if (gameState.role === 'wife') {
+                    gameState.sessionType = 'individual_wife';
+                }
+                
+                console.log('📋 Session type set to:', gameState.sessionType);
+                
+                // Create session
+                const session = await apiCall('/session/start', 'POST', { 
+                    respondentId: gameState.respondentId,
+                    sessionType: gameState.sessionType
+                });
+                gameState.sessionId = session.sessionId;
+                
+                console.log('✅ Session created:', session.sessionId);
+                
+                showLoading(false);
+                showScreen('tutorialScreen');
+                initializeTutorial();
+            } catch (error) {
+                showLoading(false);
+                console.error('Empowerment form error:', error);
+                alert('Error: ' + error.message);
             }
-            
-            // Set session type based on role
-            if (gameState.role === 'husband') {
-                gameState.sessionType = 'individual_husband';
-            } else if (gameState.role === 'wife') {
-                gameState.sessionType = 'individual_wife';
-            }
-            
-            console.log('📋 Session type set to:', gameState.sessionType);
-            
-            // Create session
-            const session = await apiCall('/session/start', 'POST', { 
-                respondentId: gameState.respondentId,
-                sessionType: gameState.sessionType
-            });
-            gameState.sessionId = session.sessionId;
-            
-            console.log('✅ Session created:', session.sessionId);
-            
-            showLoading(false);
-            showScreen('tutorialScreen');
-            initializeTutorial();
-        } catch (error) {
-            showLoading(false);
-            console.error('Empowerment form error:', error);
-            alert('Error: ' + error.message);
-        }
-    });
-}
+        });
+    }
 
     // ===== TUTORIAL =====
     const tutorialPrevBtn = document.getElementById('tutorialPrevBtn');
@@ -5661,125 +6055,114 @@ if (empForm) {
     });
 
     // ===== ALLOCATION FORM =====
-    // ===== ALLOCATION FORM =====
-
-// ===== ALLOCATION FORM =====
-const allocForm = document.getElementById('allocationForm');
-if (allocForm) {
-    allocForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        console.log('📝 Allocation form submitted');
-        console.log('Session ID:', gameState.sessionId);
-        console.log('Respondent ID:', gameState.respondentId);
-        
-        // CRITICAL: Check if we have required IDs
-        if (!gameState.sessionId) {
-            console.error('❌ Missing sessionId');
-            alert('Error: Session not initialized. Please restart the game.');
-            return;
-        }
-        
-        if (!gameState.respondentId) {
-            console.error('❌ Missing respondentId');
-            alert('Error: Respondent not initialized. Please restart the game.');
-            return;
-        }
-        
-        showLoading();
-        
-        try {
-            const budget = parseInt(document.getElementById('totalBudget').textContent);
-            const bundleCheckbox = document.getElementById('bundleAccepted');
-            const bundleAccepted = bundleCheckbox ? bundleCheckbox.checked : false;
+    const allocForm = document.getElementById('allocationForm');
+    if (allocForm) {
+        allocForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            // Get inputChoiceType if insurance was purchased
-            let inputChoiceType = '';
-            if (bundleAccepted) {
-                const inputChoiceElement = document.getElementById('inputChoiceType');
-                inputChoiceType = inputChoiceElement ? inputChoiceElement.value : '';
+            console.log('📝 Allocation form submitted');
+            console.log('Session ID:', gameState.sessionId);
+            console.log('Respondent ID:', gameState.respondentId);
+            
+            if (!gameState.sessionId) {
+                console.error('❌ Missing sessionId');
+                alert('Error: Session not initialized. Please restart the game.');
+                return;
+            }
+            
+            if (!gameState.respondentId) {
+                console.error('❌ Missing respondentId');
+                alert('Error: Respondent not initialized. Please restart the game.');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const budget = parseInt(document.getElementById('totalBudget').textContent);
+                const bundleCheckbox = document.getElementById('bundleAccepted');
+                const bundleAccepted = bundleCheckbox ? bundleCheckbox.checked : false;
                 
-                // Validate for control group
-                if (gameState.treatmentGroup === 'control' && !inputChoiceType) {
-                    showLoading(false);
-                    alert('Please select which input you want to receive with insurance');
-                    return;
+                let inputChoiceType = '';
+                if (bundleAccepted) {
+                    const inputChoiceElement = document.getElementById('inputChoiceType');
+                    inputChoiceType = inputChoiceElement ? inputChoiceElement.value : '';
+                    
+                    if (gameState.treatmentGroup === 'control' && !inputChoiceType) {
+                        showLoading(false);
+                        alert('Please select which input you want to receive with insurance');
+                        return;
+                    }
                 }
-            }
-            
-            // Determine bundle product
-            let bundleProduct = 'none';
-            if (bundleAccepted) {
-                if (gameState.treatmentGroup === 'control') {
-                    bundleProduct = inputChoiceType; // 'seeds' or 'fertilizer'
-                } else if (gameState.treatmentGroup === 'fertilizer_bundle') {
-                    bundleProduct = 'fertilizer';
-                } else if (gameState.treatmentGroup === 'seedling_bundle') {
-                    bundleProduct = 'seeds';
+                
+                let bundleProduct = 'none';
+                if (bundleAccepted) {
+                    if (gameState.treatmentGroup === 'control') {
+                        bundleProduct = inputChoiceType;
+                    } else if (gameState.treatmentGroup === 'fertilizer_bundle') {
+                        bundleProduct = 'fertilizer';
+                    } else if (gameState.treatmentGroup === 'seedling_bundle') {
+                        bundleProduct = 'seeds';
+                    }
                 }
+                
+                const seasonData = {
+                    respondentId: gameState.respondentId,
+                    sessionId: gameState.sessionId,
+                    roundNumber: gameState.currentSeason,
+                    budget: budget,
+                    insuranceSpend: parseInt(document.getElementById('insuranceSpend').value) || 0,
+                    inputSpend: parseInt(document.getElementById('inputSpend').value) || 0,
+                    educationSpend: parseInt(document.getElementById('educationSpend').value) || 0,
+                    consumptionSpend: parseInt(document.getElementById('consumptionSpend').value) || 0,
+                    decisionContext: gameState.sessionType,
+                    isPracticeRound: false,
+                    bundleAccepted: bundleAccepted,
+                    bundleProduct: bundleProduct,
+                    inputChoiceType: inputChoiceType,
+                    startTime: new Date(),
+                    weatherShock: { occurred: false, type: 'normal', severity: 'none' },
+                    harvestOutcome: 0,
+                    payoutReceived: 0
+                };
+                
+                console.log('📊 Season data:', seasonData);
+                
+                const weather = generateWeatherEvent();
+                
+                let severity = 'none';
+                if (weather.type === 'drought') {
+                    severity = weather.harvestMultiplier < 0.5 ? 'severe' : 'mild';
+                } else if (weather.type === 'flood') {
+                    severity = 'moderate';
+                }
+                
+                seasonData.weatherShock = {
+                    occurred: weather.type !== 'normal',
+                    type: weather.type,
+                    severity: severity
+                };
+                
+                calculateOutcomes(seasonData, weather);
+                
+                console.log('🌐 Saving round to server...');
+                await apiCall('/round/save', 'POST', seasonData);
+                gameState.seasonData.push(seasonData);
+                
+                console.log(`✅ Season ${gameState.currentSeason} saved successfully`);
+                
+                showLoading(false);
+                showWeatherOutcome(seasonData, weather);
+                
+            } catch (error) {
+                showLoading(false);
+                console.error('❌ Allocation error:', error);
+                console.error('Error details:', error.message);
+                alert('Error saving allocation: ' + error.message);
             }
-            
-            // ✅ COMPLETE seasonData object with ALL required fields
-            const seasonData = {
-                respondentId: gameState.respondentId,
-                sessionId: gameState.sessionId,
-                roundNumber: gameState.currentSeason,
-                budget: budget,
-                insuranceSpend: parseInt(document.getElementById('insuranceSpend').value) || 0,
-                inputSpend: parseInt(document.getElementById('inputSpend').value) || 0,
-                educationSpend: parseInt(document.getElementById('educationSpend').value) || 0,
-                consumptionSpend: parseInt(document.getElementById('consumptionSpend').value) || 0,
-                decisionContext: gameState.sessionType,
-                isPracticeRound: false,
-                bundleAccepted: bundleAccepted,
-                bundleProduct: bundleProduct,
-                inputChoiceType: inputChoiceType,
-                startTime: new Date(),
-                weatherShock: { occurred: false, type: 'normal', severity: 'none' },
-                harvestOutcome: 0,
-                payoutReceived: 0
-            };
-            
-            console.log('📊 Season data:', seasonData);
-            
-            // Generate weather and calculate outcomes
-            const weather = generateWeatherEvent();
-            
-            let severity = 'none';
-            if (weather.type === 'drought') {
-                severity = weather.harvestMultiplier < 0.5 ? 'severe' : 'mild';
-            } else if (weather.type === 'flood') {
-                severity = 'moderate';
-            }
-            
-            seasonData.weatherShock = {
-                occurred: weather.type !== 'normal',
-                type: weather.type,
-                severity: severity
-            };
-            
-            calculateOutcomes(seasonData, weather);
-            
-            console.log('🌐 Saving round to server...');
-            await apiCall('/round/save', 'POST', seasonData);
-            gameState.seasonData.push(seasonData);
-            
-            console.log(`✅ Season ${gameState.currentSeason} saved successfully`);
-            
-            showLoading(false);
-            showWeatherOutcome(seasonData, weather);
-            
-        } catch (error) {
-            showLoading(false);
-            console.error('❌ Allocation error:', error);
-            console.error('Error details:', error.message);
-            alert('Error saving allocation: ' + error.message);
-        }
-    });
-    console.log('✅ Allocation form handler registered');
-}
-
-
+        });
+        console.log('✅ Allocation form handler registered');
+    }
 
     // ===== NEXT SEASON BUTTON =====
     const nextSeasonBtn = document.getElementById('nextRoundBtn');
@@ -5788,58 +6171,52 @@ if (allocForm) {
     }
 
     // ===== KNOWLEDGE FORM =====
-  // ===== KNOWLEDGE FORM - FIXED =====
-const knowledgeForm = document.getElementById('knowledgeForm');
-if (knowledgeForm) {
-    knowledgeForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        if (isSubmittingKnowledge) {
-            console.log('⚠️ Already submitting knowledge test');
-            return;
-        }
-        
-        isSubmittingKnowledge = true;
-        showLoading();
-        
-        try {
-            const formData = new FormData(e.target);
+    const knowledgeForm = document.getElementById('knowledgeForm');
+    if (knowledgeForm) {
+        knowledgeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            // ✅ CORRECT FORMAT: Flat structure with specific field names
-            const testData = {
-                respondentId: gameState.respondentId,
-                sessionId: gameState.sessionId,
-                q1_indexBased: formData.get('q1') === 'true',
-                q2_areaWide: formData.get('q2') === 'true',
-                q3_profitGuarantee: formData.get('q3') === 'false',
-                q4_upfrontCost: formData.get('q4') === 'true',
-                q5_basisRisk: formData.get('q5') === 'true'
-            };
+            if (isSubmittingKnowledge) {
+                console.log('⚠️ Already submitting knowledge test');
+                return;
+            }
             
-            console.log('📝 Submitting knowledge test:', testData);
+            isSubmittingKnowledge = true;
+            showLoading();
             
-            await apiCall('/knowledge/submit', 'POST', testData);
-            
-            // ✅ Mark session as complete
-            await apiCall(`/session/${gameState.sessionId}/complete`, 'PUT');
-            
-            console.log('✅ Knowledge test submitted and session completed');
-            
-            showLoading(false);
-            await showResults();
-            
-        } catch (error) {
-            showLoading(false);
-            console.error('❌ Knowledge form error:', error);
-            alert('Error submitting knowledge test: ' + error.message);
-        } finally {
-            isSubmittingKnowledge = false;
-        }
-    });
-    console.log('✅ Knowledge form handler registered');
-}
-
-
+            try {
+                const formData = new FormData(e.target);
+                
+                const testData = {
+                    respondentId: gameState.respondentId,
+                    sessionId: gameState.sessionId,
+                    q1_indexBased: formData.get('q1') === 'true',
+                    q2_areaWide: formData.get('q2') === 'true',
+                    q3_profitGuarantee: formData.get('q3') === 'false',
+                    q4_upfrontCost: formData.get('q4') === 'true',
+                    q5_basisRisk: formData.get('q5') === 'true'
+                };
+                
+                console.log('📝 Submitting knowledge test:', testData);
+                
+                await apiCall('/knowledge/submit', 'POST', testData);
+                await apiCall(`/session/${gameState.sessionId}/complete`, 'PUT');
+                
+                console.log('✅ Knowledge test submitted and session completed');
+                
+                showLoading(false);
+                await showResults();
+                
+            } catch (error) {
+                showLoading(false);
+                console.error('❌ Knowledge form error:', error);
+                alert('Error submitting knowledge test: ' + error.message);
+            } finally {
+                isSubmittingKnowledge = false;
+            }
+        });
+        console.log('✅ Knowledge form handler registered');
+    }
 
     // ===== COUPLE PRE-QUESTIONS =====
     const couplePreForm = document.getElementById('couplePreQuestionsForm');
@@ -5919,28 +6296,9 @@ if (knowledgeForm) {
         restartBtn.addEventListener('click', restartGame);
     }
 
-    // // ===== LANGUAGE TOGGLE =====
-    // const langBtn = document.getElementById('languageBtn');
-    // if (langBtn) {
-    //     langBtn.addEventListener('click', () => {
-    //         const newLang = gameState.language === 'english' ? 'dagbani' : 'english';
-    //         updateLanguage(newLang);
-    //     });
-    //     console.log('✅ Language toggle button listener registered');
-    // }
-
-    // ===== CONNECTION STATUS =====
-    window.addEventListener('online', updateConnectionStatus);
-    window.addEventListener('offline', updateConnectionStatus);
-    updateConnectionStatus();
-
     console.log('✅ All event listeners registered');
-    console.log('🎮 Game ready!');
+    console.log('🎮 Game ready - Manual sync only!');
 });
-
-
-
-
 
 // ===== UPDATE PROGRESS WHEN MOVING TO OTHER SCREENS =====
 
@@ -6647,4 +7005,116 @@ const exportBtn = document.getElementById('exportButton');
 if (exportBtn) {
     exportBtn.addEventListener('click', exportOfflineData);
     console.log('✅ Export button listener registered');
+}
+
+
+
+// ===== DEBUG: Force Sync Test =====
+window.testOfflineSync = async function() {
+    console.log('');
+    console.log('🧪 ========================================');
+    console.log('🧪 TESTING OFFLINE SYNC');
+    console.log('🧪 ========================================');
+    
+    // Check offline data
+    const data = window.checkOfflineData();
+    
+    if (!data || !data.pending_sync || data.pending_sync.length === 0) {
+        console.log('❌ No pending data to sync!');
+        return;
+    }
+    
+    console.log(`📦 Found ${data.pending_sync.length} pending items`);
+    
+    // Test first item
+    const testItem = data.pending_sync[0];
+    console.log('🔬 Testing first item:', testItem);
+    
+    const testUrl = `${window.location.origin}${testItem.endpoint}`;
+    console.log('📍 Full URL:', testUrl);
+    
+    try {
+        const response = await fetch(testUrl, {
+            method: testItem.method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Offline-Sync': 'true'
+            },
+            body: JSON.stringify(testItem.data)
+        });
+        
+        console.log('📡 Response status:', response.status);
+        const responseData = await response.json();
+        console.log('📊 Response data:', responseData);
+        
+        if (response.ok) {
+            console.log('✅ TEST PASSED - Item can be synced!');
+            console.log('');
+            console.log('Now run: window.offlineStorage.syncOfflineData()');
+        } else {
+            console.error('❌ TEST FAILED:', responseData);
+        }
+    } catch (error) {
+        console.error('❌ TEST ERROR:', error);
+    }
+    
+    console.log('🧪 ========================================');
+};
+
+
+
+// ===== TEMPORARY DEBUG FUNCTION =====
+function debugSyncStatus() {
+    console.clear();
+    console.log('');
+    console.log('🔍 ========================================');
+    console.log('🔍 MANUAL SYNC DEBUG');
+    console.log('🔍 ========================================');
+    
+    // Check what's in localStorage
+    const rawData = localStorage.getItem('farm_game_offline_data');
+    console.log('📦 Raw localStorage data:', rawData ? 'EXISTS' : 'MISSING');
+    
+    if (rawData) {
+        const parsed = JSON.parse(rawData);
+        console.log('📊 Parsed data summary:', {
+            deviceId: parsed.deviceId,
+            respondents: parsed.respondents?.length || 0,
+            sessions: parsed.sessions?.length || 0,
+            rounds: parsed.rounds?.length || 0,
+            knowledge: parsed.knowledge?.length || 0,
+            perception: parsed.perception?.length || 0,
+            pending_sync_array_exists: !!parsed.pending_sync,
+            pending_sync_length: parsed.pending_sync?.length || 0
+        });
+        
+        if (parsed.pending_sync && parsed.pending_sync.length > 0) {
+            console.log('');
+            console.log('📤 PENDING SYNC ITEMS:');
+            parsed.pending_sync.forEach((item, i) => {
+                console.log(`  ${i + 1}. ${item.type}`);
+                console.log(`     Synced: ${item.synced}`);
+                console.log(`     Endpoint: ${item.endpoint}`);
+                console.log(`     Timestamp: ${item.timestamp}`);
+            });
+        }
+    }
+    
+    // Check sync status function
+    console.log('');
+    console.log('📊 Calling getSyncStatus():');
+    const syncStatus = window.offlineStorage.getSyncStatus();
+    console.log('Result:', syncStatus);
+    
+    // Update UI
+    console.log('');
+    console.log('🔄 Updating UI...');
+    updateWelcomeSyncStatus();
+    updateConnectionStatus();
+    
+    console.log('');
+    console.log('🔍 ========================================');
+    console.log('');
+    
+    alert(`Sync Status:\n\nOnline: ${syncStatus.isOnline}\nPending Items: ${syncStatus.pendingItems}\n\nCheck console for full details`);
 }
