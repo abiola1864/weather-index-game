@@ -2487,7 +2487,7 @@ async function showResults() {
         const resultsSubtitle = document.querySelector('#resultsScreen .subtitle');
         const restartBtn = document.getElementById('restartBtn');
         
-        // ✅ FIX 2 & 3: HIDE SYNC CARDS ON RESULTS SCREEN
+        // ✅ HIDE SYNC CARDS ON RESULTS SCREEN
         const resultsSyncSection = document.querySelector('.results-sync-section');
         if (resultsSyncSection) {
             resultsSyncSection.style.display = 'none';
@@ -2499,9 +2499,9 @@ async function showResults() {
         
         // ===== DETERMINE GAME FLOW =====
         
-        // CASE 1: Couple session completed - GAME OVER
+        // CASE 1: Couple session completed - GAME TRULY OVER
         if (gameState.sessionType === 'couple_joint') {
-            console.log('✅ CASE: COUPLE SESSION completed');
+            console.log('✅ CASE: COUPLE SESSION completed - GAME TRULY COMPLETE');
             
             if (resultsTitle) resultsTitle.textContent = 'Game Completed!';
             if (resultsSubtitle) resultsSubtitle.textContent = "Here's how you performed together";
@@ -2510,7 +2510,9 @@ async function showResults() {
                 restartBtn.innerHTML = '<i class="fas fa-redo"></i><span>Start New Game</span>';
             }
             
-            // Note: No sync check needed - top-right button handles it
+            // ✅ CLEAR PROGRESS - Game is truly complete
+            window.clearGameProgress();
+            
             return;
         }
         
@@ -2526,6 +2528,8 @@ async function showResults() {
             if (resultsSubtitle) resultsSubtitle.textContent = `Here's how the ${partnerName.toLowerCase()} performed`;
             if (restartBtn) restartBtn.style.display = 'none';
             
+            // ❌ DON'T CLEAR - More partners to play
+            
             await new Promise(resolve => setTimeout(resolve, 3000));
             showSecondPartnerPrompt();
             return;
@@ -2539,6 +2543,8 @@ async function showResults() {
             if (resultsTitle) resultsTitle.textContent = 'First Partner Complete!';
             if (resultsSubtitle) resultsSubtitle.textContent = `Here's how the ${partnerName.toLowerCase()} performed`;
             if (restartBtn) restartBtn.style.display = 'none';
+            
+            // ❌ DON'T CLEAR - More partners to play
             
             await new Promise(resolve => setTimeout(resolve, 3000));
             showSecondPartnerPrompt();
@@ -2556,6 +2562,8 @@ async function showResults() {
         if (resultsTitle) resultsTitle.textContent = 'Second Partner Complete!';
         if (resultsSubtitle) resultsSubtitle.textContent = `Here's how the ${partnerName.toLowerCase()} performed`;
         if (restartBtn) restartBtn.style.display = 'none';
+        
+        // ❌ DON'T CLEAR - Still have couple session
         
         await new Promise(resolve => setTimeout(resolve, 3000));
         showCouplePrompt();
@@ -5474,7 +5482,24 @@ function validateCurrentDemoPage() {
 }
 
 
-
+// 5. Save progress when moving between screens
+    const originalShowScreen = window.showScreen;
+    window.showScreen = function(screenId) {
+        saveGameProgress();
+        originalShowScreen(screenId);
+    };
+    
+    // 6. Clear saved progress on successful completion
+    window.clearGameProgress = function() {
+        sessionStorage.removeItem('game_progress');
+        hasUnsavedData = false;
+        console.log('✅ Game progress cleared');
+    };
+    
+    // 7. Restore progress on page load
+    restoreGameProgress();
+    
+    console.log('✅ Data loss prevention activated');
 
 // Add navigation button listeners in DOMContentLoaded
 // ===== EVENT LISTENERS =====
@@ -5875,18 +5900,135 @@ if (prevBtn) {
         });
     });
 
-    // ===== CROPS CHECKBOX VALIDATION =====
-    document.addEventListener('change', function(e) {
-        if (e.target.name === 'crops') {
-            const cropsCheckboxes = document.querySelectorAll('input[name="crops"]');
-            const anyChecked = Array.from(cropsCheckboxes).some(cb => cb.checked);
-            const cropsError = document.getElementById('cropsError');
-            
-            if (cropsError) {
-                cropsError.style.display = anyChecked ? 'none' : 'block';
+
+
+
+  function saveGameProgress() {
+        const progressData = {
+            currentScreen: gameState.currentScreen,
+            currentDemoPage: currentDemoPage,
+            currentStep: currentStep,
+            householdId: gameState.householdId,
+            respondentId: gameState.respondentId,
+            sessionId: gameState.sessionId,
+            treatmentGroup: gameState.treatmentGroup,
+            language: gameState.language,
+            formData: {} // Will store form values
+        };
+        
+        // Save form data from current screen
+        const currentForm = document.querySelector('.screen.active form');
+        if (currentForm) {
+            const formData = new FormData(currentForm);
+            for (let [key, value] of formData.entries()) {
+                progressData.formData[key] = value;
             }
         }
+        
+        sessionStorage.setItem('game_progress', JSON.stringify(progressData));
+        console.log('💾 Game progress saved');
+    }
+    
+    // 2. Restore game state on page load
+    function restoreGameProgress() {
+        const saved = sessionStorage.getItem('game_progress');
+        if (saved) {
+            try {
+                const progressData = JSON.parse(saved);
+                console.log('📂 Restoring game progress:', progressData);
+                
+                // Restore game state
+                if (progressData.householdId) gameState.householdId = progressData.householdId;
+                if (progressData.respondentId) gameState.respondentId = progressData.respondentId;
+                if (progressData.sessionId) gameState.sessionId = progressData.sessionId;
+                if (progressData.treatmentGroup) gameState.treatmentGroup = progressData.treatmentGroup;
+                if (progressData.language) gameState.language = progressData.language;
+                
+                // Restore screen position
+                if (progressData.currentScreen) {
+                    currentStep = progressData.currentStep || 1;
+                    currentDemoPage = progressData.currentDemoPage || 1;
+                    
+                    setTimeout(() => {
+                        showScreen(progressData.currentScreen);
+                        
+                        if (progressData.currentScreen === 'demographicsScreen') {
+                            showDemoPage(currentDemoPage);
+                        }
+                        
+                        // Restore form values
+                        if (progressData.formData && Object.keys(progressData.formData).length > 0) {
+                            const currentForm = document.querySelector('.screen.active form');
+                            if (currentForm) {
+                                Object.entries(progressData.formData).forEach(([key, value]) => {
+                                    const input = currentForm.querySelector(`[name="${key}"]`);
+                                    if (input) {
+                                        if (input.type === 'checkbox' || input.type === 'radio') {
+                                            if (input.value === value) input.checked = true;
+                                        } else {
+                                            input.value = value;
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    }, 100);
+                    
+                    showToast('📂 Session restored from page reload', 'info');
+                }
+            } catch (error) {
+                console.error('❌ Error restoring progress:', error);
+            }
+        }
+    }
+    
+    // 3. Prevent accidental page exit with unsaved data
+    let hasUnsavedData = false;
+    
+    window.addEventListener('beforeunload', function(e) {
+        // Check if we're in the middle of the game (not on welcome or results screen)
+        const activeScreen = document.querySelector('.screen.active');
+        const screenId = activeScreen ? activeScreen.id : '';
+        
+        if (screenId && screenId !== 'welcomeScreen' && screenId !== 'resultsScreen') {
+            hasUnsavedData = true;
+        }
+        
+        // Save progress before potential exit
+        if (hasUnsavedData) {
+            saveGameProgress();
+            
+            // Show browser warning
+            const message = 'You have unsaved progress. Are you sure you want to leave?';
+            e.preventDefault();
+            e.returnValue = message; // For older browsers
+            return message;
+        }
     });
+
+
+
+    // ===== CROPS CHECKBOX VALIDATION =====
+// ===== FORM CHANGE HANDLERS =====
+document.addEventListener('change', function(e) {
+    // Crops checkbox validation
+    if (e.target.name === 'crops') {
+        const cropsCheckboxes = document.querySelectorAll('input[name="crops"]');
+        const anyChecked = Array.from(cropsCheckboxes).some(cb => cb.checked);
+        const cropsError = document.getElementById('cropsError');
+        
+        if (cropsError) {
+            cropsError.style.display = anyChecked ? 'none' : 'block';
+        }
+    }
+    
+    // Auto-save progress on any form change
+    if (e.target.closest('form')) {
+        saveGameProgress();
+    }
+});
+
+
 
     // ===== RISK FORM =====
     const riskForm = document.getElementById('riskForm');
