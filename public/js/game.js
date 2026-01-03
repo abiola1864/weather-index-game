@@ -35,6 +35,113 @@ let gameState = {
 };
 
 
+
+
+  function saveGameProgress() {
+        const progressData = {
+            currentScreen: gameState.currentScreen,
+            currentDemoPage: currentDemoPage,
+            currentStep: currentStep,
+            householdId: gameState.householdId,
+            respondentId: gameState.respondentId,
+            sessionId: gameState.sessionId,
+            treatmentGroup: gameState.treatmentGroup,
+            language: gameState.language,
+            formData: {} // Will store form values
+        };
+        
+        // Save form data from current screen
+        const currentForm = document.querySelector('.screen.active form');
+        if (currentForm) {
+            const formData = new FormData(currentForm);
+            for (let [key, value] of formData.entries()) {
+                progressData.formData[key] = value;
+            }
+        }
+        
+        sessionStorage.setItem('game_progress', JSON.stringify(progressData));
+        console.log('💾 Game progress saved');
+    }
+    
+    // 2. Restore game state on page load
+    function restoreGameProgress() {
+        const saved = sessionStorage.getItem('game_progress');
+        if (saved) {
+            try {
+                const progressData = JSON.parse(saved);
+                console.log('📂 Restoring game progress:', progressData);
+                
+                // Restore game state
+                if (progressData.householdId) gameState.householdId = progressData.householdId;
+                if (progressData.respondentId) gameState.respondentId = progressData.respondentId;
+                if (progressData.sessionId) gameState.sessionId = progressData.sessionId;
+                if (progressData.treatmentGroup) gameState.treatmentGroup = progressData.treatmentGroup;
+                if (progressData.language) gameState.language = progressData.language;
+                
+                // Restore screen position
+                if (progressData.currentScreen) {
+                    currentStep = progressData.currentStep || 1;
+                    currentDemoPage = progressData.currentDemoPage || 1;
+                    
+                    setTimeout(() => {
+                        showScreen(progressData.currentScreen);
+                        
+                        if (progressData.currentScreen === 'demographicsScreen') {
+                            showDemoPage(currentDemoPage);
+                        }
+                        
+                        // Restore form values
+                        if (progressData.formData && Object.keys(progressData.formData).length > 0) {
+                            const currentForm = document.querySelector('.screen.active form');
+                            if (currentForm) {
+                                Object.entries(progressData.formData).forEach(([key, value]) => {
+                                    const input = currentForm.querySelector(`[name="${key}"]`);
+                                    if (input) {
+                                        if (input.type === 'checkbox' || input.type === 'radio') {
+                                            if (input.value === value) input.checked = true;
+                                        } else {
+                                            input.value = value;
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    }, 100);
+                    
+                    showToast('📂 Session restored from page reload', 'info');
+                }
+            } catch (error) {
+                console.error('❌ Error restoring progress:', error);
+            }
+        }
+    }
+    
+    // 3. Prevent accidental page exit with unsaved data
+    let hasUnsavedData = false;
+    
+    window.addEventListener('beforeunload', function(e) {
+        // Check if we're in the middle of the game (not on welcome or results screen)
+        const activeScreen = document.querySelector('.screen.active');
+        const screenId = activeScreen ? activeScreen.id : '';
+        
+        if (screenId && screenId !== 'welcomeScreen' && screenId !== 'resultsScreen') {
+            hasUnsavedData = true;
+        }
+        
+        // Save progress before potential exit
+        if (hasUnsavedData) {
+            saveGameProgress();
+            
+            // Show browser warning
+            const message = 'You have unsaved progress. Are you sure you want to leave?';
+            e.preventDefault();
+            e.returnValue = message; // For older browsers
+            return message;
+        }
+    });
+
+
+
 // ===== DAGBANI TRANSLATIONS =====
 // Add this object at the top of your game.js file (after gameState)
 
@@ -5902,109 +6009,6 @@ if (prevBtn) {
 
 
 
-
-  function saveGameProgress() {
-        const progressData = {
-            currentScreen: gameState.currentScreen,
-            currentDemoPage: currentDemoPage,
-            currentStep: currentStep,
-            householdId: gameState.householdId,
-            respondentId: gameState.respondentId,
-            sessionId: gameState.sessionId,
-            treatmentGroup: gameState.treatmentGroup,
-            language: gameState.language,
-            formData: {} // Will store form values
-        };
-        
-        // Save form data from current screen
-        const currentForm = document.querySelector('.screen.active form');
-        if (currentForm) {
-            const formData = new FormData(currentForm);
-            for (let [key, value] of formData.entries()) {
-                progressData.formData[key] = value;
-            }
-        }
-        
-        sessionStorage.setItem('game_progress', JSON.stringify(progressData));
-        console.log('💾 Game progress saved');
-    }
-    
-    // 2. Restore game state on page load
-    function restoreGameProgress() {
-        const saved = sessionStorage.getItem('game_progress');
-        if (saved) {
-            try {
-                const progressData = JSON.parse(saved);
-                console.log('📂 Restoring game progress:', progressData);
-                
-                // Restore game state
-                if (progressData.householdId) gameState.householdId = progressData.householdId;
-                if (progressData.respondentId) gameState.respondentId = progressData.respondentId;
-                if (progressData.sessionId) gameState.sessionId = progressData.sessionId;
-                if (progressData.treatmentGroup) gameState.treatmentGroup = progressData.treatmentGroup;
-                if (progressData.language) gameState.language = progressData.language;
-                
-                // Restore screen position
-                if (progressData.currentScreen) {
-                    currentStep = progressData.currentStep || 1;
-                    currentDemoPage = progressData.currentDemoPage || 1;
-                    
-                    setTimeout(() => {
-                        showScreen(progressData.currentScreen);
-                        
-                        if (progressData.currentScreen === 'demographicsScreen') {
-                            showDemoPage(currentDemoPage);
-                        }
-                        
-                        // Restore form values
-                        if (progressData.formData && Object.keys(progressData.formData).length > 0) {
-                            const currentForm = document.querySelector('.screen.active form');
-                            if (currentForm) {
-                                Object.entries(progressData.formData).forEach(([key, value]) => {
-                                    const input = currentForm.querySelector(`[name="${key}"]`);
-                                    if (input) {
-                                        if (input.type === 'checkbox' || input.type === 'radio') {
-                                            if (input.value === value) input.checked = true;
-                                        } else {
-                                            input.value = value;
-                                        }
-                                    }
-                                });
-                            }
-                        }
-                    }, 100);
-                    
-                    showToast('📂 Session restored from page reload', 'info');
-                }
-            } catch (error) {
-                console.error('❌ Error restoring progress:', error);
-            }
-        }
-    }
-    
-    // 3. Prevent accidental page exit with unsaved data
-    let hasUnsavedData = false;
-    
-    window.addEventListener('beforeunload', function(e) {
-        // Check if we're in the middle of the game (not on welcome or results screen)
-        const activeScreen = document.querySelector('.screen.active');
-        const screenId = activeScreen ? activeScreen.id : '';
-        
-        if (screenId && screenId !== 'welcomeScreen' && screenId !== 'resultsScreen') {
-            hasUnsavedData = true;
-        }
-        
-        // Save progress before potential exit
-        if (hasUnsavedData) {
-            saveGameProgress();
-            
-            // Show browser warning
-            const message = 'You have unsaved progress. Are you sure you want to leave?';
-            e.preventDefault();
-            e.returnValue = message; // For older browsers
-            return message;
-        }
-    });
 
 
 
