@@ -2289,10 +2289,17 @@ function startSecondPartner() {
         
         // ✅ FIX 1: HIDE HOUSEHOLD ASSETS PAGE (Page 3) for second partner
         const page3 = document.getElementById('demoPage3');
+        const page6 = document.getElementById('demoPage6');
         if (page3) {
             page3.style.display = 'none';
             console.log('✅ Hidden household assets page (Page 3) for second partner');
         }
+
+        if (page6) {
+    page6.style.display = 'none';
+    page6.setAttribute('data-skip', 'true');
+    console.log('✅ Marked Page 6 (Livestock) for skipping');
+}
         
         // ===== STEP 4: ADD NOTICE BOX =====
         const page1 = document.getElementById('demoPage1');
@@ -5273,10 +5280,41 @@ function updateGlobalProgress(stepNumber, totalSteps = TOTAL_STEPS) {
 
 // ===== DEMOGRAPHICS MULTI-PAGE NAVIGATION =====
 function showDemoPage(pageNum) {
-    console.log(`📄 Showing demo page ${pageNum} of ${DEMOGRAPHICS_PAGES}`);
+    console.log(`📄 Attempting to show demo page ${pageNum} of ${DEMOGRAPHICS_PAGES}`);
     
-    // ✅ CHECK IF SECOND PARTNER (they should skip household data pages)
-    const isSecondPartner = document.querySelector('input[data-second-partner-hidden]') !== null;
+    // ✅ CHECK IF PAGE SHOULD BE SKIPPED
+    let targetPage = pageNum;
+    const pageElement = document.getElementById(`demoPage${targetPage}`);
+    
+    if (pageElement && pageElement.getAttribute('data-skip') === 'true') {
+        console.log(`⏭️ Page ${targetPage} is marked for skipping`);
+        
+        // Determine direction (forward or backward)
+        const goingForward = targetPage > currentDemoPage;
+        
+        if (goingForward) {
+            // Skip to next non-skipped page
+            while (targetPage <= DEMOGRAPHICS_PAGES) {
+                targetPage++;
+                const nextPage = document.getElementById(`demoPage${targetPage}`);
+                if (!nextPage || nextPage.getAttribute('data-skip') !== 'true') {
+                    break;
+                }
+            }
+        } else {
+            // Skip to previous non-skipped page
+            while (targetPage >= 1) {
+                targetPage--;
+                const prevPage = document.getElementById(`demoPage${targetPage}`);
+                if (!prevPage || prevPage.getAttribute('data-skip') !== 'true') {
+                    break;
+                }
+            }
+        }
+        
+        console.log(`✅ Redirecting to page ${targetPage}`);
+        pageNum = targetPage;
+    }
     
     // Validate page number
     if (pageNum < 1 || pageNum > DEMOGRAPHICS_PAGES) {
@@ -5379,15 +5417,19 @@ function showDemoPage(pageNum) {
     }, 50);
     
     // Log final state
+    const isSecondPartner = document.querySelector('input[data-second-partner-hidden]') !== null;
     console.log('📊 Page state:', {
         current: pageNum,
         total: DEMOGRAPHICS_PAGES,
         isSecondPartner: isSecondPartner,
+        isSkipped: pageElement && pageElement.getAttribute('data-skip') === 'true',
         backVisible: prevBtn ? prevBtn.style.display !== 'none' : false,
         nextVisible: nextBtn ? nextBtn.style.display !== 'none' : false,
         submitVisible: submitBtn ? submitBtn.style.display !== 'none' : false
     });
 }
+
+
 
 
 
