@@ -2269,25 +2269,30 @@ function startSecondPartner() {
         
         console.log('✅ Added hidden fields for all household data');
         
-        // ===== STEP 3: DISABLE AND HIDE VISIBLE ENUMERATOR/COMMUNITY FIELDS =====
-       // Disable and hide enumerator and community fields
-const communitySelect = document.getElementById('communityName');
-const enumeratorSelect = document.getElementById('enumeratorName');
+        // ===== STEP 3: DISABLE AND HIDE VISIBLE ENUMERATOR/COMMUNITY/HOUSEHOLD ASSET FIELDS =====
+        const communitySelect = document.getElementById('communityName');
+        const enumeratorSelect = document.getElementById('enumeratorName');
 
-if (communitySelect) {
-    communitySelect.removeAttribute('required');
-    communitySelect.disabled = true; // ✅ Disable so it's not in FormData
-    const formGroup = communitySelect.closest('.form-group');
-    if (formGroup) formGroup.style.display = 'none';
-}
+        if (communitySelect) {
+            communitySelect.removeAttribute('required');
+            communitySelect.disabled = true;
+            const formGroup = communitySelect.closest('.form-group');
+            if (formGroup) formGroup.style.display = 'none';
+        }
 
-if (enumeratorSelect) {
-    enumeratorSelect.removeAttribute('required');
-    enumeratorSelect.disabled = true; // ✅ Disable so it's not in FormData
-    const formGroup = enumeratorSelect.closest('.form-group');
-    if (formGroup) formGroup.style.display = 'none';
-}
-
+        if (enumeratorSelect) {
+            enumeratorSelect.removeAttribute('required');
+            enumeratorSelect.disabled = true;
+            const formGroup = enumeratorSelect.closest('.form-group');
+            if (formGroup) formGroup.style.display = 'none';
+        }
+        
+        // ✅ FIX 1: HIDE HOUSEHOLD ASSETS PAGE (Page 3) for second partner
+        const page3 = document.getElementById('demoPage3');
+        if (page3) {
+            page3.style.display = 'none';
+            console.log('✅ Hidden household assets page (Page 3) for second partner');
+        }
         
         // ===== STEP 4: ADD NOTICE BOX =====
         const page1 = document.getElementById('demoPage1');
@@ -2307,7 +2312,7 @@ if (enumeratorSelect) {
                     Second Partner Information
                 </p>
                 <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #424242;">
-                    <strong>Community and Enumerator</strong> are already saved from the first partner.
+                    <strong>Community, Enumerator, and Household Assets</strong> are already saved from the first partner.
                     <br>Please fill in <strong>your personal details</strong> (role, gender, age, education, trust scores).
                 </p>
             `;
@@ -2321,6 +2326,8 @@ if (enumeratorSelect) {
         
     }, 200);
 }
+
+
 
 
 
@@ -2473,6 +2480,13 @@ async function showResults() {
         const resultsSubtitle = document.querySelector('#resultsScreen .subtitle');
         const restartBtn = document.getElementById('restartBtn');
         
+        // ✅ FIX 2 & 3: HIDE SYNC CARDS ON RESULTS SCREEN
+        const resultsSyncSection = document.querySelector('.results-sync-section');
+        if (resultsSyncSection) {
+            resultsSyncSection.style.display = 'none';
+            console.log('✅ Hidden results sync section - using top-right sync button only');
+        }
+        
         showLoading(false);
         showScreen('resultsScreen');
         
@@ -2489,17 +2503,14 @@ async function showResults() {
                 restartBtn.innerHTML = '<i class="fas fa-redo"></i><span>Start New Game</span>';
             }
             
-            // 🆕 CHECK FOR PENDING SYNC DATA
-            await checkAndHandlePendingSync();
+            // Note: No sync check needed - top-right button handles it
             return;
         }
         
-        // ✅ FIX: Check if firstRespondentId EXISTS first
+        // Check if firstRespondentId EXISTS first
         if (!gameState.firstRespondentId) {
-            // No first partner set yet - this MUST be the first partner
             console.log('✅ CASE: FIRST PARTNER completed (no firstRespondentId set)');
             
-            // Set first partner info
             gameState.firstRespondentId = gameState.respondentId;
             gameState.firstRespondentRole = gameState.role;
             
@@ -2513,7 +2524,7 @@ async function showResults() {
             return;
         }
         
-        // CASE 2: This respondent matches the first partner (shouldn't happen but handle it)
+        // CASE 2: This respondent matches the first partner
         if (gameState.respondentId === gameState.firstRespondentId) {
             console.log('✅ CASE: FIRST PARTNER completed (ID matches)');
             
@@ -2527,10 +2538,9 @@ async function showResults() {
             return;
         }
         
-        // CASE 3: First partner exists AND current ID is different - this is second partner
+        // CASE 3: Second partner
         console.log('✅ CASE: SECOND PARTNER completed');
         
-        // Mark second partner
         if (!gameState.secondRespondentId) {
             gameState.secondRespondentId = gameState.respondentId;
         }
@@ -2549,6 +2559,7 @@ async function showResults() {
         alert('Error loading results: ' + error.message);
     }
 }
+
 
 
 
