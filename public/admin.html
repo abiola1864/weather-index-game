@@ -676,7 +676,7 @@
                 </p>
                 <div class="danger-zone-warning">
                     <p style="margin: 0; color: var(--gray-800); font-weight: 600;">
-                        <i class="fas fa-shield-alt"></i> Password protected: gme110_ghana
+                        <i class="fas fa-shield-alt"></i> Password protected:
                     </p>
                 </div>
                 <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-top: 1rem;">
@@ -785,41 +785,42 @@
             }
         }
 
-        async function loadStats() {
-            try {
-                const response = await fetch(`${API_BASE}/api/admin/dashboard/stats`);
-                const result = await response.json();
-                
-                if (result.success) {
-                    const { overview, treatmentCounts, communityCounts, enumeratorCounts } = result.data;
-                    
-                    // Update stat cards with null checks
-                    const totalRespondentsEl = document.getElementById('totalRespondents');
-                    const completedRespondentsEl = document.getElementById('completedRespondents');
-                    const inProgressRespondentsEl = document.getElementById('inProgressRespondents');
-                    const householdsCountEl = document.getElementById('householdsCount');
-                    const overallProgressEl = document.getElementById('overallProgress');
-                    
-                    if (totalRespondentsEl) totalRespondentsEl.textContent = overview.totalRespondents || 0;
-                    if (completedRespondentsEl) completedRespondentsEl.textContent = overview.completedSessions || 0;
-                    if (inProgressRespondentsEl) inProgressRespondentsEl.textContent = overview.inProgressSessions || 0;
-                    if (householdsCountEl) householdsCountEl.textContent = overview.uniqueHouseholds || 0;
-                    
-                    // Calculate overall progress
-                    const totalRespondents = overview.totalRespondents || 0;
-                    const targetTotal = 300;
-                    const progressPercentage = ((totalRespondents / targetTotal) * 100).toFixed(1);
-                    if (overallProgressEl) {
-                        overallProgressEl.textContent = `${totalRespondents}/${targetTotal} (${progressPercentage}%)`;
-                    }
-                    
-                    displayTreatmentTable(treatmentCounts);
-                    populateFilters(communityCounts, enumeratorCounts);
-                }
-            } catch (error) {
-                console.error('Error loading stats:', error);
+async function loadStats() {
+    try {
+        const response = await fetch(`${API_BASE}/api/admin/dashboard/stats`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const { overview, treatmentCounts, communityCounts, enumeratorCounts } = result.data;
+            
+            // Update stat cards with null checks
+            const totalRespondentsEl = document.getElementById('totalRespondents');
+            const completedRespondentsEl = document.getElementById('completedRespondents');
+            const inProgressRespondentsEl = document.getElementById('inProgressRespondents');
+            const householdsCountEl = document.getElementById('householdsCount');
+            const overallProgressEl = document.getElementById('overallProgress');
+            
+            if (totalRespondentsEl) totalRespondentsEl.textContent = overview.totalRespondents || 0;
+            if (completedRespondentsEl) completedRespondentsEl.textContent = overview.completedSessions || 0;
+            if (inProgressRespondentsEl) inProgressRespondentsEl.textContent = overview.inProgressSessions || 0;
+            if (householdsCountEl) householdsCountEl.textContent = overview.uniqueHouseholds || 0;
+            
+            // ✅ FIXED: Calculate progress based on HOUSEHOLDS, not respondents
+            const uniqueHouseholds = overview.uniqueHouseholds || 0;
+            const targetHouseholds = 300;
+            const progressPercentage = ((uniqueHouseholds / targetHouseholds) * 100).toFixed(1);
+            if (overallProgressEl) {
+                overallProgressEl.textContent = `${uniqueHouseholds}/${targetHouseholds} (${progressPercentage}%)`;
             }
+            
+            displayTreatmentTable(treatmentCounts);
+            populateFilters(communityCounts, enumeratorCounts);
         }
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
 
         async function loadCommunities() {
             try {
