@@ -5280,28 +5280,7 @@ function updateGlobalProgress(stepNumber, totalSteps = TOTAL_STEPS) {
 
 // ===== DEMOGRAPHICS MULTI-PAGE NAVIGATION =====
 function showDemoPage(pageNum) {
-    console.log(`📄 Attempting to show demo page ${pageNum} of ${DEMOGRAPHICS_PAGES}`);
-    
-    // ✅ CHECK IF THIS IS SECOND PARTNER AND SKIP PAGES 3 & 6
-    const isSecondPartner = document.querySelector('input[data-second-partner-hidden]') !== null;
-    
-    if (isSecondPartner) {
-        // Determine direction
-        const goingForward = pageNum > currentDemoPage || currentDemoPage === 0;
-        
-        // Skip page 3 (Household Assets) and page 6 (Livestock)
-        if (pageNum === 3 || pageNum === 6) {
-            console.log(`⏭️ Second partner - skipping page ${pageNum}`);
-            
-            if (goingForward) {
-                pageNum = pageNum + 1; // Skip forward
-            } else {
-                pageNum = pageNum - 1; // Skip backward
-            }
-            
-            console.log(`✅ Redirecting to page ${pageNum}`);
-        }
-    }
+    console.log(`📄 Showing demo page ${pageNum} of ${DEMOGRAPHICS_PAGES}`);
     
     // Validate page number
     if (pageNum < 1 || pageNum > DEMOGRAPHICS_PAGES) {
@@ -5318,17 +5297,15 @@ function showDemoPage(pageNum) {
     // Hide all demo pages
     document.querySelectorAll('.demo-page').forEach(page => {
         page.classList.remove('active');
-        page.scrollTop = 0; // Reset scroll of each page
+        page.scrollTop = 0;
     });
     
     // Show current page
     const currentPage = document.getElementById(`demoPage${pageNum}`);
     
     if (currentPage) {
-        // Reset current page scroll before showing
         currentPage.scrollTop = 0;
         currentPage.style.overflow = 'auto';
-        
         currentPage.classList.add('active');
         
         // Update guidance for second partner on page 1
@@ -5341,47 +5318,35 @@ function showDemoPage(pageNum) {
         console.error(`❌ Page element not found: demoPage${pageNum}`);
     }
     
-    // Update global step (demographics is steps 1-10)
+    // Update global step
     currentStep = pageNum;
     updateGlobalProgress(currentStep, TOTAL_STEPS);
     
-    // ✅ NAVIGATION BUTTONS - Show/Hide based on current page
+    // Navigation buttons visibility
     const prevBtn = document.getElementById('demoPrevBtn');
     const nextBtn = document.getElementById('demoNextBtn');
     const submitBtn = document.getElementById('demoSubmitBtn');
     
-    // Back button - hide on page 1, show on pages 2-10
     if (prevBtn) {
-        if (pageNum === 1) {
-            prevBtn.style.display = 'none';
-            console.log('⬅️ Back button hidden (page 1)');
-        } else {
-            prevBtn.style.display = 'flex';
-            console.log('⬅️ Back button visible (page ' + pageNum + ')');
-        }
+        prevBtn.style.display = pageNum === 1 ? 'none' : 'flex';
     }
     
-    // Next/Submit buttons - show submit only on last page
     if (nextBtn && submitBtn) {
         if (pageNum === DEMOGRAPHICS_PAGES) {
-            // Last page (10)
             nextBtn.style.display = 'none';
             submitBtn.style.display = 'flex';
-            console.log('✅ Submit button now visible on page', pageNum);
         } else {
-            // Pages 1-9
             nextBtn.style.display = 'flex';
             submitBtn.style.display = 'none';
         }
     }
     
-    // ✅ TOP BACK BUTTON (if it exists) - Optional feature
     const topBackBtn = document.getElementById('demoTopBackBtn');
     if (topBackBtn) {
         topBackBtn.style.display = pageNum > 1 ? 'flex' : 'none';
     }
     
-    // Force multiple scroll resets with different timing
+    // Force multiple scroll resets
     setTimeout(() => {
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
@@ -5403,7 +5368,7 @@ function showDemoPage(pageNum) {
         if (currentPage) currentPage.scrollTop = 0;
     }, 50);
     
-    // Log final state
+    const isSecondPartner = document.querySelector('input[data-second-partner-hidden]') !== null;
     console.log('📊 Page state:', {
         current: pageNum,
         total: DEMOGRAPHICS_PAGES,
@@ -5413,7 +5378,6 @@ function showDemoPage(pageNum) {
         submitVisible: submitBtn ? submitBtn.style.display !== 'none' : false
     });
 }
-
 
 
 
@@ -5574,57 +5538,95 @@ window.addEventListener('online', function() {
     const nextBtn = document.getElementById('demoNextBtn');
     const prevBtn = document.getElementById('demoPrevBtn');
 
-    if (nextBtn) {
-        // Remove old listeners by cloning
-        const newNextBtn = nextBtn.cloneNode(true);
-        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+if (nextBtn) {
+    // Remove old listeners by cloning
+    const newNextBtn = nextBtn.cloneNode(true);
+    nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+    
+    newNextBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         
-        newNextBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            console.log(`▶️ Next clicked. Current page: ${currentDemoPage}`);
-            
-            if (validateCurrentDemoPage()) {
-                if (currentDemoPage < DEMOGRAPHICS_PAGES) {
-                    const newPage = currentDemoPage + 1;
-                    console.log(`✅ Navigating from page ${currentDemoPage} to ${newPage}`);
-                    currentDemoPage = newPage;
-                    showDemoPage(currentDemoPage);
-                } else {
-                    console.log('⚠️ Already on last page');
+        console.log(`▶️ Next clicked. Current page: ${currentDemoPage}`);
+        
+        if (validateCurrentDemoPage()) {
+            if (currentDemoPage < DEMOGRAPHICS_PAGES) {
+                let newPage = currentDemoPage + 1;
+                
+                // ✅ CHECK IF SECOND PARTNER AND SKIP PAGES 3 & 6
+                const isSecondPartner = document.querySelector('input[data-second-partner-hidden]') !== null;
+                
+                if (isSecondPartner) {
+                    // Skip page 3 (Household Assets)
+                    if (newPage === 3) {
+                        console.log('⏭️ Second partner - skipping page 3 (Assets)');
+                        newPage = 4;
+                    }
+                    // Skip page 6 (Livestock)
+                    else if (newPage === 6) {
+                        console.log('⏭️ Second partner - skipping page 6 (Livestock)');
+                        newPage = 7;
+                    }
                 }
-            } else {
-                console.log('❌ Validation failed, staying on page', currentDemoPage);
-            }
-        }, false);
-        
-        console.log('✅ Next button listener registered (clean)');
-    }
-
-    if (prevBtn) {
-        // Remove old listeners by cloning
-        const newPrevBtn = prevBtn.cloneNode(true);
-        prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
-        
-        newPrevBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            console.log(`◀️ Previous clicked. Current page: ${currentDemoPage}`);
-            
-            if (currentDemoPage > 1) {
-                const newPage = currentDemoPage - 1;
+                
                 console.log(`✅ Navigating from page ${currentDemoPage} to ${newPage}`);
                 currentDemoPage = newPage;
                 showDemoPage(currentDemoPage);
             } else {
-                console.log('⚠️ Already on first page');
+                console.log('⚠️ Already on last page');
             }
-        }, false);
+        } else {
+            console.log('❌ Validation failed, staying on page', currentDemoPage);
+        }
+    }, false);
+    
+    console.log('✅ Next button listener registered (with second partner skip logic)');
+}
+
+
+// ===== DEMOGRAPHICS NAVIGATION - PREVIOUS BUTTON =====
+
+if (prevBtn) {
+    // Remove old listeners by cloning
+    const newPrevBtn = prevBtn.cloneNode(true);
+    prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+    
+    newPrevBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         
-        console.log('✅ Previous button listener registered (clean)');
-    }
+        console.log(`◀️ Previous clicked. Current page: ${currentDemoPage}`);
+        
+        if (currentDemoPage > 1) {
+            let newPage = currentDemoPage - 1;
+            
+            // ✅ CHECK IF SECOND PARTNER AND SKIP PAGES 3 & 6
+            const isSecondPartner = document.querySelector('input[data-second-partner-hidden]') !== null;
+            
+            if (isSecondPartner) {
+                // Skip page 6 (Livestock) when going backward
+                if (newPage === 6) {
+                    console.log('⏭️ Second partner - skipping page 6 (Livestock) backward');
+                    newPage = 5;
+                }
+                // Skip page 3 (Household Assets) when going backward
+                else if (newPage === 3) {
+                    console.log('⏭️ Second partner - skipping page 3 (Assets) backward');
+                    newPage = 2;
+                }
+            }
+            
+            console.log(`✅ Navigating from page ${currentDemoPage} to ${newPage}`);
+            currentDemoPage = newPage;
+            showDemoPage(currentDemoPage);
+        } else {
+            console.log('⚠️ Already on first page');
+        }
+    }, false);
+    
+    console.log('✅ Previous button listener registered (with second partner skip logic)');
+}
+
 
     // Initialize demographics to page 1
     showDemoPage(1);
