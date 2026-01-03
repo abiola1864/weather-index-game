@@ -11,6 +11,10 @@ const app = express();
 app.set('trust proxy', 1);
 
 
+
+
+
+
 const PORT = process.env.PORT || 3000;
 
 // ===== SECURITY MIDDLEWARE - FIXED CSP =====
@@ -203,6 +207,73 @@ app.get('/api/health', (req, res) => {
     version: '1.0.0'
   });
 });
+
+
+
+
+
+// ===== GET COMMUNITIES =====
+app.get('communities', async (req, res) => {
+    try {
+        console.log('📋 Fetching communities...');
+        const communities = await CommunityAssignment.find({})
+            .select('communityName district treatmentGroup')
+            .sort({ district: 1, communityName: 1 });
+        
+        console.log(`✅ Returning ${communities.length} communities`);
+        res.json({ success: true, data: communities });
+    } catch (error) {
+        console.error('❌ Communities error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// ===== CREATE RESPONDENT =====
+app.post('respondent/create', async (req, res) => {
+    try {
+        console.log('👤 Creating respondent...');
+        const respondent = new Respondent(req.body);
+        await respondent.save();
+        
+        console.log(`✅ Created respondent: ${respondent._id}`);
+        res.json({ 
+            success: true, 
+            data: {
+                _id: respondent._id,
+                treatmentGroup: respondent.treatmentGroup
+            }
+        });
+    } catch (error) {
+        console.error('❌ Respondent error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// ===== START SESSION =====
+app.post('/session/start', async (req, res) => {
+    try {
+        console.log('🎮 Starting session...');
+        const session = new GameSession(req.body);
+        await session.save();
+        
+        console.log(`✅ Created session: ${session._id}`);
+        res.json({ 
+            success: true, 
+            data: { sessionId: session._id }
+        });
+    } catch (error) {
+        console.error('❌ Session error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Add more routes as needed...
+
+
+
+
+
+
 
 // ===== SERVE SERVICE WORKER =====
 app.get('/service-worker.js', (req, res) => {

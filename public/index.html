@@ -320,7 +320,7 @@
 .screen-back-btn {
     position: absolute;
     top: 20px;
-    left: 20px;
+    left: 80px;
     background: rgba(255, 255, 255, 0.9);
     border: 2px solid var(--primary);
     color: var(--primary);
@@ -350,7 +350,7 @@
 @media (max-width: 768px) {
     .screen-back-btn {
         top: 10px;
-        left: 10px;
+        left: 80px;
         padding: 10px 16px;
         font-size: 14px;
     }
@@ -1010,6 +1010,253 @@ select:invalid:focus {
     }
 }
 
+/* ===== GAME ALLOCATION BACK BUTTON - HIGHLY VISIBLE ===== */
+.game-back-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: white;
+    border: 3px solid #2E7D32;
+    color: #2E7D32;
+    padding: 16px 28px;
+    border-radius: 50px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    z-index: 9999; /* Very high z-index to be above everything */
+    box-shadow: 0 8px 25px rgba(46, 125, 50, 0.3);
+}
+
+.game-back-btn:hover {
+    background: #2E7D32;
+    color: white;
+    transform: translateX(-8px) scale(1.08);
+    box-shadow: 0 10px 30px rgba(46, 125, 50, 0.5);
+}
+
+.game-back-btn i {
+    font-size: 20px;
+}
+
+/* Ensure game container doesn't overlap with back button */
+.game-container {
+    padding-top: 20px;
+    position: relative;
+}
+
+.round-header {
+    margin-top: 80px; /* Space for back button */
+}
+
+/* Make sure connection controls don't overlap */
+.connection-controls {
+    top: 20px;
+    right: 20px;
+}
+
+@media (max-width: 768px) {
+    .game-back-btn {
+        top: 15px;
+        left: 15px;
+        padding: 14px 22px;
+        font-size: 16px;
+        gap: 10px;
+    }
+    
+    .game-back-btn i {
+        font-size: 18px;
+    }
+    
+    .round-header {
+        margin-top: 85px;
+    }
+    
+    /* Adjust connection controls on mobile */
+    .connection-controls {
+        top: 75px; /* Below back button */
+    }
+}
+
+
+
+
+
+/* ===== IMPROVED BACK BUTTON STYLING ===== */
+.demo-nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    gap: 15px;
+}
+
+#demoPrevBtn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 18px 30px;
+    background: linear-gradient(135deg, #757575, #616161);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+#demoPrevBtn:hover {
+    background: linear-gradient(135deg, #616161, #424242);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+#demoPrevBtn i {
+    font-size: 20px;
+}
+
+/* Make the top-left back button more prominent */
+.demo-back-btn {
+    position: fixed; /* Changed from absolute to fixed */
+    top: 80px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.98);
+    border: 3px solid #757575;
+    color: #424242;
+    padding: 14px 24px; /* Increased padding */
+    border-radius: 50px;
+    font-size: 16px; /* Increased font size */
+    font-weight: 700; /* Made bolder */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+.demo-back-btn:hover {
+    background: #757575;
+    color: white;
+    transform: translateX(-5px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+.demo-back-btn i {
+    font-size: 18px; /* Larger icon */
+}
+
+/* Screen back button (for other screens) */
+.screen-back-btn {
+    position: fixed; /* Changed to fixed */
+    top: 80px;
+    left: 85px;
+    background: rgba(255, 255, 255, 0.98);
+    border: 3px solid var(--primary);
+    color: var(--primary);
+    padding: 14px 24px;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+.screen-back-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateX(-5px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(46, 125, 50, 0.4);
+}
+
+
+
+@media (max-width: 768px) {
+    .demo-back-btn,
+    .screen-back-btn {
+        top: 70px;
+        left: 60px;
+        padding: 12px 20px;
+        font-size: 15px;
+    }
+    
+    #demoPrevBtn {
+        font-size: 16px;
+        padding: 16px 24px;
+    }
+}
+
+/* ===== GAME ALLOCATION BACK BUTTON ===== */
+.game-back-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.98);
+    border: 3px solid #757575;
+    color: #424242;
+    padding: 16px 28px;
+    border-radius: 50px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+}
+
+.game-back-btn:hover {
+    background: #757575;
+    color: white;
+    transform: translateX(-8px) scale(1.08);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.game-back-btn i {
+    font-size: 20px;
+}
+
+/* Adjust game container to make room for back button */
+.game-container {
+    padding-top: 20px;
+}
+
+.round-header {
+    margin-top: 70px; /* Space for back button */
+}
+
+@media (max-width: 768px) {
+    .game-back-btn {
+        top: 15px;
+        left: 15px;
+        padding: 14px 22px;
+        font-size: 16px;
+    }
+    
+    .game-back-btn i {
+        font-size: 18px;
+    }
+    
+    .round-header {
+        margin-top: 80px;
+    }
+}
+
+
 
     </style>
 </head>
@@ -1147,10 +1394,10 @@ select:invalid:focus {
     <div class="form-container" style="max-width: 800px;">
 
          <!-- ✅ BACK TO PREVIOUS PAGE BUTTON (only shows after page 1) -->
-        <button class="demo-back-btn" onclick="goBackOnePage()" id="demoTopBackBtn" style="display: none;">
+        <!-- <button class="demo-back-btn" onclick="goBackOnePage()" id="demoTopBackBtn" style="display: none;">
             <i class="fas fa-arrow-left"></i>
             <span>Back</span>
-        </button>
+        </button> -->
 
 
 
@@ -2039,7 +2286,33 @@ select:invalid:focus {
 
         <!-- Game Season Screen -->
         <div id="gameScreen" class="screen">
+
+       <!-- ✅ BACK BUTTON MUST BE HERE -->
+        <!-- <button class="game-back-btn" id="gameBackBtn" onclick="goBackFromGameAllocation()">
+            <i class="fas fa-arrow-left"></i>
+            <span data-translate="common.back">Back</span>
+        </button>
+         -->
+        
+
             <div class="game-container">
+
+
+
+                 <!-- ✅ INLINE BACK BUTTON (Alternative approach) -->
+    <div style="padding: 20px 20px 0 20px;">
+        <button type="button" onclick="goBackFromGameAllocation()" 
+                style="display: inline-flex; align-items: center; gap: 10px; padding: 14px 28px; 
+                       background: white; border: 3px solid #2E7D32; color: #2E7D32; 
+                       border-radius: 50px; font-size: 18px; font-weight: 700; cursor: pointer;
+                       transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(46,125,50,0.2);">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back</span>
+        </button>
+    </div>
+
+
+
                 <!-- Season Header -->
                 <div class="round-header">
                     <div class="round-info">

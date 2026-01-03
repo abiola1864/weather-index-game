@@ -36,86 +36,250 @@ let gameState = {
 
 
 
-
-  function saveGameProgress() {
-        const progressData = {
-            currentScreen: gameState.currentScreen,
-            currentDemoPage: currentDemoPage,
-            currentStep: currentStep,
-            householdId: gameState.householdId,
-            respondentId: gameState.respondentId,
-            sessionId: gameState.sessionId,
-            treatmentGroup: gameState.treatmentGroup,
-            language: gameState.language,
-            formData: {} // Will store form values
-        };
+function saveGameProgress() {
+    const progressData = {
+        // Basic state
+        currentScreen: gameState.currentScreen,
+        currentDemoPage: currentDemoPage,
+        currentStep: currentStep,
+        currentSeason: gameState.currentSeason, // ✅ Make sure this is included
         
-        // Save form data from current screen
-        const currentForm = document.querySelector('.screen.active form');
-        if (currentForm) {
-            const formData = new FormData(currentForm);
-            for (let [key, value] of formData.entries()) {
-                progressData.formData[key] = value;
-            }
+        // IDs
+        householdId: gameState.householdId,
+        respondentId: gameState.respondentId,
+        sessionId: gameState.sessionId,
+        
+        // Partner tracking
+        firstRespondentId: gameState.firstRespondentId,
+        firstRespondentRole: gameState.firstRespondentRole,
+        secondRespondentId: gameState.secondRespondentId,
+        
+        // Settings
+        treatmentGroup: gameState.treatmentGroup,
+        language: gameState.language,
+        role: gameState.role,
+        gender: gameState.gender,
+        sessionType: gameState.sessionType,
+        
+        // Data
+        demographics: gameState.demographics,
+        seasonData: gameState.seasonData,
+        
+        formData: {}
+    };
+    
+    // Save form data from current screen
+    const currentForm = document.querySelector('.screen.active form');
+    if (currentForm) {
+        const formData = new FormData(currentForm);
+        for (let [key, value] of formData.entries()) {
+            progressData.formData[key] = value;
         }
         
-        sessionStorage.setItem('game_progress', JSON.stringify(progressData));
-        console.log('💾 Game progress saved');
+        // ✅ Also save checkbox states explicitly (FormData doesn't capture unchecked boxes)
+        const checkboxes = currentForm.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            progressData.formData[cb.id || cb.name] = cb.checked ? 'on' : 'off';
+        });
     }
     
+    try {
+        sessionStorage.setItem('game_progress', JSON.stringify(progressData));
+        console.log('💾 Game progress saved:', {
+            screen: progressData.currentScreen,
+            step: progressData.currentStep,
+            season: progressData.currentSeason,
+            partner: progressData.respondentId
+        });
+    } catch (error) {
+        console.error('❌ Error saving progress:', error);
+    }
+}
+
+
+
+    
     // 2. Restore game state on page load
-    function restoreGameProgress() {
-        const saved = sessionStorage.getItem('game_progress');
-        if (saved) {
-            try {
-                const progressData = JSON.parse(saved);
-                console.log('📂 Restoring game progress:', progressData);
+// ===== RESTORE GAME STATE ON PAGE LOAD =====
+// ===== RESTORE GAME STATE ON PAGE LOAD =====
+function restoreGameProgress() {
+    const saved = sessionStorage.getItem('game_progress');
+    if (saved) {
+        try {
+            const progressData = JSON.parse(saved);
+            console.log('📂 Restoring game progress:', progressData);
+            
+            // ===== RESTORE BASIC STATE =====
+            if (progressData.householdId) gameState.householdId = progressData.householdId;
+            if (progressData.respondentId) gameState.respondentId = progressData.respondentId;
+            if (progressData.sessionId) gameState.sessionId = progressData.sessionId;
+            if (progressData.treatmentGroup) gameState.treatmentGroup = progressData.treatmentGroup;
+            if (progressData.language) gameState.language = progressData.language;
+            if (progressData.role) gameState.role = progressData.role;
+            if (progressData.gender) gameState.gender = progressData.gender;
+            if (progressData.sessionType) gameState.sessionType = progressData.sessionType;
+            
+            // ===== RESTORE PARTNER TRACKING =====
+            if (progressData.firstRespondentId) {
+                gameState.firstRespondentId = progressData.firstRespondentId;
+                gameState.firstRespondentRole = progressData.firstRespondentRole;
+                console.log('✅ Restored first partner tracking:', {
+                    id: gameState.firstRespondentId,
+                    role: gameState.firstRespondentRole
+                });
+            }
+            
+            if (progressData.secondRespondentId) {
+                gameState.secondRespondentId = progressData.secondRespondentId;
+                console.log('✅ Restored second partner tracking:', gameState.secondRespondentId);
+            }
+            
+            // ===== RESTORE DEMOGRAPHICS =====
+            if (progressData.demographics) {
+                gameState.demographics = progressData.demographics;
+            }
+            
+            // ===== RESTORE SEASON DATA =====
+            if (progressData.seasonData) {
+                gameState.seasonData = progressData.seasonData;
+            }
+            
+            if (progressData.currentSeason) {
+                gameState.currentSeason = progressData.currentSeason;
+            }
+            
+            // ===== RESTORE SCREEN POSITION =====
+            if (progressData.currentScreen) {
+                currentStep = progressData.currentStep || 1;
+                currentDemoPage = progressData.currentDemoPage || 1;
                 
-                // Restore game state
-                if (progressData.householdId) gameState.householdId = progressData.householdId;
-                if (progressData.respondentId) gameState.respondentId = progressData.respondentId;
-                if (progressData.sessionId) gameState.sessionId = progressData.sessionId;
-                if (progressData.treatmentGroup) gameState.treatmentGroup = progressData.treatmentGroup;
-                if (progressData.language) gameState.language = progressData.language;
+                // Determine partner status for proper restoration
+                let isSecondPartner = false;
+                if (gameState.firstRespondentId && 
+                    gameState.respondentId && 
+                    gameState.respondentId !== gameState.firstRespondentId) {
+                    isSecondPartner = true;
+                }
                 
-                // Restore screen position
-                if (progressData.currentScreen) {
-                    currentStep = progressData.currentStep || 1;
-                    currentDemoPage = progressData.currentDemoPage || 1;
-                    
-                    setTimeout(() => {
-                        showScreen(progressData.currentScreen);
+                console.log('📊 Restoration context:', {
+                    screen: progressData.currentScreen,
+                    step: currentStep,
+                    demoPage: currentDemoPage,
+                    season: gameState.currentSeason,
+                    isSecondPartner: isSecondPartner,
+                    sessionType: gameState.sessionType
+                });
+                
+                setTimeout(() => {
+                    // ===== SPECIAL HANDLING FOR GAME SCREEN =====
+                    if (progressData.currentScreen === 'gameScreen') {
+                        console.log('🎮 Restoring game screen - Season', gameState.currentSeason);
                         
-                        if (progressData.currentScreen === 'demographicsScreen') {
-                            showDemoPage(currentDemoPage);
+                        // ✅ CRITICAL FIX: Don't just show screen, reload the season
+                        // This rebuilds the allocation UI with proper elements
+                        if (gameState.currentSeason) {
+                            loadSeason(gameState.currentSeason);
+                            
+                            // Restore form values after UI is built
+                            if (progressData.formData && Object.keys(progressData.formData).length > 0) {
+                                setTimeout(() => {
+                                    const allocForm = document.getElementById('allocationForm');
+                                    if (allocForm) {
+                                        console.log('📝 Restoring allocation form values...');
+                                        
+                                        // Restore checkbox state
+                                        const bundleCheckbox = document.getElementById('bundleAccepted');
+                                        if (bundleCheckbox && progressData.formData.bundleAccepted === 'on') {
+                                            bundleCheckbox.checked = true;
+                                            handleBundleToggle(); // Trigger to show input choice if needed
+                                        }
+                                        
+                                        // Restore input values
+                                        Object.entries(progressData.formData).forEach(([key, value]) => {
+                                            const input = allocForm.querySelector(`[name="${key}"], #${key}`);
+                                            if (input) {
+                                                if (input.type === 'checkbox') {
+                                                    input.checked = (value === 'on' || value === '1' || value === true);
+                                                } else if (input.type === 'radio') {
+                                                    if (input.value === value) input.checked = true;
+                                                } else {
+                                                    input.value = value;
+                                                }
+                                            }
+                                        });
+                                        
+                                        // Update allocation totals
+                                        updateAllocation();
+                                        
+                                        console.log('✅ Allocation form restored');
+                                    }
+                                }, 500); // Wait for UI to fully render
+                            }
+                        } else {
+                            console.warn('⚠️ No current season found, starting from Season 1');
+                            gameState.currentSeason = 1;
+                            loadSeason(1);
+                        }
+                    }
+                    // ===== SPECIAL HANDLING FOR DEMOGRAPHICS =====
+                    else if (progressData.currentScreen === 'demographicsScreen') {
+                        showScreen('demographicsScreen');
+                        showDemoPage(currentDemoPage);
+                        
+                        // Load communities if on page 1
+                        if (currentDemoPage === 1) {
+                            console.log('📋 Restored to demo page 1 - loading communities...');
+                            setTimeout(() => {
+                                loadCommunities();
+                                
+                                // If second partner, update guidance
+                                if (isSecondPartner) {
+                                    console.log('👥 Second partner detected - updating guidance');
+                                    updateSecondPartnerGuidance();
+                                }
+                            }, 300);
                         }
                         
                         // Restore form values
                         if (progressData.formData && Object.keys(progressData.formData).length > 0) {
-                            const currentForm = document.querySelector('.screen.active form');
-                            if (currentForm) {
-                                Object.entries(progressData.formData).forEach(([key, value]) => {
-                                    const input = currentForm.querySelector(`[name="${key}"]`);
-                                    if (input) {
-                                        if (input.type === 'checkbox' || input.type === 'radio') {
-                                            if (input.value === value) input.checked = true;
-                                        } else {
-                                            input.value = value;
+                            setTimeout(() => {
+                                const currentForm = document.querySelector('.screen.active form');
+                                if (currentForm) {
+                                    Object.entries(progressData.formData).forEach(([key, value]) => {
+                                        const input = currentForm.querySelector(`[name="${key}"]`);
+                                        if (input) {
+                                            if (input.type === 'checkbox' || input.type === 'radio') {
+                                                if (input.value === value) input.checked = true;
+                                            } else {
+                                                input.value = value;
+                                            }
                                         }
-                                    }
-                                });
-                            }
+                                    });
+                                }
+                            }, 400);
                         }
-                    }, 100);
+                    }
+                    // ===== OTHER SCREENS =====
+                    else {
+                        showScreen(progressData.currentScreen);
+                    }
                     
-                    showToast('📂 Session restored from page reload', 'info');
-                }
-            } catch (error) {
-                console.error('❌ Error restoring progress:', error);
+                }, 100);
+                
+                showToast('📂 Session restored from page reload', 'info');
             }
+        } catch (error) {
+            console.error('❌ Error restoring progress:', error);
+            sessionStorage.removeItem('game_progress'); // Clear corrupted data
+            showToast('⚠️ Could not restore session. Starting fresh.', 'warning');
         }
     }
-    
+}
+
+
+
+
+
     // 3. Prevent accidental page exit with unsaved data
     let hasUnsavedData = false;
     
@@ -158,6 +322,16 @@ let gameState = {
 
 const TRANSLATIONS = {
     english: {
+
+         common: {
+            continue: "Continue",
+            loading: "Loading...",
+            yes: "Yes",
+            no: "No",
+            select: "Select...",
+            back: "Back"  // ✅ Add this
+        },
+
         welcome: {
             title: "Farming Decisions Game",
             subtitle: "Make important decisions for your farm and family across 4 seasons",
@@ -509,6 +683,16 @@ plough: "Plough",
             weatherDesc: "Yi saŋa ni ka yɛl yini ka ni yi puuni",
             startBtn: "Ti Dɔɣi"
         },
+
+          common: {
+            continue: "Ti Dɔɣi",
+            loading: "Yi Zaŋa...",
+            yes: "Yɔɔ",
+            no: "Ayi",
+            select: "Chɛ...",
+            back: "Ti Nyɛla"  // ✅ Add this
+        },
+
         demographics: {
             title: "Ti Pam Yi Yɛltɔɣa",
             
@@ -1039,8 +1223,6 @@ const BUNDLE_INFO = {
 
 
 // ===== REVISED API CALL FUNCTION WITH OFFLINE SUPPORT =====
-// Replace the existing apiCall function in your game.js with this version
-
 async function apiCall(endpoint, method = 'GET', data = null) {
     try {
         // Check if online
@@ -1061,7 +1243,10 @@ async function apiCall(endpoint, method = 'GET', data = null) {
         
         if (data) options.body = JSON.stringify(data);
         
-        const fullUrl = `${API_BASE}/api/game${endpoint}`;
+        // ✅ FIX: Ensure endpoint starts with /
+        const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+        const fullUrl = `${API_BASE}${cleanEndpoint}`;
+        
         console.log('🌐 API Call:', method, fullUrl);
         
         const response = await fetch(fullUrl, options);
@@ -1069,22 +1254,21 @@ async function apiCall(endpoint, method = 'GET', data = null) {
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            console.error('❌ Server error details:', errorData); // ✅ ADD THIS
+            console.error('❌ Server error details:', errorData);
             throw new Error(errorData.message || `Server error: ${response.status}`);
         }
         
         const result = await response.json();
         console.log('✅ API Response:', result);
         
-        if (!result.success) {
-            console.error('❌ API returned failure:', result); // ✅ ADD THIS
+        if (!result.success && result.success !== undefined) {
+            console.error('❌ API returned failure:', result);
             throw new Error(result.message || 'Unknown error');
         }
         
-        return result.data;
+        return result.data || result;
     } catch (error) {
         console.error('💥 API Error:', error.message);
-        console.error('💥 Full error:', error); // ✅ ADD THIS
         
         // If fetch fails due to network, switch to offline mode
         if (error.message.includes('Failed to fetch') || 
@@ -1103,64 +1287,63 @@ async function apiCall(endpoint, method = 'GET', data = null) {
 
 
 
-// ===== SCREEN MANAGEMENT =====
-// ===== SCREEN MANAGEMENT =====
+
+
+
+
 function showScreen(screenId) {
     console.log('🖥️ showScreen called:', screenId);
+    console.log('📍 From:', gameState.currentScreen, '→ To:', screenId);
     
-    // AGGRESSIVE SCROLL RESET - Multiple methods
+    // AGGRESSIVE SCROLL RESET
     window.scrollTo({top: 0, left: 0, behavior: 'instant'});
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-    window.pageYOffset = 0;
     
     // Hide all screens
     const allScreens = document.querySelectorAll('.screen');
-    console.log('📺 Total screens:', allScreens.length);
+    console.log('📺 Total screens found:', allScreens.length);
     
     allScreens.forEach(screen => {
         screen.classList.remove('active');
-        screen.scrollTop = 0; // Reset scroll of each screen
+        screen.scrollTop = 0;
     });
     
     // Show target screen
     const targetScreen = document.getElementById(screenId);
     
-    if (targetScreen) {
-        // Reset target screen scroll before showing
-        targetScreen.scrollTop = 0;
-        targetScreen.style.overflow = 'auto';
-        
-        targetScreen.classList.add('active');
-        gameState.currentScreen = screenId;
-        console.log('✅ Screen activated:', screenId);
-        
-        // Force multiple scroll resets with different timing
-        setTimeout(() => {
-            window.scrollTo(0, 0);
-            document.documentElement.scrollTop = 0;
-            document.body.scrollTop = 0;
-            targetScreen.scrollTop = 0;
-        }, 0);
-        
-        requestAnimationFrame(() => {
-            window.scrollTo(0, 0);
-            document.documentElement.scrollTop = 0;
-            document.body.scrollTop = 0;
-            targetScreen.scrollTop = 0;
-        });
-        
-        setTimeout(() => {
-            window.scrollTo(0, 0);
-            document.documentElement.scrollTop = 0;
-            document.body.scrollTop = 0;
-            targetScreen.scrollTop = 0;
-        }, 50);
-        
-    } else {
+    if (!targetScreen) {
         console.error('❌ SCREEN NOT FOUND:', screenId);
         console.log('Available screens:', Array.from(allScreens).map(s => s.id));
+        alert(`Error: Screen "${screenId}" not found. Please refresh the page.`);
+        return;
     }
+    
+    console.log('✅ Target screen found:', screenId);
+    
+    // Reset target screen scroll
+    targetScreen.scrollTop = 0;
+    targetScreen.style.overflow = 'auto';
+    
+    // Activate screen
+    targetScreen.classList.add('active');
+    gameState.currentScreen = screenId;
+    
+    console.log('✅ Screen activated:', screenId);
+    console.log('📊 Active class applied:', targetScreen.classList.contains('active'));
+    
+    // Multiple scroll resets with different timing
+    [0, 50, 100, 200].forEach(delay => {
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+            if (targetScreen) targetScreen.scrollTop = 0;
+        }, delay);
+    });
+    
+    // Save progress
+    saveGameProgress();
 }
 
 
@@ -1184,21 +1367,30 @@ function generateHouseholdId() {
 
 // ===== GAME FLOW =====
 // ===== START DEMOGRAPHICS =====
+// ===== START DEMOGRAPHICS =====
 function startDemographics() {
-    console.log('Start Demographics clicked');
+    console.log('🎬 Start Demographics clicked');
     
     if (!gameState.householdId) {
         gameState.householdId = generateHouseholdId();
-        console.log('Generated Household ID:', gameState.householdId);
+        console.log('✅ Generated Household ID:', gameState.householdId);
     }
     
+    // Show screen first
     showScreen('demographicsScreen');
+    showDemoPage(1);
     
-    // CRITICAL: Load communities AFTER screen is shown
+    // ✅ FIX: Load communities after screen is fully rendered
     setTimeout(() => {
+        console.log('📋 Loading communities after screen render...');
         loadCommunities();
-    }, 100);
+    }, 300); // Increased delay to ensure DOM is ready
 }
+
+
+
+
+
 
 
 
@@ -1511,6 +1703,15 @@ function loadSeason(seasonNumber) {
         allocateTitle.textContent = t('game.allocateTitle');
     }
     
+    // ✅ ENSURE BACK BUTTON IS VISIBLE
+    const gameBackBtn = document.getElementById('gameBackBtn');
+    if (gameBackBtn) {
+        gameBackBtn.style.display = 'flex'; // Force it to show
+        console.log('✅ Game back button made visible');
+    } else {
+        console.error('❌ Game back button not found in DOM!');
+    }
+    
     setupRandomizedAllocationUI();
     
     document.getElementById('allocationForm').reset();
@@ -1520,6 +1721,7 @@ function loadSeason(seasonNumber) {
     
     showScreen('gameScreen');
 }
+
 
 
 
@@ -2049,22 +2251,33 @@ function showConfetti() {
 }
 
 // FIX: Proper flow to next season or end
+// ===== NEXT SEASON (UPDATED) =====
 function nextSeason() {
-    if (gameState.currentSeason < 4) {
+    console.log('▶️ Next season clicked');
+    console.log('Current season:', gameState.currentSeason, '| Total:', gameState.totalSeasons);
+    
+    if (gameState.currentSeason < gameState.totalSeasons) {
         // Still have more seasons to play
         gameState.currentSeason++;
+        console.log('✅ Advancing to season', gameState.currentSeason);
         loadSeason(gameState.currentSeason);
     } else {
-        // All 4 seasons completed - decide what's next
+        // All seasons completed
+        console.log('🏁 All seasons completed');
+        
         if (gameState.sessionType === 'couple_joint') {
             // Couple session → Go to perception screen (no knowledge test)
+            console.log('👫 Couple session → Perception screen');
             showScreen('perceptionScreen');
         } else {
             // Individual session → Go to knowledge test
+            console.log('👤 Individual session → Knowledge test');
             showScreen('knowledgeScreen');
         }
     }
 }
+
+
 
 
 function updateNextRoundButtonText() {
@@ -5181,85 +5394,159 @@ async function manualSync() {
 
 // ===== LOAD COMMUNITIES WITH OFFLINE SUPPORT =====
 
+// ===== LOAD COMMUNITIES WITH OFFLINE SUPPORT =====
+// ===== LOAD COMMUNITIES WITH BETTER ERROR HANDLING =====
 async function loadCommunities() {
-  try {
-    console.log('📋 Loading communities...');
-    
-    const select = document.getElementById('communityName');
-    if (!select) {
-      console.error('❌ Could not find communityName select element!');
-      return;
-    }
-    
-    // Show loading state
-    select.innerHTML = '<option value="">Loading communities...</option>';
-    select.disabled = true;
-    
-    let communities = [];
-    
     try {
-      // Try to fetch from API (works both online and offline)
-      const response = await apiCall('/communities'); // ✅ Changed from /admin/communities
-      communities = response || [];
-      
-      if (communities && communities.length > 0) {
-        console.log(`✅ Loaded ${communities.length} communities from API`);
-      } else {
-        throw new Error('No communities returned from API');
-      }
-    } catch (error) {
-      console.warn('⚠️ Could not load from API, using fallback:', error.message);
-      communities = getDefaultCommunities();
-      console.log(`📋 Using default communities list (${communities.length} communities)`);
-    }
-    
-    // Populate the select
-    if (communities.length > 0) {
-      select.innerHTML = '<option value="">-- Select Community --</option>';
-      
-      // Sort and group by district
-      const sorted = communities.sort((a, b) => {
-        if (a.district !== b.district) {
-          return a.district.localeCompare(b.district);
-        }
-        return a.communityName.localeCompare(b.communityName);
-      });
-      
-      let currentOptgroup = null;
-      let currentDistrict = '';
-      
-      sorted.forEach(community => {
-        if (community.district !== currentDistrict) {
-          currentDistrict = community.district;
-          currentOptgroup = document.createElement('optgroup');
-          currentOptgroup.label = community.district;
-          select.appendChild(currentOptgroup);
+        console.log('📋 Loading communities...');
+        
+        const select = document.getElementById('communityName');
+        if (!select) {
+            console.error('❌ Could not find communityName select element!');
+            return;
         }
         
-        const option = document.createElement('option');
-        option.value = community.communityName;
-        option.textContent = community.communityName;
-        option.setAttribute('data-treatment', community.treatmentGroup);
-        currentOptgroup.appendChild(option);
-      });
-      
-      console.log(`✅ Successfully populated ${communities.length} communities`);
-    } else {
-      select.innerHTML = '<option value="">Error: No communities available</option>';
-      console.error('❌ No communities available!');
+        // Show loading state
+        select.innerHTML = '<option value="">Loading communities...</option>';
+        select.disabled = true;
+        
+        let communities = [];
+        
+        try {
+            // ✅ FIX: Use correct endpoint without leading slash
+            console.log('🌐 Fetching from:', `${API_BASE}/communities`);
+            const response = await apiCall('communities'); // Remove leading slash
+            
+            console.log('📡 API Response:', response);
+            
+            // Handle different response formats
+            if (Array.isArray(response)) {
+                communities = response;
+            } else if (response && Array.isArray(response.data)) {
+                communities = response.data;
+            } else if (response && response.communities) {
+                communities = response.communities;
+            }
+            
+            if (communities && communities.length > 0) {
+                console.log(`✅ Loaded ${communities.length} communities from API`);
+            } else {
+                throw new Error('No communities in response');
+            }
+        } catch (error) {
+            console.warn('⚠️ API failed, using fallback:', error.message);
+            communities = getDefaultCommunities();
+            console.log(`📋 Using ${communities.length} fallback communities`);
+        }
+        
+        // Populate the select
+        if (communities.length > 0) {
+            select.innerHTML = '<option value="">-- Select Community --</option>';
+            
+            // Group by district
+            const byDistrict = {};
+            communities.forEach(c => {
+                if (!byDistrict[c.district]) {
+                    byDistrict[c.district] = [];
+                }
+                byDistrict[c.district].push(c);
+            });
+            
+            // Sort districts
+            const sortedDistricts = Object.keys(byDistrict).sort();
+            
+            // Add optgroups
+            sortedDistricts.forEach(district => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = district;
+                
+                // Sort communities within district
+                byDistrict[district].sort((a, b) => 
+                    a.communityName.localeCompare(b.communityName)
+                );
+                
+                byDistrict[district].forEach(community => {
+                    const option = document.createElement('option');
+                    option.value = community.communityName;
+                    option.textContent = community.communityName;
+                    option.setAttribute('data-treatment', community.treatmentGroup);
+                    option.setAttribute('data-district', community.district);
+                    optgroup.appendChild(option);
+                });
+                
+                select.appendChild(optgroup);
+            });
+            
+            console.log(`✅ Populated ${communities.length} communities across ${sortedDistricts.length} districts`);
+        } else {
+            select.innerHTML = '<option value="">No communities available</option>';
+            console.error('❌ No communities to display!');
+        }
+        
+        select.disabled = false;
+        
+    } catch (error) {
+        console.error('❌ Critical error loading communities:', error);
+        const select = document.getElementById('communityName');
+        if (select) {
+            select.innerHTML = '<option value="">Error loading communities</option>';
+            select.disabled = false;
+        }
     }
-    
-    select.disabled = false;
-    
-  } catch (error) {
-    console.error('❌ Critical error loading communities:', error);
-    const select = document.getElementById('communityName');
-    if (select) {
-      select.innerHTML = '<option value="">Error loading communities</option>';
-      select.disabled = false;
-    }
-  }
 }
+
+
+
+
+
+
+
+// ===== DEFAULT COMMUNITIES FALLBACK =====
+
+
+// ===== DEFAULT COMMUNITIES FALLBACK (30 COMMUNITIES) =====
+function getDefaultCommunities() {
+    // This is a fallback if the API fails
+    // In production, these should come from MongoDB
+    return [
+        // Tolon District (11 communities)
+        { communityName: "Kpalsabogu", district: "Tolon", treatmentGroup: "control" },
+        { communityName: "Nyankpala", district: "Tolon", treatmentGroup: "control" },
+        { communityName: "Wantugu", district: "Tolon", treatmentGroup: "control" },
+        { communityName: "Voggu", district: "Tolon", treatmentGroup: "fertilizer_bundle" },
+        { communityName: "Kpendua", district: "Tolon", treatmentGroup: "fertilizer_bundle" },
+        { communityName: "Gbullung", district: "Tolon", treatmentGroup: "fertilizer_bundle" },
+        { communityName: "Zangbalun", district: "Tolon", treatmentGroup: "seedling_bundle" },
+        { communityName: "Lingbunga", district: "Tolon", treatmentGroup: "seedling_bundle" },
+        { communityName: "Kpalbusi", district: "Tolon", treatmentGroup: "seedling_bundle" },
+        { communityName: "Wayamba", district: "Tolon", treatmentGroup: "control" },
+        { communityName: "Yoggu", district: "Tolon", treatmentGroup: "fertilizer_bundle" },
+        
+        // Kumbungu District (9 communities)
+        { communityName: "Tuunayili", district: "Kumbungu", treatmentGroup: "seedling_bundle" },
+        { communityName: "Kpalguni", district: "Kumbungu", treatmentGroup: "control" },
+        { communityName: "Kumbuyili", district: "Kumbungu", treatmentGroup: "fertilizer_bundle" },
+        { communityName: "Gbulung", district: "Kumbungu", treatmentGroup: "seedling_bundle" },
+        { communityName: "Kasuliyili", district: "Kumbungu", treatmentGroup: "control" },
+        { communityName: "Kpanvo", district: "Kumbungu", treatmentGroup: "fertilizer_bundle" },
+        { communityName: "Tindan", district: "Kumbungu", treatmentGroup: "seedling_bundle" },
+        { communityName: "Gbulahagu", district: "Kumbungu", treatmentGroup: "control" },
+        { communityName: "Kpalguni II", district: "Kumbungu", treatmentGroup: "fertilizer_bundle" },
+        
+        // Gushegu District (10 communities)
+        { communityName: "Zantani", district: "Gushegu", treatmentGroup: "seedling_bundle" },
+        { communityName: "Kpanshegu", district: "Gushegu", treatmentGroup: "control" },
+        { communityName: "Nabogo", district: "Gushegu", treatmentGroup: "fertilizer_bundle" },
+        { communityName: "Tampion", district: "Gushegu", treatmentGroup: "seedling_bundle" },
+        { communityName: "Nanton", district: "Gushegu", treatmentGroup: "control" },
+        { communityName: "Kpatinga", district: "Gushegu", treatmentGroup: "fertilizer_bundle" },
+        { communityName: "Nakpanduri", district: "Gushegu", treatmentGroup: "seedling_bundle" },
+        { communityName: "Zakpalsi", district: "Gushegu", treatmentGroup: "control" },
+        { communityName: "Kpachi", district: "Gushegu", treatmentGroup: "fertilizer_bundle" },
+        { communityName: "Gushegu", district: "Gushegu", treatmentGroup: "seedling_bundle" }
+    ];
+}
+
 
 
 
@@ -5403,11 +5690,10 @@ function showDemoPage(pageNum) {
         return;
     }
     
-    // AGGRESSIVE SCROLL RESET - Multiple methods
+    // AGGRESSIVE SCROLL RESET
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-    window.pageYOffset = 0;
     
     // Hide all demo pages
     document.querySelectorAll('.demo-page').forEach(page => {
@@ -5423,6 +5709,14 @@ function showDemoPage(pageNum) {
         currentPage.style.overflow = 'auto';
         currentPage.classList.add('active');
         
+        // ✅ ADD THIS: Load communities when showing page 1
+        if (pageNum === 1) {
+            console.log('📋 Page 1 shown - loading communities...');
+            setTimeout(() => {
+                loadCommunities();
+            }, 100);
+        }
+        
         // Update guidance for second partner on page 1
         if (pageNum === 1 && gameState.firstRespondentId) {
             updateSecondPartnerGuidance();
@@ -5432,7 +5726,7 @@ function showDemoPage(pageNum) {
     } else {
         console.error(`❌ Page element not found: demoPage${pageNum}`);
     }
-    
+
     // Update global step
     currentStep = pageNum;
     updateGlobalProgress(currentStep, TOTAL_STEPS);
@@ -5763,218 +6057,226 @@ if (prevBtn) {
     // Initialize demographics to page 1
     showDemoPage(1);
 
-    // ===== DEMOGRAPHICS FORM SUBMISSION (PARTNER 1) =====
-    const demoForm = document.getElementById('demographicsForm');
-    if (demoForm) {
-        console.log('✅ Demographics form found');
+// ===== DEMOGRAPHICS FORM SUBMISSION (PARTNER 1) =====
+const demoForm = document.getElementById('demographicsForm');
+if (demoForm) {
+    console.log('✅ Demographics form found');
+    
+    demoForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
         
-        demoForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        console.log('📝 FORM SUBMIT TRIGGERED');
+        console.log('Current page:', currentDemoPage, '/', DEMOGRAPHICS_PAGES);
+        
+        // CRITICAL: Only process if on last page
+        if (currentDemoPage !== DEMOGRAPHICS_PAGES) {
+            console.log('⚠️ Not on last page - skipping');
+            return;
+        }
+        
+        // Validate before proceeding
+        if (!validateCurrentDemoPage()) {
+            console.log('❌ Validation failed');
+            alert('Please fill in all required fields on this page.');
+            return;
+        }
+        
+        console.log('✅ Starting submission process...');
+        showLoading();
+        
+        try {
+            const formData = new FormData(e.target);
             
-            console.log('📝 FORM SUBMIT TRIGGERED');
-            console.log('Current page:', currentDemoPage, '/', DEMOGRAPHICS_PAGES);
+            // Basic validation
+            const enumeratorName = formData.get('enumeratorName');
+            const communityName = formData.get('communityName');
+            const selectedRole = formData.get('role');
+            const selectedGender = formData.get('gender');
             
-            // CRITICAL: Only process if on last page
-            if (currentDemoPage !== DEMOGRAPHICS_PAGES) {
-                console.log('⚠️ Not on last page - skipping');
+            console.log('📋 Form values:', {
+                enumerator: enumeratorName,
+                community: communityName,
+                role: selectedRole,
+                gender: selectedGender
+            });
+            
+            if (!enumeratorName?.trim() || !communityName?.trim() || !selectedRole || !selectedGender) {
+                throw new Error('Missing required basic information');
+            }
+            
+            // Collect crops
+            const crops = Array.from(document.querySelectorAll('input[name="crops"]:checked'))
+                .map(cb => cb.value);
+            
+            if (crops.length === 0) {
+                showLoading(false);
+                alert('⚠️ Please select at least one crop on Page 5');
+                currentDemoPage = 5;
+                showDemoPage(5);
                 return;
             }
             
-            console.log('📝 Processing demographics submission (Partner 1)...');
-            showLoading();
+            // Collect all other data (assets, livestock, etc.)
+            const assets = {
+                radio: formData.get('asset_radio') === '1',
+                tv: formData.get('asset_tv') === '1',
+                refrigerator: formData.get('asset_refrigerator') === '1',
+                bicycle: formData.get('asset_bicycle') === '1',
+                motorbike: formData.get('asset_motorbike') === '1',
+                mobilePhone: formData.get('asset_mobilePhone') === '1',
+                generator: formData.get('asset_generator') === '1',
+                plough: formData.get('asset_plough') === '1'
+            };
             
-            try {
-                const formData = new FormData(e.target);
+            const livestock = {
+                cattle: parseInt(formData.get('livestock_cattle')) || 0,
+                goats: parseInt(formData.get('livestock_goats')) || 0,
+                sheep: parseInt(formData.get('livestock_sheep')) || 0,
+                poultry: parseInt(formData.get('livestock_poultry')) || 0
+            };
+            
+            const improvedInputs = {
+                certifiedSeed: formData.get('input_certifiedSeed') === '1',
+                fertilizer: formData.get('input_fertilizer') === '1',
+                pesticides: formData.get('input_pesticides') === '1',
+                irrigation: formData.get('input_irrigation') === '1'
+            };
+            
+            const shocks = {
+                drought: formData.get('shock_drought') === '1',
+                flood: formData.get('shock_flood') === '1',
+                pestsDisease: formData.get('shock_pestsDisease') === '1',
+                cropPriceFall: formData.get('shock_cropPriceFall') === '1'
+            };
+            
+            const borrowSources = [];
+            if (formData.get('borrowedMoney') === '1') {
+                if (formData.get('borrowSource_bank')) borrowSources.push('bank');
+                if (formData.get('borrowSource_microfinance')) borrowSources.push('microfinance');
+                if (formData.get('borrowSource_vsla')) borrowSources.push('vsla');
+                if (formData.get('borrowSource_familyFriends')) borrowSources.push('familyFriends');
+                if (formData.get('borrowSource_moneylender')) borrowSources.push('moneylender');
+            }
+            
+            // Build demographics object
+            gameState.demographics = {
+                householdId: gameState.householdId,
+                communityName: communityName.trim(),
+                enumeratorName: enumeratorName.trim(),
+                gender: selectedGender,
+                role: selectedRole,
+                language: gameState.language || 'english',
                 
-                // ===== BASIC VALIDATION =====
-                const enumeratorName = formData.get('enumeratorName');
-                const communityName = formData.get('communityName');
-                const selectedRole = formData.get('role');
-                const selectedGender = formData.get('gender');
+                age: parseInt(formData.get('age')) || 18,
+                education: parseInt(formData.get('education')) || 0,
+                householdSize: parseInt(formData.get('householdSize')) || 1,
+                childrenUnder15: parseInt(formData.get('childrenUnder15')) || 0,
                 
-                if (!enumeratorName?.trim()) {
-                    console.error('❌ Missing enumerator name');
-                    console.log('📋 Available form data:', Array.from(formData.entries()));
-                    throw new Error('Please enter enumerator name');
-                }
-
-                if (!communityName?.trim()) {
-                    console.error('❌ Missing community name');
-                    throw new Error('Please select a community');
-                }
-
-                if (!selectedRole) {
-                    throw new Error('Please select your role (Husband/Wife)');
-                }
-
-                if (!selectedGender) {
-                    throw new Error('Please select your gender');
-                }
+                assets: assets,
+                livestock: livestock,
                 
-                // ===== COLLECT DATA =====
-                const crops = Array.from(document.querySelectorAll('input[name="crops"]:checked'))
-                    .map(cb => cb.value);
+                yearsOfFarming: parseInt(formData.get('farmingYears')) || 0,
+                landCultivated: parseFloat(formData.get('landSize')) || 0,
+                landAccessMethod: parseInt(formData.get('landAccessMethod')) || 1,
+                landAccessOther: formData.get('landAccessOther') || '',
+                mainCrops: crops,
+                numberOfCropsPlanted: parseInt(formData.get('numberOfCropsPlanted')) || 1,
+                lastSeasonIncome: parseFloat(formData.get('lastIncome')) || 0,
+                farmingInputExpenditure: parseFloat(formData.get('farmingInputExpenditure')) || 0,
                 
-                console.log('🌾 Selected crops:', crops);
+                improvedInputs: improvedInputs,
+                hasIrrigationAccess: formData.get('hasIrrigationAccess') === '1',
                 
-                if (crops.length === 0) {
-                    showLoading(false);
-                    alert('Please select at least one crop on Page 5 (Crops & Income)');
-                    currentDemoPage = 5;
-                    showDemoPage(5);
-                    return;
-                }
+                shocks: shocks,
+                estimatedLossLastYear: parseFloat(formData.get('estimatedLossLastYear')) || 0,
+                harvestLossPercentage: parseInt(formData.get('harvestLossPercentage')) || 0,
                 
-                const assets = {
-                    radio: formData.get('asset_radio') === '1',
-                    tv: formData.get('asset_tv') === '1',
-                    refrigerator: formData.get('asset_refrigerator') === '1',
-                    bicycle: formData.get('asset_bicycle') === '1',
-                    motorbike: formData.get('asset_motorbike') === '1',
-                    mobilePhone: formData.get('asset_mobilePhone') === '1',
-                    generator: formData.get('asset_generator') === '1',
-                    plough: formData.get('asset_plough') === '1'
-                };
+                hasSavings: formData.get('hasSavings') === '1',
+                savingsAmount: parseFloat(formData.get('savingsAmount')) || 0,
+                borrowedMoney: formData.get('borrowedMoney') === '1',
+                borrowSources: borrowSources,
+                hasOffFarmIncome: formData.get('hasOffFarmIncome') === '1',
+                offFarmIncomeAmount: parseFloat(formData.get('offFarmIncomeAmount')) || 0,
                 
-                const livestock = {
-                    cattle: parseInt(formData.get('livestock_cattle')) || 0,
-                    goats: parseInt(formData.get('livestock_goats')) || 0,
-                    sheep: parseInt(formData.get('livestock_sheep')) || 0,
-                    poultry: parseInt(formData.get('livestock_poultry')) || 0
-                };
+                priorInsuranceKnowledge: formData.get('priorKnowledge') === '1',
+                purchasedInsuranceBefore: formData.get('purchasedInsuranceBefore') === '1',
+                insuranceType: formData.get('insuranceType') || '',
                 
-                const improvedInputs = {
-                    certifiedSeed: formData.get('input_certifiedSeed') === '1',
-                    fertilizer: formData.get('input_fertilizer') === '1',
-                    pesticides: formData.get('input_pesticides') === '1',
-                    irrigation: formData.get('input_irrigation') === '1'
-                };
+                trustFarmerGroup: parseInt(formData.get('trust_farmerGroup')) || 3,
+                trustNGO: parseInt(formData.get('trust_ngo')) || 3,
+                trustInsuranceProvider: parseInt(formData.get('trust_insuranceProvider')) || 3,
+                rainfallChangePerception: parseInt(formData.get('rainfallChangePerception')) || 3,
+                insurerPayoutTrust: parseInt(formData.get('insurerPayoutTrust')) || 3,
                 
-                const shocks = {
-                    drought: formData.get('shock_drought') === '1',
-                    flood: formData.get('shock_flood') === '1',
-                    pestsDisease: formData.get('shock_pestsDisease') === '1',
-                    cropPriceFall: formData.get('shock_cropPriceFall') === '1'
-                };
+                communityInsuranceDiscussion: false,
+                extensionVisits: false,
+                numberOfExtensionVisits: 0,
                 
-                const borrowSources = [];
-                if (formData.get('borrowedMoney') === '1') {
-                    if (formData.get('borrowSource_bank')) borrowSources.push('bank');
-                    if (formData.get('borrowSource_microfinance')) borrowSources.push('microfinance');
-                    if (formData.get('borrowSource_vsla')) borrowSources.push('vsla');
-                    if (formData.get('borrowSource_familyFriends')) borrowSources.push('familyFriends');
-                    if (formData.get('borrowSource_moneylender')) borrowSources.push('moneylender');
-                }
+                memberOfFarmerGroup: formData.get('memberOfFarmerGroup') === '1',
+                farmerGroupName: formData.get('farmerGroupName') || '',
                 
-                // ===== BUILD DEMOGRAPHICS OBJECT =====
-                gameState.demographics = {
-                    householdId: gameState.householdId,
-                    communityName: communityName.trim(),
-                    enumeratorName: enumeratorName.trim(),
-                    gender: selectedGender,
-                    role: selectedRole,
-                    language: gameState.language || 'english',
-                    
-                    age: parseInt(formData.get('age')) || 18,
-                    education: parseInt(formData.get('education')) || 0,
-                    householdSize: parseInt(formData.get('householdSize')) || 1,
-                    childrenUnder15: parseInt(formData.get('childrenUnder15')) || 0,
-                    
-                    assets: assets,
-                    livestock: livestock,
-                    
-                    yearsOfFarming: parseInt(formData.get('farmingYears')) || 0,
-                    landCultivated: parseFloat(formData.get('landSize')) || 0,
-                    landAccessMethod: parseInt(formData.get('landAccessMethod')) || 1,
-                    landAccessOther: formData.get('landAccessOther') || '',
-                    mainCrops: crops,
-                    numberOfCropsPlanted: parseInt(formData.get('numberOfCropsPlanted')) || 1,
-                    lastSeasonIncome: parseFloat(formData.get('lastIncome')) || 0,
-                    farmingInputExpenditure: parseFloat(formData.get('farmingInputExpenditure')) || 0,
-                    
-                    improvedInputs: improvedInputs,
-                    hasIrrigationAccess: formData.get('hasIrrigationAccess') === '1',
-                    
-                    shocks: shocks,
-                    estimatedLossLastYear: parseFloat(formData.get('estimatedLossLastYear')) || 0,
-                    harvestLossPercentage: parseInt(formData.get('harvestLossPercentage')) || 0,
-                    
-                    hasSavings: formData.get('hasSavings') === '1',
-                    savingsAmount: parseFloat(formData.get('savingsAmount')) || 0,
-                    borrowedMoney: formData.get('borrowedMoney') === '1',
-                    borrowSources: borrowSources,
-                    hasOffFarmIncome: formData.get('hasOffFarmIncome') === '1',
-                    offFarmIncomeAmount: parseFloat(formData.get('offFarmIncomeAmount')) || 0,
-                    
-                    priorInsuranceKnowledge: formData.get('priorKnowledge') === '1',
-                    purchasedInsuranceBefore: formData.get('purchasedInsuranceBefore') === '1',
-                    insuranceType: formData.get('insuranceType') || '',
-                    
-                    trustFarmerGroup: parseInt(formData.get('trust_farmerGroup')) || 3,
-                    trustNGO: parseInt(formData.get('trust_ngo')) || 3,
-                    trustInsuranceProvider: parseInt(formData.get('trust_insuranceProvider')) || 3,
-                    rainfallChangePerception: parseInt(formData.get('rainfallChangePerception')) || 3,
-                    insurerPayoutTrust: parseInt(formData.get('insurerPayoutTrust')) || 3,
-                    
-                    communityInsuranceDiscussion: false,
-                    extensionVisits: false,
-                    numberOfExtensionVisits: 0,
-                    
-                    memberOfFarmerGroup: formData.get('memberOfFarmerGroup') === '1',
-                    farmerGroupName: formData.get('farmerGroupName') || '',
-                    
-                    distanceToMarket: parseInt(formData.get('distanceToMarket')) || 0,
-                    distanceToInsurer: parseInt(formData.get('distanceToInsurer')) || 0,
-                    usesMobileMoney: formData.get('usesMobileMoney') === '1'
-                };
+                distanceToMarket: parseInt(formData.get('distanceToMarket')) || 0,
+                distanceToInsurer: parseInt(formData.get('distanceToInsurer')) || 0,
+                usesMobileMoney: formData.get('usesMobileMoney') === '1'
+            };
+            
+            gameState.gender = selectedGender;
+            gameState.role = selectedRole;
+            
+            console.log('✅ Demographics collected successfully!');
+            console.log('📊 Role:', selectedRole, '| Gender:', selectedGender);
+            console.log('📊 Crops:', crops);
+            
+            showLoading(false);
+            
+            // ✅ CRITICAL FIX: Use a more robust screen transition
+            console.log('🎯 Preparing to show Risk Assessment...');
+            
+            // Update progress FIRST
+            currentStep = 11;
+            updateGlobalProgress(currentStep, TOTAL_STEPS);
+            
+            // Verify risk screen exists
+            const riskScreen = document.getElementById('riskScreen');
+            if (!riskScreen) {
+                console.error('❌ FATAL: Risk screen not found in DOM!');
+                alert('Error: Risk Assessment screen is missing. Please refresh the page.');
+                return;
+            }
+            
+            console.log('✅ Risk screen exists in DOM');
+            
+            // Small delay for UI update, then show risk screen
+            setTimeout(() => {
+                console.log('🔄 Calling showScreen("riskScreen")...');
+                showScreen('riskScreen');
                 
-                gameState.gender = selectedGender;
-                gameState.role = selectedRole;
-                
-                console.log('✅ Demographics collected successfully');
-                console.log('📋 Moving to Risk Assessment (Step 11 of 13)');
-                
-                showLoading(false);
-                
-                // Move to step 11 (Risk screen)
-                currentStep = 11;
-                updateGlobalProgress(currentStep, TOTAL_STEPS);
-                
-                // Verify risk screen exists before transitioning
-                const riskScreen = document.getElementById('riskScreen');
-                if (!riskScreen) {
-                    console.error('❌ CRITICAL: Risk screen not found in DOM!');
-                    alert('Error: Risk screen is missing from the page. Please refresh and try again.');
-                    return;
-                }
-                
-                console.log('✅ Risk screen found, initiating transition...');
-                
-                // Small delay to ensure UI updates
+                // Double-check it activated
                 setTimeout(() => {
-                    showScreen('riskScreen');
-                    console.log('✅ Transitioned to Risk Assessment screen');
-                    
-                    // Double-check the screen is actually showing
                     if (!riskScreen.classList.contains('active')) {
                         console.error('❌ Risk screen failed to activate!');
+                        console.log('Forcing activation...');
                         riskScreen.classList.add('active');
+                    } else {
+                        console.log('✅ Risk screen successfully activated');
                     }
                 }, 100);
-                
-            } catch (error) {
-                showLoading(false);
-                console.error('❌ Demographics form error:', error);
-                console.error('Error stack:', error.stack);
-                alert('Error: ' + error.message + '\n\nPlease check the console for details.');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        });
-        
-        console.log('✅ Demographics form submission handler registered');
-    } else {
-        console.error('❌ Demographics form NOT found!');
-    }
+            }, 150);
+            
+        } catch (error) {
+            showLoading(false);
+            console.error('❌ ERROR:', error.message);
+            console.error('Stack:', error.stack);
+            alert('Error submitting demographics: ' + error.message);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    });
+    
+    console.log('✅ Demographics form submission handler registered');
+}
+
+
+
 
     // ===== CONDITIONAL FIELD VISIBILITY =====
     const hasSavingsRadios = document.querySelectorAll('[name="hasSavings"]');
@@ -6094,124 +6396,97 @@ window.addEventListener('load', updateWelcomeSyncStatus);
 
 
     // ===== EMPOWERMENT FORM =====
-    const empForm = document.getElementById('empowermentForm');
-    if (empForm) {
-        empForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showLoading();
+// In your empowerment form handler, add better error handling:
+const empForm = document.getElementById('empowermentForm');
+if (empForm) {
+    empForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Prevent double submission
+        const submitBtn = empForm.querySelector('button[type="submit"]');
+        if (submitBtn.disabled) {
+            console.log('⚠️ Form already submitting...');
+            return;
+        }
+        
+        submitBtn.disabled = true;
+        showLoading();
+        
+        try {
+            const formData = new FormData(e.target);
+            gameState.empowermentScores = {
+                cropDecisions: parseInt(formData.get('q1')),
+                moneyDecisions: parseInt(formData.get('q2')),
+                inputDecisions: parseInt(formData.get('q3')),
+                opinionConsidered: parseInt(formData.get('q4')),
+                confidenceExpressing: parseInt(formData.get('q5'))
+            };
             
-            try {
-                const formData = new FormData(e.target);
-                gameState.empowermentScores = {
-                    cropDecisions: parseInt(formData.get('q1')),
-                    moneyDecisions: parseInt(formData.get('q2')),
-                    inputDecisions: parseInt(formData.get('q3')),
-                    opinionConsidered: parseInt(formData.get('q4')),
-                    confidenceExpressing: parseInt(formData.get('q5'))
-                };
-                
-                const respondentData = {
-                    ...gameState.demographics,
-                    empowermentScores: gameState.empowermentScores
-                };
-                
-                // Create respondent
-                const respondent = await apiCall('/respondent/create', 'POST', respondentData);
-                gameState.respondentId = respondent._id;
-                
-                if (gameState.treatmentGroup && respondent.treatmentGroup !== gameState.treatmentGroup) {
-                    console.error('⚠️ WARNING: Treatment group mismatch!');
-                }
-                gameState.treatmentGroup = respondent.treatmentGroup;
-                
-                console.log(`✅ Respondent created: ${respondent._id}, Treatment: ${respondent.treatmentGroup}`);
-                
-                // Better detection logic using localStorage
-                const savedHouseholdData = localStorage.getItem('weather_game_household');
-                let savedFirstId = null;
-                if (savedHouseholdData) {
-                    try {
-                        const parsed = JSON.parse(savedHouseholdData);
-                        savedFirstId = parsed.firstRespondentId;
-                    } catch (e) {
-                        console.warn('Could not parse saved household data');
+            const respondentData = {
+                ...gameState.demographics,
+                empowermentScores: gameState.empowermentScores
+            };
+            
+            // ✅ ADD RETRY LOGIC FOR 429 ERRORS
+            let respondent;
+            let retryCount = 0;
+            const maxRetries = 3;
+            
+            while (retryCount < maxRetries) {
+                try {
+                    respondent = await apiCall('/respondent/create', 'POST', respondentData);
+                    break; // Success, exit retry loop
+                } catch (error) {
+                    if (error.message.includes('429') && retryCount < maxRetries - 1) {
+                        retryCount++;
+                        console.log(`⚠️ Rate limited, retrying (${retryCount}/${maxRetries})...`);
+                        await new Promise(resolve => setTimeout(resolve, 2000 * retryCount)); // Wait 2s, 4s, 6s
+                    } else {
+                        throw error; // Give up after max retries or if different error
                     }
                 }
-                
-                // Determine if this is first or second partner
-                let isFirstPartner;
-                
-                if (!gameState.firstRespondentId && !savedFirstId) {
-                    isFirstPartner = true;
-                } else if (gameState.firstRespondentId && respondent._id === gameState.firstRespondentId) {
-                    isFirstPartner = true;
-                } else if (savedFirstId && respondent._id === savedFirstId) {
-                    isFirstPartner = true;
-                } else if (gameState.firstRespondentId || savedFirstId) {
-                    isFirstPartner = false;
-                } else {
-                    isFirstPartner = true;
-                }
-                
-                console.log('🔍 Partner detection:', {
-                    currentId: respondent._id,
-                    firstIdInState: gameState.firstRespondentId,
-                    firstIdInStorage: savedFirstId,
-                    isFirstPartner: isFirstPartner
-                });
-                
-                if (isFirstPartner) {
-                    gameState.firstRespondentId = respondent._id;
-                    gameState.firstRespondentRole = gameState.role;
-                    gameState.firstRespondentData = {
-                        role: gameState.role,
-                        gender: gameState.gender,
-                        treatmentGroup: gameState.treatmentGroup,
-                        demographics: { ...gameState.demographics }
-                    };
-                    gameState.secondRespondentId = null;
-                    
-                    console.log('🎯 FIRST PARTNER registered:', {
-                        id: gameState.firstRespondentId,
-                        role: gameState.firstRespondentRole
-                    });
-                } else {
-                    gameState.secondRespondentId = respondent._id;
-                    
-                    console.log('🎯 SECOND PARTNER registered:', {
-                        id: gameState.secondRespondentId,
-                        role: gameState.role
-                    });
-                }
-                
-                // Set session type based on role
-                if (gameState.role === 'husband') {
-                    gameState.sessionType = 'individual_husband';
-                } else if (gameState.role === 'wife') {
-                    gameState.sessionType = 'individual_wife';
-                }
-                
-                console.log('📋 Session type set to:', gameState.sessionType);
-                
-                // Create session
-                const session = await apiCall('/session/start', 'POST', { 
-                    respondentId: gameState.respondentId,
-                    sessionType: gameState.sessionType
-                });
-                gameState.sessionId = session.sessionId;
-                
-                console.log('✅ Session created:', session.sessionId);
-                
-                showLoading(false);
-                showScreen('tutorialScreen');
-                initializeTutorial();
-            } catch (error) {
-                showLoading(false);
-                console.error('Empowerment form error:', error);
+            }
+            
+            gameState.respondentId = respondent._id;
+            
+            if (gameState.treatmentGroup && respondent.treatmentGroup !== gameState.treatmentGroup) {
+                console.error('⚠️ WARNING: Treatment group mismatch!');
+            }
+            gameState.treatmentGroup = respondent.treatmentGroup;
+            
+            console.log(`✅ Respondent created: ${respondent._id}, Treatment: ${respondent.treatmentGroup}`);
+            
+            // ... rest of your existing code for partner detection ...
+            
+            // Create session
+            const session = await apiCall('/session/start', 'POST', { 
+                respondentId: gameState.respondentId,
+                sessionType: gameState.sessionType
+            });
+            gameState.sessionId = session.sessionId;
+            
+            console.log('✅ Session created:', session.sessionId);
+            
+            showLoading(false);
+            showScreen('tutorialScreen');
+            initializeTutorial();
+            
+        } catch (error) {
+            showLoading(false);
+            submitBtn.disabled = false; // Re-enable on error
+            console.error('Empowerment form error:', error);
+            
+            // Show user-friendly error message
+            if (error.message.includes('429')) {
+                alert('Server is busy. Please wait a moment and try again.');
+            } else {
                 alert('Error: ' + error.message);
             }
-        });
-    }
+        }
+    });
+}
+
+
 
     // ===== TUTORIAL =====
     const tutorialPrevBtn = document.getElementById('tutorialPrevBtn');
@@ -7305,3 +7580,132 @@ function debugSyncStatus() {
     
     alert(`Sync Status:\n\nOnline: ${syncStatus.isOnline}\nPending Items: ${syncStatus.pendingItems}\n\nCheck console for full details`);
 }
+
+
+// ===== GO BACK FROM GAME SCREEN (Alternative Version) =====
+function goBackFromGame() {
+    console.log('◀️ Back button clicked from game screen');
+    console.log('Current season:', gameState.currentSeason);
+    
+    if (gameState.currentSeason === 1) {
+        // First season - go back to tutorial
+        if (confirm('Go back to tutorial? You will need to restart Season 1.')) {
+            console.log('📚 Going back to tutorial');
+            showScreen('tutorialScreen');
+            initializeTutorial();
+        }
+    } else {
+        // Show info message
+        const previousSeasonData = gameState.seasonData[gameState.currentSeason - 2]; // -2 because array is 0-indexed
+        
+        if (previousSeasonData) {
+            if (confirm(`Go back to review Season ${gameState.currentSeason - 1} results?`)) {
+                console.log('📊 Going back to previous season results');
+                
+                // Recreate the weather object
+                let weatherType = WEATHER_TYPES.GOOD;
+                if (previousSeasonData.weatherShock.type === 'drought') {
+                    weatherType = previousSeasonData.weatherShock.severity === 'severe' 
+                        ? WEATHER_TYPES.SEVERE_DROUGHT 
+                        : WEATHER_TYPES.MILD_DROUGHT;
+                } else if (previousSeasonData.weatherShock.type === 'flood') {
+                    weatherType = WEATHER_TYPES.FLOOD;
+                }
+                
+                // Temporarily go back one season
+                gameState.currentSeason--;
+                
+                // Show the weather outcome
+                showWeatherOutcome(previousSeasonData, weatherType);
+                
+                // Update the "Continue" button to say "Continue to Next Season"
+                const nextBtn = document.getElementById('nextRoundBtn');
+                if (nextBtn) {
+                    nextBtn.innerHTML = `
+                        <span>Continue to Season ${gameState.currentSeason + 1}</span>
+                        <i class="fas fa-arrow-right"></i>
+                    `;
+                }
+            }
+        } else {
+            alert('Cannot go back - no previous season data found.');
+        }
+    }
+}
+
+
+
+// ===== GO BACK FROM GAME ALLOCATION SCREEN =====
+function goBackFromGameAllocation() {
+    console.log('◀️ Back button clicked from game allocation screen');
+    console.log('📊 Current state:', {
+        season: gameState.currentSeason,
+        sessionType: gameState.sessionType,
+        totalSeasons: gameState.totalSeasons
+    });
+    
+    // Determine where to go back to
+    if (gameState.currentSeason === 1) {
+        // First season - ask if they want to go back to tutorial
+        const confirmMsg = gameState.language === 'dagbani' 
+            ? 'Ti nyɛla tutorial? Yi chɛm dɔɣi kpeeni 1 palli.'
+            : 'Go back to tutorial? You will need to restart Season 1.';
+        
+        if (confirm(confirmMsg)) {
+            console.log('📚 Going back to tutorial');
+            
+            // Reset current season data
+            if (gameState.seasonData.length > 0) {
+                gameState.seasonData.pop();
+            }
+            
+            // Show tutorial
+            showScreen('tutorialScreen');
+            initializeTutorial();
+        }
+    } else {
+        // Season 2, 3, or 4 - go back to previous season's weather result
+        const confirmMsg = gameState.language === 'dagbani' 
+            ? `Ti nyɛla kpeeni ${gameState.currentSeason - 1} lahira?`
+            : `Go back to review Season ${gameState.currentSeason - 1} results?`;
+        
+        if (confirm(confirmMsg)) {
+            console.log(`📊 Going back to Season ${gameState.currentSeason - 1} results`);
+            
+            // Get previous season data
+            const previousSeasonIndex = gameState.currentSeason - 2; // -2 because array is 0-indexed
+            const previousSeasonData = gameState.seasonData[previousSeasonIndex];
+            
+            if (previousSeasonData) {
+                // Temporarily decrease current season
+                gameState.currentSeason--;
+                
+                // Recreate the weather object from saved data
+                let weatherType = WEATHER_TYPES.GOOD;
+                
+                if (previousSeasonData.weatherShock.type === 'drought') {
+                    if (previousSeasonData.weatherShock.severity === 'severe') {
+                        weatherType = WEATHER_TYPES.SEVERE_DROUGHT;
+                    } else {
+                        weatherType = WEATHER_TYPES.MILD_DROUGHT;
+                    }
+                } else if (previousSeasonData.weatherShock.type === 'flood') {
+                    weatherType = WEATHER_TYPES.FLOOD;
+                }
+                
+                console.log('🌤️ Showing previous weather result:', weatherType);
+                
+                // Show the weather outcome
+                showWeatherOutcome(previousSeasonData, weatherType);
+                
+                // Update the continue button text
+                updateNextRoundButtonText();
+            } else {
+                console.error('❌ No previous season data found');
+                alert('Cannot go back - no previous season data available.');
+            }
+        }
+    }
+}
+
+
