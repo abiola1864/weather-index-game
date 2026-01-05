@@ -1683,8 +1683,6 @@ function loadSeason(seasonNumber) {
     const intensity = ROUND_INTENSITY[seasonNumber];
     
     console.log(`Loading Season ${seasonNumber}`);
-    console.log('Current gameState.sessionType:', gameState.sessionType);
-    console.log('Current gameState.role:', gameState.role);
     
     const gameScreen = document.getElementById('gameScreen');
     gameScreen.classList.remove('intensity-low', 'intensity-medium', 'intensity-high');
@@ -1714,24 +1712,15 @@ function loadSeason(seasonNumber) {
         budgetLabel.textContent = t('game.budget');
     }
     
-    // ✅ FIX: Determine session type text based on role and session type
-    let sessionTypeText;
-    
-    if (gameState.sessionType === 'couple_joint') {
+    // Session type text
+    let sessionTypeText = t('game.individualPlay');
+    if (gameState.sessionType === 'individual_husband') {
+        sessionTypeText = t('game.husbandPlaying');
+    } else if (gameState.sessionType === 'individual_wife') {
+        sessionTypeText = t('game.wifePlaying');
+    } else if (gameState.sessionType === 'couple_joint') {
         sessionTypeText = t('game.couplePlaying');
-    } else {
-        // For individual sessions, check role
-        if (gameState.role === 'husband') {
-            sessionTypeText = t('game.husbandPlaying');
-        } else if (gameState.role === 'wife') {
-            sessionTypeText = t('game.wifePlaying');
-        } else {
-            // Fallback
-            sessionTypeText = t('game.individualPlay');
-        }
     }
-    
-    console.log('✅ Session type text:', sessionTypeText);
     document.getElementById('roundContext').textContent = sessionTypeText;
     
     // Update allocate title
@@ -6536,6 +6525,12 @@ if (empForm) {
             showLoading(false);
             submitBtn.disabled = false; // Re-enable on error
             console.error('Empowerment form error:', error);
+
+             if (!navigator.onLine) {
+            alert('You are offline. Your data has been saved locally and will sync when you reconnect.');
+        } else {
+            alert('Error saving allocation: ' + error.message);
+        }
             
             // Show user-friendly error message
             if (error.message.includes('429')) {
@@ -6580,25 +6575,40 @@ if (empForm) {
     // ===== ALLOCATION FORM =====
     const allocForm = document.getElementById('allocationForm');
     if (allocForm) {
-        allocForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            console.log('📝 Allocation form submitted');
-            console.log('Session ID:', gameState.sessionId);
-            console.log('Respondent ID:', gameState.respondentId);
-            
-            if (!gameState.sessionId) {
-                console.error('❌ Missing sessionId');
-                alert('Error: Session not initialized. Please restart the game.');
-                return;
-            }
-            
-            if (!gameState.respondentId) {
-                console.error('❌ Missing respondentId');
-                alert('Error: Respondent not initialized. Please restart the game.');
-                return;
-            }
-            
+       allocForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // ✅ FIX: Prevent double submission
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn.disabled) {
+        console.log('⚠️ Already submitting...');
+        return;
+    }
+    
+    submitBtn.disabled = true;
+    
+    console.log('📝 Allocation form submitted');
+    console.log('🌐 Online status:', navigator.onLine);
+    console.log('Session ID:', gameState.sessionId);
+    console.log('Respondent ID:', gameState.respondentId);
+    
+    // ✅ FIX: Save progress before submitting
+    saveGameProgress();
+    
+    if (!gameState.sessionId) {
+        submitBtn.disabled = false; // Re-enable on error
+        console.error('❌ Missing sessionId');
+        alert('Error: Session not initialized. Please restart the game.');
+        return;
+    }
+    
+    if (!gameState.respondentId) {
+        submitBtn.disabled = false; // Re-enable on error
+        console.error('❌ Missing respondentId');
+        alert('Error: Respondent not initialized. Please restart the game.');
+        return;
+    }
+    
             showLoading();
             
             try {
@@ -6802,7 +6812,6 @@ if (perceptionForm) {
         }
     });
 }
-
 
 
     // ===== SECOND PARTNER BUTTONS =====

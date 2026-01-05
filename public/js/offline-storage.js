@@ -686,28 +686,46 @@ async function syncOfflineData() {
     
     console.log('📋 Sync order:', sortedItems.map(item => item.type).join(' → '));
     
-    // ===== SYNC LOOP =====
-    for (const item of sortedItems) {
-        if (item.synced) {
-            console.log(`⏭️ Already synced: ${item.type}`);
-            continue;
+ for (const item of sortedItems) {
+    if (item.synced) {
+        console.log(`⏭️ Already synced: ${item.type}`);
+        continue;
+    }
+    
+    console.log('');
+    console.log(`📤 Syncing ${item.type} (${item.id})...`);
+    
+    try {
+        // ✅ FIX: Check online status before each item
+        if (!navigator.onLine) {
+            console.warn('📴 Lost connection during sync - stopping');
+            results.skipped++;
+            break; // Stop syncing if we lost connection
         }
         
-        console.log('');
-        console.log(`📤 Syncing ${item.type} (${item.id})...`);
+        // ✅ STEP 1: Prepare data for sync
+        let cleanData;
         
         try {
-            // ✅ STEP 1: Prepare data for sync
-            let cleanData;
-            
-            try {
-                cleanData = prepareDataForSync(item.data, item.type, idMappings);
-            } catch (prepError) {
-                // ✅ Preparation failed (e.g., unmapped IDs)
+            cleanData = prepareDataForSync(item.data, item.type, idMappings);
+        } catch (prepError) {
+            // Check if it's a missing ID error
+            if (prepError.message.includes('requires') && prepError.message.includes('first')) {
                 console.warn(`⏭️ Skipping ${item.type} - ${prepError.message}`);
                 results.skipped++;
-                continue; // Skip this item, will retry on next sync
+                continue;
+            } else {
+                // Other error - mark as failed
+                console.error(`❌ Preparation error: ${prepError.message}`);
+                results.failed++;
+                results.errors.push({
+                    item: item.type,
+                    id: item.id,
+                    error: prepError.message
+                });
+                continue;
             }
+        }
             
             // ✅ STEP 2: Additional validation for specific types
             if (item.type === 'round') {
@@ -1097,3 +1115,48 @@ window.offlineStorage = {
 };
 
 console.log('✅ Offline storage system loaded');
+
+
+// ===== HANDLE NETWORK STATE CHANGES =====
+let wasOffline = !navigator.onLine;
+
+window.addEventListener('online', function() {
+    console.log('🌐 Connection restored');
+    wasOffline = false;
+    
+    // Don't immediately sync - let user trigger it
+    updateConnectionStatus();
+});
+
+window.addEventListener('offline', function() {
+    console.log('📴 Connection lost');
+    wasOffline = true;
+    updateConnectionStatus();
+});
+
+
+
+// ===== STABLE CONNECTION CHECK =====
+async function isStablyOnline() {
+    if (!navigator.onLine) return false;
+    
+    // Try a lightweight request to verify actual connectivity
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout
+        
+        const response = await fetch(`${API_BASE}/health`, {
+            method: 'HEAD',
+            signal: controller.signal,
+            cache: 'no-cache'
+        });
+        
+        clearTimeout(timeoutId);
+        return response.ok;
+    } catch (error) {
+        console.warn('⚠️ Connection unstable:', error.message);
+        return false;
+    }
+}
+
+// Use this instead of navigator.onLine in critical places

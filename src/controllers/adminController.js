@@ -565,10 +565,16 @@ const exportCompleteDataset = async (req, res) => {
     
     for (const respondent of respondents) {
       // Get all related data for this respondent
-      const sessions = await GameSession.find({ respondentId: respondent._id }).lean();
-      const rounds = await GameRound.find({ respondentId: respondent._id }).lean();
-      const knowledge = await KnowledgeTest.findOne({ respondentId: respondent._id }).lean();
-      const perception = await Perception.findOne({ respondentId: respondent._id }).lean();
+   // Get all related data for this respondent
+const sessions = await GameSession.find({ respondentId: respondent._id }).lean();
+const rounds = await GameRound.find({ respondentId: respondent._id }).lean();
+const knowledge = await KnowledgeTest.findOne({ respondentId: respondent._id }).lean();
+const perception = await Perception.findOne({ respondentId: respondent._id }).lean();
+
+// ✅ FIX: Check game completion properly
+const hasCompletedSession = sessions.some(s => s.gameCompleted === true);
+const hasKnowledge = knowledge !== null;
+const isGameComplete = hasCompletedSession && hasKnowledge;
       
       // Calculate aggregate statistics
       const totalRounds = rounds.length;
@@ -755,10 +761,12 @@ const exportCompleteDataset = async (req, res) => {
         perception_future_use_likelihood: perception?.futureUseLikelihood,
         
         // ===== SESSION INFO =====
-        game_completed: sessions.some(s => s.status === 'completed'),
-        session_types: sessions.map(s => s.sessionType).join(';'),
-        created_at: respondent.createdAt,
-        last_updated: respondent.updatedAt
+    game_completed: isGameComplete ? 'Yes' : 'No',  // Changed to text instead of boolean
+session_types: sessions.length > 0 ? sessions.map(s => s.sessionType).join(';') : 'None',
+session_count: sessions.length,
+completed_sessions_count: sessions.filter(s => s.gameCompleted === true).length,
+created_at: respondent.createdAt,
+last_updated: respondent.updatedAt
       };
       
       completeData.push(record);
