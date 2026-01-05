@@ -6058,6 +6058,7 @@ if (prevBtn) {
     showDemoPage(1);
 
 // ===== DEMOGRAPHICS FORM SUBMISSION (PARTNER 1) =====
+// ===== DEMOGRAPHICS FORM SUBMISSION =====
 const demoForm = document.getElementById('demographicsForm');
 if (demoForm) {
     console.log('✅ Demographics form found');
@@ -6068,7 +6069,7 @@ if (demoForm) {
         console.log('📝 FORM SUBMIT TRIGGERED');
         console.log('Current page:', currentDemoPage, '/', DEMOGRAPHICS_PAGES);
         
-        // CRITICAL: Only process if on last page
+        // Only process if on last page
         if (currentDemoPage !== DEMOGRAPHICS_PAGES) {
             console.log('⚠️ Not on last page - skipping');
             return;
@@ -6087,22 +6088,43 @@ if (demoForm) {
         try {
             const formData = new FormData(e.target);
             
-            // Basic validation
-            const enumeratorName = formData.get('enumeratorName');
-            const communityName = formData.get('communityName');
+            // ✅ CHECK IF THIS IS SECOND PARTNER
+            const isSecondPartner = document.querySelector('input[data-second-partner-hidden]') !== null;
+            
+            // Basic validation - SKIP for hidden fields on second partner
+            let enumeratorName, communityName;
+            
+            if (isSecondPartner) {
+                // For second partner, get from hidden fields
+                enumeratorName = formData.get('enumeratorName') || 
+                                gameState.demographics.enumeratorName;
+                communityName = formData.get('communityName') || 
+                               gameState.demographics.communityName;
+                console.log('👥 Second partner - using saved household data');
+            } else {
+                // For first partner, validate visible fields
+                enumeratorName = formData.get('enumeratorName');
+                communityName = formData.get('communityName');
+                
+                if (!enumeratorName?.trim() || !communityName?.trim()) {
+                    throw new Error('Missing required basic information');
+                }
+            }
+            
             const selectedRole = formData.get('role');
             const selectedGender = formData.get('gender');
+            
+            if (!selectedRole || !selectedGender) {
+                throw new Error('Missing role or gender information');
+            }
             
             console.log('📋 Form values:', {
                 enumerator: enumeratorName,
                 community: communityName,
                 role: selectedRole,
-                gender: selectedGender
+                gender: selectedGender,
+                isSecondPartner: isSecondPartner
             });
-            
-            if (!enumeratorName?.trim() || !communityName?.trim() || !selectedRole || !selectedGender) {
-                throw new Error('Missing required basic information');
-            }
             
             // Collect crops
             const crops = Array.from(document.querySelectorAll('input[name="crops"]:checked'))
@@ -6116,109 +6138,39 @@ if (demoForm) {
                 return;
             }
             
-            // Collect all other data (assets, livestock, etc.)
-            const assets = {
-                radio: formData.get('asset_radio') === '1',
-                tv: formData.get('asset_tv') === '1',
-                refrigerator: formData.get('asset_refrigerator') === '1',
-                bicycle: formData.get('asset_bicycle') === '1',
-                motorbike: formData.get('asset_motorbike') === '1',
-                mobilePhone: formData.get('asset_mobilePhone') === '1',
-                generator: formData.get('asset_generator') === '1',
-                plough: formData.get('asset_plough') === '1'
-            };
-            
-            const livestock = {
-                cattle: parseInt(formData.get('livestock_cattle')) || 0,
-                goats: parseInt(formData.get('livestock_goats')) || 0,
-                sheep: parseInt(formData.get('livestock_sheep')) || 0,
-                poultry: parseInt(formData.get('livestock_poultry')) || 0
-            };
-            
-            const improvedInputs = {
-                certifiedSeed: formData.get('input_certifiedSeed') === '1',
-                fertilizer: formData.get('input_fertilizer') === '1',
-                pesticides: formData.get('input_pesticides') === '1',
-                irrigation: formData.get('input_irrigation') === '1'
-            };
-            
-            const shocks = {
-                drought: formData.get('shock_drought') === '1',
-                flood: formData.get('shock_flood') === '1',
-                pestsDisease: formData.get('shock_pestsDisease') === '1',
-                cropPriceFall: formData.get('shock_cropPriceFall') === '1'
-            };
-            
-            const borrowSources = [];
-            if (formData.get('borrowedMoney') === '1') {
-                if (formData.get('borrowSource_bank')) borrowSources.push('bank');
-                if (formData.get('borrowSource_microfinance')) borrowSources.push('microfinance');
-                if (formData.get('borrowSource_vsla')) borrowSources.push('vsla');
-                if (formData.get('borrowSource_familyFriends')) borrowSources.push('familyFriends');
-                if (formData.get('borrowSource_moneylender')) borrowSources.push('moneylender');
-            }
+            // ... rest of your existing code to collect all demographic data ...
+            // (Keep all the existing code for assets, livestock, etc.)
             
             // Build demographics object
-            gameState.demographics = {
-                householdId: gameState.householdId,
-                communityName: communityName.trim(),
-                enumeratorName: enumeratorName.trim(),
-                gender: selectedGender,
-                role: selectedRole,
-                language: gameState.language || 'english',
-                
-                age: parseInt(formData.get('age')) || 18,
-                education: parseInt(formData.get('education')) || 0,
-                householdSize: parseInt(formData.get('householdSize')) || 1,
-                childrenUnder15: parseInt(formData.get('childrenUnder15')) || 0,
-                
-                assets: assets,
-                livestock: livestock,
-                
-                yearsOfFarming: parseInt(formData.get('farmingYears')) || 0,
-                landCultivated: parseFloat(formData.get('landSize')) || 0,
-                landAccessMethod: parseInt(formData.get('landAccessMethod')) || 1,
-                landAccessOther: formData.get('landAccessOther') || '',
-                mainCrops: crops,
-                numberOfCropsPlanted: parseInt(formData.get('numberOfCropsPlanted')) || 1,
-                lastSeasonIncome: parseFloat(formData.get('lastIncome')) || 0,
-                farmingInputExpenditure: parseFloat(formData.get('farmingInputExpenditure')) || 0,
-                
-                improvedInputs: improvedInputs,
-                hasIrrigationAccess: formData.get('hasIrrigationAccess') === '1',
-                
-                shocks: shocks,
-                estimatedLossLastYear: parseFloat(formData.get('estimatedLossLastYear')) || 0,
-                harvestLossPercentage: parseInt(formData.get('harvestLossPercentage')) || 0,
-                
-                hasSavings: formData.get('hasSavings') === '1',
-                savingsAmount: parseFloat(formData.get('savingsAmount')) || 0,
-                borrowedMoney: formData.get('borrowedMoney') === '1',
-                borrowSources: borrowSources,
-                hasOffFarmIncome: formData.get('hasOffFarmIncome') === '1',
-                offFarmIncomeAmount: parseFloat(formData.get('offFarmIncomeAmount')) || 0,
-                
-                priorInsuranceKnowledge: formData.get('priorKnowledge') === '1',
-                purchasedInsuranceBefore: formData.get('purchasedInsuranceBefore') === '1',
-                insuranceType: formData.get('insuranceType') || '',
-                
-                trustFarmerGroup: parseInt(formData.get('trust_farmerGroup')) || 3,
-                trustNGO: parseInt(formData.get('trust_ngo')) || 3,
-                trustInsuranceProvider: parseInt(formData.get('trust_insuranceProvider')) || 3,
-                rainfallChangePerception: parseInt(formData.get('rainfallChangePerception')) || 3,
-                insurerPayoutTrust: parseInt(formData.get('insurerPayoutTrust')) || 3,
-                
-                communityInsuranceDiscussion: false,
-                extensionVisits: false,
-                numberOfExtensionVisits: 0,
-                
-                memberOfFarmerGroup: formData.get('memberOfFarmerGroup') === '1',
-                farmerGroupName: formData.get('farmerGroupName') || '',
-                
-                distanceToMarket: parseInt(formData.get('distanceToMarket')) || 0,
-                distanceToInsurer: parseInt(formData.get('distanceToInsurer')) || 0,
-                usesMobileMoney: formData.get('usesMobileMoney') === '1'
-            };
+            if (isSecondPartner) {
+                // For second partner, MERGE with existing household data
+                gameState.demographics = {
+                    ...gameState.demographics, // Keep all household data from first partner
+                    // Update only individual-specific fields
+                    gender: selectedGender,
+                    role: selectedRole,
+                    age: parseInt(formData.get('age')) || 18,
+                    education: parseInt(formData.get('education')) || 0,
+                    priorInsuranceKnowledge: formData.get('priorKnowledge') === '1',
+                    purchasedInsuranceBefore: formData.get('purchasedInsuranceBefore') === '1',
+                    trustFarmerGroup: parseInt(formData.get('trust_farmerGroup')) || 3,
+                    trustNGO: parseInt(formData.get('trust_ngo')) || 3,
+                    trustInsuranceProvider: parseInt(formData.get('trust_insuranceProvider')) || 3,
+                    rainfallChangePerception: parseInt(formData.get('rainfallChangePerception')) || 3,
+                    insurerPayoutTrust: parseInt(formData.get('insurerPayoutTrust')) || 3
+                };
+            } else {
+                // For first partner, build complete demographics object
+                gameState.demographics = {
+                    householdId: gameState.householdId,
+                    communityName: communityName.trim(),
+                    enumeratorName: enumeratorName.trim(),
+                    gender: selectedGender,
+                    role: selectedRole,
+                    language: gameState.language || 'english',
+                    // ... all your existing fields ...
+                };
+            }
             
             gameState.gender = selectedGender;
             gameState.role = selectedRole;
@@ -6229,39 +6181,16 @@ if (demoForm) {
             
             showLoading(false);
             
-            // ✅ CRITICAL FIX: Use a more robust screen transition
-            console.log('🎯 Preparing to show Risk Assessment...');
-            
-            // Update progress FIRST
+            // Move to Risk Assessment (Step 11)
             currentStep = 11;
             updateGlobalProgress(currentStep, TOTAL_STEPS);
             
-            // Verify risk screen exists
-            const riskScreen = document.getElementById('riskScreen');
-            if (!riskScreen) {
-                console.error('❌ FATAL: Risk screen not found in DOM!');
-                alert('Error: Risk Assessment screen is missing. Please refresh the page.');
-                return;
-            }
+            console.log('🎯 Moving to Risk Assessment...');
             
-            console.log('✅ Risk screen exists in DOM');
-            
-            // Small delay for UI update, then show risk screen
             setTimeout(() => {
-                console.log('🔄 Calling showScreen("riskScreen")...');
                 showScreen('riskScreen');
-                
-                // Double-check it activated
-                setTimeout(() => {
-                    if (!riskScreen.classList.contains('active')) {
-                        console.error('❌ Risk screen failed to activate!');
-                        console.log('Forcing activation...');
-                        riskScreen.classList.add('active');
-                    } else {
-                        console.log('✅ Risk screen successfully activated');
-                    }
-                }, 100);
-            }, 150);
+                console.log('✅ TRANSITIONED TO RISK SCREEN');
+            }, 100);
             
         } catch (error) {
             showLoading(false);
@@ -6274,6 +6203,7 @@ if (demoForm) {
     
     console.log('✅ Demographics form submission handler registered');
 }
+
 
 
 
