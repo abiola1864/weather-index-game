@@ -185,48 +185,150 @@ function handleOfflineStorage(endpoint, method, data) {
     }
     
     // ===== RESPONDENT CREATION =====
-    if (endpoint.includes('/respondent/create') && method === 'POST') {
-        const respondentId = generateOfflineId();
-        const treatmentGroup = assignTreatmentOffline();
-        
-        const respondent = {
-            _id: respondentId,
-            ...data,
-            treatmentGroup: treatmentGroup,
-            createdAt: new Date().toISOString(),
-            offline: true,
-            deviceId: offlineData.deviceId
-        };
-        
-        // ✅ FIX: Get fresh data before modifying
-        offlineData = getOfflineData();
-        if (!offlineData.respondents) offlineData.respondents = [];
-        if (!offlineData.pending_sync) offlineData.pending_sync = [];
-        
-        offlineData.respondents.push(respondent);
-        
-        // ✅ Add to pending sync
-        offlineData.pending_sync.push({
-            id: generateOfflineId(),
-            type: 'respondent',
-            endpoint: endpoint,
-            method: method,
-            data: respondent,
-            timestamp: new Date().toISOString(),
-            synced: false,
-            syncedAt: null
-        });
-        
-        saveOfflineData(offlineData);
-        
-        console.log('✅ Respondent created offline:', respondentId, 'Treatment:', treatmentGroup);
-        console.log('📤 Added to pending_sync. Total pending:', offlineData.pending_sync.length);
-        
-        return respondent;
-    }
+ // ===== RESPONDENT CREATION =====
+if (endpoint.includes('/respondent/create') && method === 'POST') {
+    const respondentId = generateOfflineId();
+    const treatmentGroup = assignTreatmentOffline();
     
+    // ✅ Build respondent with explicit defaults for ALL required fields
+    const respondent = {
+        _id: respondentId,
+        treatmentGroup: treatmentGroup,
+        
+        // Basic info (spread data but with fallbacks)
+        householdId: data.householdId,
+        communityName: data.communityName,
+        enumeratorName: data.enumeratorName,
+        gender: data.gender,
+        role: data.role,
+        age: data.age,
+        education: data.education,
+        language: data.language || 'english',
+        
+        // ✅ Required fields with EXPLICIT defaults (not undefined)
+        householdSize: data.householdSize ?? 1,
+        childrenUnder15: data.childrenUnder15 ?? 0,
+        yearsOfFarming: data.yearsOfFarming ?? 0,
+        landCultivated: data.landCultivated ?? 0,
+        landAccessMethod: data.landAccessMethod ?? 1,
+        landAccessOther: data.landAccessOther ?? '',
+        numberOfCropsPlanted: data.numberOfCropsPlanted ?? 1,
+        lastSeasonIncome: data.lastSeasonIncome ?? 0,
+        farmingInputExpenditure: data.farmingInputExpenditure ?? 0,
+        
+        // Arrays
+        mainCrops: data.mainCrops ?? [],
+        borrowSources: data.borrowSources ?? [],
+        
+        // Objects
+        assets: data.assets ?? {
+            radio: false,
+            tv: false,
+            refrigerator: false,
+            bicycle: false,
+            motorbike: false,
+            mobilePhone: false,
+            generator: false,
+            plough: false
+        },
+        livestock: data.livestock ?? {
+            cattle: 0,
+            goats: 0,
+            sheep: 0,
+            poultry: 0
+        },
+        improvedInputs: data.improvedInputs ?? {
+            certifiedSeed: false,
+            fertilizer: false,
+            pesticides: false,
+            irrigation: false
+        },
+        shocks: data.shocks ?? {
+            drought: false,
+            flood: false,
+            pestsDisease: false,
+            cropPriceFall: false
+        },
+        
+        // Boolean fields (explicitly convert)
+        hasIrrigationAccess: data.hasIrrigationAccess === true,
+        hasSavings: data.hasSavings === true,
+        borrowedMoney: data.borrowedMoney === true,
+        hasOffFarmIncome: data.hasOffFarmIncome === true,
+        priorInsuranceKnowledge: data.priorInsuranceKnowledge === true,
+        purchasedInsuranceBefore: data.purchasedInsuranceBefore === true,
+        memberOfFarmerGroup: data.memberOfFarmerGroup === true,
+        usesMobileMoney: data.usesMobileMoney === true,
+        
+        // Numeric fields with defaults
+        savingsAmount: data.savingsAmount ?? 0,
+        offFarmIncomeAmount: data.offFarmIncomeAmount ?? 0,
+        estimatedLossLastYear: data.estimatedLossLastYear ?? 0,
+        harvestLossPercentage: data.harvestLossPercentage ?? 0,
+        distanceToMarket: data.distanceToMarket ?? 0,
+        distanceToInsurer: data.distanceToInsurer ?? 0,
+        
+        // Trust scores (1-5)
+        trustFarmerGroup: data.trustFarmerGroup ?? 3,
+        trustNGO: data.trustNGO ?? 3,
+        trustInsuranceProvider: data.trustInsuranceProvider ?? 3,
+        rainfallChangePerception: data.rainfallChangePerception ?? 3,
+        insurerPayoutTrust: data.insurerPayoutTrust ?? 3,
+        
+        // String fields
+        farmerGroupName: data.farmerGroupName ?? '',
+        insuranceType: data.insuranceType ?? '',
+        
+        // Empowerment scores
+        empowermentScores: data.empowermentScores ?? {
+            cropDecisions: 3,
+            moneyDecisions: 3,
+            inputDecisions: 3,
+            opinionConsidered: 3,
+            confidenceExpressing: 3
+        },
+        
+        // Risk assessment
+        riskPreference: data.riskPreference ?? 1,
+        riskComfort: data.riskComfort ?? 3,
+        decisionMaker: data.decisionMaker ?? 3,
+        
+        // Metadata
+        createdAt: new Date().toISOString(),
+        offline: true,
+        deviceId: offlineData.deviceId
+    };
+    
+    // ✅ Get fresh data before modifying
+    offlineData = getOfflineData();
+    if (!offlineData.respondents) offlineData.respondents = [];
+    if (!offlineData.pending_sync) offlineData.pending_sync = [];
+    
+    offlineData.respondents.push(respondent);
+    
+    // ✅ Add to pending sync
+    offlineData.pending_sync.push({
+        id: generateOfflineId(),
+        type: 'respondent',
+        endpoint: endpoint,
+        method: method,
+        data: respondent,
+        timestamp: new Date().toISOString(),
+        synced: false,
+        syncedAt: null
+    });
+    
+    saveOfflineData(offlineData);
+    
+    console.log('✅ Respondent created offline:', respondentId, 'Treatment:', treatmentGroup);
+    console.log('📤 Added to pending_sync. Total pending:', offlineData.pending_sync.length);
+    
+    return respondent;
+}
+
+
     // ===== SESSION START =====
-  // ===== SESSION START =====
+ // ===== SESSION START =====
 if (endpoint.includes('/session/start') && method === 'POST') {
     const sessionId = generateOfflineId().replace('OFFLINE_', 'OFFLINE_SESSION_');
     
@@ -271,6 +373,8 @@ if (endpoint.includes('/session/start') && method === 'POST') {
     
     return session;
 }
+
+
     
     // ===== ROUND SAVE =====
     if (endpoint.includes('/round/save') && method === 'POST') {
@@ -592,8 +696,6 @@ function rebuildIdMappings() {
 
 // Sync offline data to server
 // Sync offline data to server
-// ===== REVISED SYNC FUNCTION WITH PROPER DEPENDENCY HANDLING =====
-// ===== REVERT TO SIMPLER WORKING SYNC FUNCTION =====
 async function syncOfflineData() {
     if (!isOnline()) {
         console.log('📴 Cannot sync - still offline');
@@ -615,62 +717,64 @@ async function syncOfflineData() {
         errors: []
     };
     
-    // ✅ Build ID mappings as we go
-    const idMappings = {
-        respondents: {},
-        sessions: {}
-    };
+    // ✅ CRITICAL: Rebuild ID mappings from previously synced items
+    const idMappings = rebuildIdMappings();
     
-    // Sort by timestamp only
-    const sortedItems = offlineData.pending_sync
-        .filter(item => !item.synced)
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    const sortedItems = offlineData.pending_sync.sort((a, b) => 
+        new Date(a.timestamp) - new Date(b.timestamp)
+    );
     
     for (const item of sortedItems) {
+        if (item.synced) continue;
+        
         try {
-            // ✅ Use the data as-is, just update IDs if they exist in mapping
-            const dataToSend = { ...item.data };
+            // ✅ Clean data before sending
+            const cleanData = prepareDataForSync(item.data, item.type, idMappings);
             
-            // Only map IDs if they've already been synced
-            if (dataToSend.respondentId && idMappings.respondents[dataToSend.respondentId]) {
-                dataToSend.respondentId = idMappings.respondents[dataToSend.respondentId];
-            }
-            
-            if (dataToSend.sessionId && idMappings.sessions[dataToSend.sessionId]) {
-                dataToSend.sessionId = idMappings.sessions[dataToSend.sessionId];
-            }
-            
-            // Handle session_complete endpoint mapping
+            // ✅ Map endpoint URLs for session_complete
             let endpoint = item.endpoint;
             if (item.type === 'session_complete') {
-                const sessionMatch = endpoint.match(/session\/([^/]+)\/complete/);
-                if (sessionMatch && idMappings.sessions[sessionMatch[1]]) {
-                    endpoint = endpoint.replace(sessionMatch[1], idMappings.sessions[sessionMatch[1]]);
+                const offlineSessionMatch = endpoint.match(/session\/(OFFLINE_SESSION_[^/]+)/);
+                if (offlineSessionMatch && offlineSessionMatch[1]) {
+                    const offlineSessionId = offlineSessionMatch[1];
+                    const mappedSessionId = idMappings.sessions[offlineSessionId];
+                    
+                    if (mappedSessionId) {
+                        endpoint = endpoint.replace(offlineSessionId, mappedSessionId);
+                        console.log('✅ Mapped endpoint:', item.endpoint, '→', endpoint);
+                    } else {
+                        console.warn('⚠️ No session mapping found for:', offlineSessionId);
+                    }
                 }
             }
             
             const fullUrl = `${API_BASE}${endpoint}`;
+            
             console.log(`📤 Syncing ${item.type} to: ${fullUrl}`);
             
             const response = await fetch(fullUrl, {
                 method: item.method,
                 headers: { 
                     'Content-Type': 'application/json',
-                    'X-Offline-Sync': 'true'
+                    'X-Offline-Sync': 'true',
+                    'X-Device-Id': offlineData.deviceId
                 },
-                body: JSON.stringify(dataToSend)
+                body: JSON.stringify(cleanData)
             });
             
             if (response.ok) {
                 const serverResponse = await response.json();
                 
-                // Store mappings for next items
-                if (item.type === 'respondent' && item.data._id && serverResponse.data?._id) {
+                // ✅ Store server response for rebuilding mappings later
+                item.serverResponse = serverResponse.data;
+                
+                // ✅ Store ID mappings for subsequent requests
+                if (item.type === 'respondent' && serverResponse.data) {
                     idMappings.respondents[item.data._id] = serverResponse.data._id;
                     console.log('✅ Mapped respondent:', item.data._id, '→', serverResponse.data._id);
                 }
                 
-                if (item.type === 'session' && item.data.sessionId && serverResponse.data?.sessionId) {
+                if (item.type === 'session' && serverResponse.data) {
                     idMappings.sessions[item.data.sessionId] = serverResponse.data.sessionId;
                     console.log('✅ Mapped session:', item.data.sessionId, '→', serverResponse.data.sessionId);
                 }
@@ -698,7 +802,8 @@ async function syncOfflineData() {
         }
     }
     
-    // Save progress
+    // Remove synced items and save
+    offlineData.pending_sync = offlineData.pending_sync.filter(item => !item.synced);
     offlineData.lastSyncAttempt = new Date().toISOString();
     saveOfflineData(offlineData);
     
@@ -711,8 +816,6 @@ async function syncOfflineData() {
     console.log('🔄 Sync complete:', results);
     return { success: true, results };
 }
-
-
 
 
 
