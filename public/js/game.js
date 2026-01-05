@@ -6754,41 +6754,45 @@ if (empForm) {
     }
 
     // ===== PERCEPTION FORM =====
-    const perceptionForm = document.getElementById('perceptionForm');
-    if (perceptionForm) {
-        perceptionForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            showLoading();
+const perceptionForm = document.getElementById('perceptionForm');
+if (perceptionForm) {
+    perceptionForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showLoading();
+        
+        try {
+            const formData = new FormData(e.target);
             
-            try {
-                const formData = new FormData(e.target);
-                
-                const perceptionData = {
-                    sessionId: gameState.sessionId,
-                    bundleInfluence: parseInt(formData.get('bundleInfluence')),
-                    insuranceUnderstanding: parseInt(formData.get('insuranceUnderstanding')),
-                    willingnessToPay: formData.get('willingnessToPay') === 'yes',
-                    recommendToOthers: parseInt(formData.get('recommendToOthers')),
-                    perceivedFairness: parseInt(formData.get('perceivedFairness')),
-                    trustInPayout: parseInt(formData.get('trustInPayout')),
-                    bundleValuePerception: parseInt(formData.get('bundleValuePerception')),
-                    futureUseLikelihood: parseInt(formData.get('futureUseLikelihood'))
-                };
-                
-                await apiCall('/perception/submit', 'POST', perceptionData);
-                
-                console.log('✅ Perception data submitted');
-                
-                showLoading(false);
-                await showResults();
-                
-            } catch (error) {
-                showLoading(false);
-                console.error('Perception form error:', error);
-                alert('Error submitting perception data: ' + error.message);
-            }
-        });
-    }
+            const perceptionData = {
+                respondentId: gameState.respondentId,  // ✅ ADD THIS LINE
+                sessionId: gameState.sessionId,
+                householdId: gameState.householdId,    // ✅ This was already there
+                bundleInfluence: parseInt(formData.get('bundleInfluence')),
+                insuranceUnderstanding: parseInt(formData.get('insuranceUnderstanding')),
+                willingnessToPay: formData.get('willingnessToPay') === 'yes',
+                recommendToOthers: parseInt(formData.get('recommendToOthers')),
+                perceivedFairness: parseInt(formData.get('perceivedFairness')),
+                trustInPayout: parseInt(formData.get('trustInPayout')),
+                bundleValuePerception: parseInt(formData.get('bundleValuePerception')),
+                futureUseLikelihood: parseInt(formData.get('futureUseLikelihood'))
+            };
+            
+            await apiCall('/perception/submit', 'POST', perceptionData);
+            
+            console.log('✅ Perception data submitted');
+            
+            showLoading(false);
+            await showResults();
+            
+        } catch (error) {
+            showLoading(false);
+            console.error('Perception form error:', error);
+            alert('Error submitting perception data: ' + error.message);
+        }
+    });
+}
+
+
 
     // ===== SECOND PARTNER BUTTONS =====
     const startSecondBtn = document.getElementById('startSecondPartnerBtn');
