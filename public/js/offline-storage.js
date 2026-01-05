@@ -190,123 +190,24 @@ if (endpoint.includes('/respondent/create') && method === 'POST') {
     const respondentId = generateOfflineId();
     const treatmentGroup = assignTreatmentOffline();
     
-    // ✅ Build respondent with explicit defaults for ALL required fields
+    // ✅ SIMPLIFIED: Just use the data as-is since frontend now sends everything
     const respondent = {
+        ...data,  // All demographic fields from frontend
         _id: respondentId,
         treatmentGroup: treatmentGroup,
-        
-        // Basic info (spread data but with fallbacks)
-        householdId: data.householdId,
-        communityName: data.communityName,
-        enumeratorName: data.enumeratorName,
-        gender: data.gender,
-        role: data.role,
-        age: data.age,
-        education: data.education,
-        language: data.language || 'english',
-        
-        // ✅ Required fields with EXPLICIT defaults (not undefined)
-        householdSize: data.householdSize ?? 1,
-        childrenUnder15: data.childrenUnder15 ?? 0,
-        yearsOfFarming: data.yearsOfFarming ?? 0,
-        landCultivated: data.landCultivated ?? 0,
-        landAccessMethod: data.landAccessMethod ?? 1,
-        landAccessOther: data.landAccessOther ?? '',
-        numberOfCropsPlanted: data.numberOfCropsPlanted ?? 1,
-        lastSeasonIncome: data.lastSeasonIncome ?? 0,
-        farmingInputExpenditure: data.farmingInputExpenditure ?? 0,
-        
-        // Arrays
-        mainCrops: data.mainCrops ?? [],
-        borrowSources: data.borrowSources ?? [],
-        
-        // Objects
-        assets: data.assets ?? {
-            radio: false,
-            tv: false,
-            refrigerator: false,
-            bicycle: false,
-            motorbike: false,
-            mobilePhone: false,
-            generator: false,
-            plough: false
-        },
-        livestock: data.livestock ?? {
-            cattle: 0,
-            goats: 0,
-            sheep: 0,
-            poultry: 0
-        },
-        improvedInputs: data.improvedInputs ?? {
-            certifiedSeed: false,
-            fertilizer: false,
-            pesticides: false,
-            irrigation: false
-        },
-        shocks: data.shocks ?? {
-            drought: false,
-            flood: false,
-            pestsDisease: false,
-            cropPriceFall: false
-        },
-        
-        // Boolean fields (explicitly convert)
-        hasIrrigationAccess: data.hasIrrigationAccess === true,
-        hasSavings: data.hasSavings === true,
-        borrowedMoney: data.borrowedMoney === true,
-        hasOffFarmIncome: data.hasOffFarmIncome === true,
-        priorInsuranceKnowledge: data.priorInsuranceKnowledge === true,
-        purchasedInsuranceBefore: data.purchasedInsuranceBefore === true,
-        memberOfFarmerGroup: data.memberOfFarmerGroup === true,
-        usesMobileMoney: data.usesMobileMoney === true,
-        
-        // Numeric fields with defaults
-        savingsAmount: data.savingsAmount ?? 0,
-        offFarmIncomeAmount: data.offFarmIncomeAmount ?? 0,
-        estimatedLossLastYear: data.estimatedLossLastYear ?? 0,
-        harvestLossPercentage: data.harvestLossPercentage ?? 0,
-        distanceToMarket: data.distanceToMarket ?? 0,
-        distanceToInsurer: data.distanceToInsurer ?? 0,
-        
-        // Trust scores (1-5)
-        trustFarmerGroup: data.trustFarmerGroup ?? 3,
-        trustNGO: data.trustNGO ?? 3,
-        trustInsuranceProvider: data.trustInsuranceProvider ?? 3,
-        rainfallChangePerception: data.rainfallChangePerception ?? 3,
-        insurerPayoutTrust: data.insurerPayoutTrust ?? 3,
-        
-        // String fields
-        farmerGroupName: data.farmerGroupName ?? '',
-        insuranceType: data.insuranceType ?? '',
-        
-        // Empowerment scores
-        empowermentScores: data.empowermentScores ?? {
-            cropDecisions: 3,
-            moneyDecisions: 3,
-            inputDecisions: 3,
-            opinionConsidered: 3,
-            confidenceExpressing: 3
-        },
-        
-        // Risk assessment
-        riskPreference: data.riskPreference ?? 1,
-        riskComfort: data.riskComfort ?? 3,
-        decisionMaker: data.decisionMaker ?? 3,
-        
-        // Metadata
         createdAt: new Date().toISOString(),
         offline: true,
         deviceId: offlineData.deviceId
     };
     
-    // ✅ Get fresh data before modifying
+    // Get fresh data before modifying
     offlineData = getOfflineData();
     if (!offlineData.respondents) offlineData.respondents = [];
     if (!offlineData.pending_sync) offlineData.pending_sync = [];
     
     offlineData.respondents.push(respondent);
     
-    // ✅ Add to pending sync
+    // Add to pending sync
     offlineData.pending_sync.push({
         id: generateOfflineId(),
         type: 'respondent',
