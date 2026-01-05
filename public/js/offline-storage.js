@@ -59,6 +59,31 @@ function initializeOfflineStorage() {
     }
 }
 
+
+
+
+// ===== PERMANENT ID MAPPING STORAGE =====
+function saveIdMapping(type, offlineId, serverId) {
+    const mappings = JSON.parse(localStorage.getItem('offline_id_mappings') || '{}');
+    
+    if (!mappings[type]) mappings[type] = {};
+    mappings[type][offlineId] = serverId;
+    
+    localStorage.setItem('offline_id_mappings', JSON.stringify(mappings));
+    console.log(`💾 Saved ${type} mapping: ${offlineId.substring(0, 30)}... → ${serverId}`);
+}
+
+function getIdMappings() {
+    return JSON.parse(localStorage.getItem('offline_id_mappings') || '{"respondents": {}, "sessions": {}}');
+}
+
+function clearIdMappings() {
+    localStorage.removeItem('offline_id_mappings');
+    console.log('🗑️ Cleared ID mappings');
+}
+
+
+
 // Get offline data
 function getOfflineData() {
     const data = localStorage.getItem(OFFLINE_STORAGE_KEY);
@@ -568,30 +593,38 @@ if (endpoint.includes('/session/start') && method === 'POST') {
 
 // ===== REBUILD ID MAPPINGS FROM SYNCED DATA =====
 function rebuildIdMappings() {
-    const offlineData = getOfflineData();
-    const mappings = {
-        respondents: {},
-        sessions: {}
-    };
+    // Start with permanent mappings
+    const mappings = getIdMappings();
     
-    // Look through all synced items to rebuild mappings
-    if (offlineData.pending_sync) {
+    console.log('🗺️ Loading permanent mappings:', {
+        respondents: Object.keys(mappings.respondents).length,
+        sessions: Object.keys(mappings.sessions).length
+    });
+    
+    // Also check pending_sync for any new mappings
+    const offlineData = getOfflineData();
+    if (offlineData && offlineData.pending_sync) {
         offlineData.pending_sync.forEach(item => {
-            // Only process already-synced items
             if (item.synced && item.serverResponse) {
-                if (item.type === 'respondent' && item.data._id) {
+                if (item.type === 'respondent' && item.data._id && item.serverResponse._id) {
                     mappings.respondents[item.data._id] = item.serverResponse._id;
                 }
-                if (item.type === 'session' && item.data.sessionId) {
+                if (item.type === 'session' && item.data.sessionId && item.serverResponse.sessionId) {
                     mappings.sessions[item.data.sessionId] = item.serverResponse.sessionId;
                 }
             }
         });
     }
     
-    console.log('🔄 Rebuilt ID mappings:', mappings);
+    console.log('🔄 Total ID mappings:', {
+        respondents: Object.keys(mappings.respondents).length,
+        sessions: Object.keys(mappings.sessions).length
+    });
+    
     return mappings;
 }
+
+
 
 
 
@@ -763,16 +796,18 @@ async function syncOfflineData() {
                 item.serverResponse = serverResponse.data || serverResponse;
                 
                 // ✅ CRITICAL: Store ID mappings for subsequent requests
-                if (item.type === 'respondent' && serverResponse.data) {
-                    const offlineId = item.data._id;
-                    const serverId = serverResponse.data._id;
-                    
-                    if (offlineId && serverId) {
-                        idMappings.respondents[offlineId] = serverId;
-                        console.log('✅ Mapped respondent:', offlineId, '→', serverId);
-                    }
-                }
-                
+               if (item.type === 'respondent' && serverResponse.data) {
+    const offlineId = item.data._id;
+    const serverId = serverResponse.data._id;
+    
+    if (offlineId && serverId) {
+        idMappings.respondents[offlineId] = serverId;
+        saveIdMapping('respondents', offlineId, serverId); // ✅ ADD THIS LINE
+        console.log('✅ Mapped respondent:', offlineId, '→', serverId);
+    }
+}
+
+
                 if (item.type === 'session' && serverResponse.data) {
                     const offlineSessionId = item.data.sessionId;
                     const serverSessionId = serverResponse.data.sessionId;
@@ -1049,6 +1084,7 @@ function clearOfflineData() {
 initializeOfflineStorage();
 
 // Export functions for use in game.js
+// Export functions for use in game.js
 window.offlineStorage = {
     isOnline,
     handleOfflineStorage,
@@ -1056,7 +1092,8 @@ window.offlineStorage = {
     getSyncStatus,
     exportOfflineData,
     clearOfflineData,
-    initializeOfflineStorage
+    initializeOfflineStorage,
+    clearIdMappings  // ✅ ADD THIS
 };
 
 console.log('✅ Offline storage system loaded');
