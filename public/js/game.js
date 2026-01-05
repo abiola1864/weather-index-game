@@ -102,6 +102,7 @@ function saveGameProgress() {
     // 2. Restore game state on page load
 // ===== RESTORE GAME STATE ON PAGE LOAD =====
 // ===== RESTORE GAME STATE ON PAGE LOAD =====
+// ===== RESTORE GAME STATE ON PAGE LOAD =====
 function restoreGameProgress() {
     const saved = sessionStorage.getItem('game_progress');
     if (saved) {
@@ -274,7 +275,17 @@ function restoreGameProgress() {
             showToast('⚠️ Could not restore session. Starting fresh.', 'warning');
         }
     }
+    
+    // ✅ NEW: Re-enable all submit buttons after restore
+    setTimeout(() => {
+        document.querySelectorAll('button[type="submit"]').forEach(btn => {
+            btn.disabled = false;
+        });
+        console.log('✅ All submit buttons re-enabled after restore');
+    }, 200);
 }
+
+
 
 
 
@@ -1290,7 +1301,6 @@ async function apiCall(endpoint, method = 'GET', data = null) {
 
 
 
-
 function showScreen(screenId) {
     console.log('🖥️ showScreen called:', screenId);
     console.log('📍 From:', gameState.currentScreen, '→ To:', screenId);
@@ -1344,7 +1354,23 @@ function showScreen(screenId) {
     
     // Save progress
     saveGameProgress();
+    
+    // ✅ NEW: Re-enable all submit buttons on the newly shown screen
+    setTimeout(() => {
+        const screen = document.getElementById(screenId);
+        if (screen) {
+            const buttons = screen.querySelectorAll('button[type="submit"]');
+            buttons.forEach(btn => {
+                btn.disabled = false;
+            });
+            if (buttons.length > 0) {
+                console.log(`✅ Re-enabled ${buttons.length} submit button(s) on ${screenId}`);
+            }
+        }
+    }, 150);
 }
+
+
 
 
 
@@ -2348,6 +2374,8 @@ function showSecondPartnerPrompt() {
 
 
 
+
+
 function startSecondPartner() {
     console.log('🔄 Starting second partner...');
     
@@ -2447,8 +2475,16 @@ function startSecondPartner() {
         treatmentGroup: gameState.treatmentGroup
     });
     
-    // Clear all forms
-    document.querySelectorAll('form').forEach(form => form.reset());
+    // ===== NEW: Clear all forms AND re-enable buttons =====
+    document.querySelectorAll('form').forEach(form => {
+        form.reset();
+        // ✅ Explicitly re-enable submit buttons
+        const submitBtns = form.querySelectorAll('button[type="submit"]');
+        submitBtns.forEach(btn => {
+            btn.disabled = false;
+        });
+    });
+    console.log('✅ All forms reset and buttons enabled for second partner');
     
     // Reset progress
     currentDemoPage = 1;
@@ -2589,7 +2625,7 @@ function startSecondPartner() {
         
         console.log('✅ Added hidden fields for all household data');
         
-        // ===== STEP 3: DISABLE AND HIDE VISIBLE ENUMERATOR/COMMUNITY/HOUSEHOLD ASSET FIELDS =====
+        // ===== STEP 3: DISABLE AND HIDE VISIBLE ENUMERATOR/COMMUNITY FIELDS =====
         const communitySelect = document.getElementById('communityName');
         const enumeratorSelect = document.getElementById('enumeratorName');
 
@@ -2606,20 +2642,6 @@ function startSecondPartner() {
             const formGroup = enumeratorSelect.closest('.form-group');
             if (formGroup) formGroup.style.display = 'none';
         }
-        
-        // ✅ FIX 1: HIDE HOUSEHOLD ASSETS PAGE (Page 3) for second partner
-//         const page3 = document.getElementById('demoPage3');
-//         const page6 = document.getElementById('demoPage6');
-//         if (page3) {
-//             page3.style.display = 'none';
-//             console.log('✅ Hidden household assets page (Page 3) for second partner');
-//         }
-
-//         if (page6) {
-//     page6.style.display = 'none';
-//     page6.setAttribute('data-skip', 'true');
-//     console.log('✅ Marked Page 6 (Livestock) for skipping');
-// }
         
         // ===== STEP 4: ADD NOTICE BOX =====
         const page1 = document.getElementById('demoPage1');
@@ -2649,10 +2671,23 @@ function startSecondPartner() {
         // ===== STEP 5: SETUP ROLE GUIDANCE =====
         updateSecondPartnerGuidance();
         
+        // ===== STEP 6: Re-enable all buttons after form setup =====
+        setTimeout(() => {
+            document.querySelectorAll('form').forEach(form => {
+                const submitBtns = form.querySelectorAll('button[type="submit"]');
+                submitBtns.forEach(btn => {
+                    btn.disabled = false;
+                });
+            });
+            console.log('✅ All submit buttons re-enabled after second partner form setup');
+        }, 100);
+        
         console.log('✅ Second partner form setup complete');
         
     }, 200);
 }
+
+
 
 
 
