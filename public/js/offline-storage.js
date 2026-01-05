@@ -593,6 +593,7 @@ function rebuildIdMappings() {
 // Sync offline data to server
 // Sync offline data to server
 // ===== REVISED SYNC FUNCTION WITH PROPER DEPENDENCY HANDLING =====
+// ===== REVERT TO SIMPLER WORKING SYNC FUNCTION =====
 async function syncOfflineData() {
     if (!isOnline()) {
         console.log('📴 Cannot sync - still offline');
@@ -614,140 +615,78 @@ async function syncOfflineData() {
         errors: []
     };
     
-    // ✅ CRITICAL: Start with fresh ID mappings
+    // ✅ Build ID mappings as we go
     const idMappings = {
         respondents: {},
         sessions: {}
     };
     
-    // ✅ Sort by dependency order: respondent → session → round → knowledge → session_complete
-    const typeOrder = {
-        'respondent': 1,
-        'session': 2,
-        'round': 3,
-        'knowledge': 4,
-        'perception': 5,
-        'coupleInfo': 6,
-        'session_complete': 7
-    };
-    
+    // Sort by timestamp only
     const sortedItems = offlineData.pending_sync
-        .filter(item => !item.synced) // Only unsynced items
-        .sort((a, b) => {
-            // Sort by type order first, then by timestamp
-            const typeA = typeOrder[a.type] || 999;
-            const typeB = typeOrder[b.type] || 999;
-            if (typeA !== typeB) return typeA - typeB;
-            return new Date(a.timestamp) - new Date(b.timestamp);
-        });
-    
-    console.log('📋 Sync order:', sortedItems.map(i => i.type));
+        .filter(item => !item.synced)
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
     
     for (const item of sortedItems) {
         try {
-            console.log(`\n🔄 Processing ${item.type}...`);
+            // ✅ Use the data as-is, just update IDs if they exist in mapping
+            const dataToSend = { ...item.data };
             
-            // ✅ Prepare data with current mappings
-            const cleanData = prepareDataForSync(item.data, item.type, idMappings);
-            
-            // ✅ CRITICAL: Check if dependencies are mapped
-            if (item.type !== 'respondent') {
-                // Check if respondentId is properly mapped
-                if (cleanData.respondentId && cleanData.respondentId.startsWith('OFFLINE_')) {
-                    console.error('❌ Cannot sync - respondent not yet synced:', cleanData.respondentId);
-                    results.failed++;
-                    results.errors.push({
-                        item: item.type,
-                        error: 'Respondent not synced yet - will retry on next sync'
-                    });
-                    continue; // Skip this item for now
-                }
+            // Only map IDs if they've already been synced
+            if (dataToSend.respondentId && idMappings.respondents[dataToSend.respondentId]) {
+                dataToSend.respondentId = idMappings.respondents[dataToSend.respondentId];
             }
             
-            if (item.type !== 'respondent' && item.type !== 'session') {
-                // Check if sessionId is properly mapped
-                if (cleanData.sessionId && cleanData.sessionId.startsWith('OFFLINE_')) {
-                    console.error('❌ Cannot sync - session not yet synced:', cleanData.sessionId);
-                    results.failed++;
-                    results.errors.push({
-                        item: item.type,
-                        error: 'Session not synced yet - will retry on next sync'
-                    });
-                    continue; // Skip this item for now
-                }
+            if (dataToSend.sessionId && idMappings.sessions[dataToSend.sessionId]) {
+                dataToSend.sessionId = idMappings.sessions[dataToSend.sessionId];
             }
             
-            // ✅ Map endpoint URLs for session_complete
+            // Handle session_complete endpoint mapping
             let endpoint = item.endpoint;
             if (item.type === 'session_complete') {
-                const offlineSessionMatch = endpoint.match(/session\/(OFFLINE_SESSION_[^/]+)/);
-                if (offlineSessionMatch && offlineSessionMatch[1]) {
-                    const offlineSessionId = offlineSessionMatch[1];
-                    const mappedSessionId = idMappings.sessions[offlineSessionId];
-                    
-                    if (mappedSessionId) {
-                        endpoint = endpoint.replace(offlineSessionId, mappedSessionId);
-                        console.log('✅ Mapped endpoint:', item.endpoint, '→', endpoint);
-                    } else {
-                        console.error('❌ Cannot sync session_complete - no session mapping');
-                        results.failed++;
-                        results.errors.push({
-                            item: item.type,
-                            error: 'Session not synced yet - will retry on next sync'
-                        });
-                        continue;
-                    }
+                const sessionMatch = endpoint.match(/session\/([^/]+)\/complete/);
+                if (sessionMatch && idMappings.sessions[sessionMatch[1]]) {
+                    endpoint = endpoint.replace(sessionMatch[1], idMappings.sessions[sessionMatch[1]]);
                 }
             }
             
             const fullUrl = `${API_BASE}${endpoint}`;
-            
             console.log(`📤 Syncing ${item.type} to: ${fullUrl}`);
-            console.log('📦 Data:', cleanData);
             
             const response = await fetch(fullUrl, {
                 method: item.method,
                 headers: { 
                     'Content-Type': 'application/json',
-                    'X-Offline-Sync': 'true',
-                    'X-Device-Id': offlineData.deviceId
+                    'X-Offline-Sync': 'true'
                 },
-                body: JSON.stringify(cleanData)
+                body: JSON.stringify(dataToSend)
             });
             
-            const responseText = await response.text();
-            let serverResponse;
-            try {
-                serverResponse = JSON.parse(responseText);
-            } catch (e) {
-                console.error('❌ Invalid JSON response:', responseText);
-                throw new Error(`Invalid response: ${responseText.substring(0, 100)}`);
-            }
-            
             if (response.ok) {
-                // ✅ Store ID mappings for subsequent requests
-                if (item.type === 'respondent' && serverResponse.data && serverResponse.data._id) {
+                const serverResponse = await response.json();
+                
+                // Store mappings for next items
+                if (item.type === 'respondent' && item.data._id && serverResponse.data?._id) {
                     idMappings.respondents[item.data._id] = serverResponse.data._id;
                     console.log('✅ Mapped respondent:', item.data._id, '→', serverResponse.data._id);
                 }
                 
-                if (item.type === 'session' && serverResponse.data && serverResponse.data.sessionId) {
+                if (item.type === 'session' && item.data.sessionId && serverResponse.data?.sessionId) {
                     idMappings.sessions[item.data.sessionId] = serverResponse.data.sessionId;
                     console.log('✅ Mapped session:', item.data.sessionId, '→', serverResponse.data.sessionId);
                 }
                 
                 item.synced = true;
                 item.syncedAt = new Date().toISOString();
-                item.serverResponse = serverResponse.data;
                 results.successful++;
                 console.log('✅ Synced:', item.type, item.id);
             } else {
+                const errorText = await response.text();
                 results.failed++;
                 results.errors.push({
                     item: item.type,
-                    error: `HTTP ${response.status}: ${JSON.stringify(serverResponse)}`
+                    error: `HTTP ${response.status}: ${errorText}`
                 });
-                console.error('❌ Sync failed:', item.type, response.status, serverResponse);
+                console.error('❌ Sync failed:', item.type, response.status, errorText);
             }
         } catch (error) {
             results.failed++;
@@ -759,7 +698,7 @@ async function syncOfflineData() {
         }
     }
     
-    // ✅ Save progress after each sync attempt
+    // Save progress
     offlineData.lastSyncAttempt = new Date().toISOString();
     saveOfflineData(offlineData);
     
@@ -770,14 +709,9 @@ async function syncOfflineData() {
     localStorage.setItem(SYNC_STATUS_KEY, JSON.stringify(syncStatus));
     
     console.log('🔄 Sync complete:', results);
-    
-    // ✅ If some items failed due to dependencies, suggest retrying
-    if (results.failed > 0 && results.successful > 0) {
-        console.log('ℹ️ Some items synced successfully. Retry sync to upload remaining items.');
-    }
-    
     return { success: true, results };
 }
+
 
 
 
