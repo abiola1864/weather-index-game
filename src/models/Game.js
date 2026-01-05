@@ -440,7 +440,7 @@ const gameSessionSchema = new mongoose.Schema({
     unique: true
   },
   respondentId: {
-    type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed,
     ref: 'Respondent',
     required: true
   },

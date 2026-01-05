@@ -696,6 +696,7 @@ function rebuildIdMappings() {
 
 // Sync offline data to server
 // Sync offline data to server
+// ===== SYNC OFFLINE DATA TO SERVER - COMPLETE REVISED VERSION =====
 async function syncOfflineData() {
     if (!isOnline()) {
         console.log('📴 Cannot sync - still offline');
@@ -714,25 +715,100 @@ async function syncOfflineData() {
         total: offlineData.pending_sync.length,
         successful: 0,
         failed: 0,
+        skipped: 0,
         errors: []
     };
     
     // ✅ CRITICAL: Rebuild ID mappings from previously synced items
     const idMappings = rebuildIdMappings();
+    console.log('🗺️ ID Mappings:', {
+        respondents: Object.keys(idMappings.respondents).length,
+        sessions: Object.keys(idMappings.sessions).length
+    });
     
-    const sortedItems = offlineData.pending_sync.sort((a, b) => 
-        new Date(a.timestamp) - new Date(b.timestamp)
-    );
+    // ✅ Sort items by type priority and timestamp
+    const sortedItems = offlineData.pending_sync.sort((a, b) => {
+        // Priority order: respondent → session → round → knowledge → perception → coupleInfo
+        const typePriority = {
+            'respondent': 1,
+            'session': 2,
+            'round': 3,
+            'knowledge': 4,
+            'perception': 5,
+            'coupleInfo': 6,
+            'session_complete': 7
+        };
+        
+        const aPriority = typePriority[a.type] || 99;
+        const bPriority = typePriority[b.type] || 99;
+        
+        if (aPriority !== bPriority) {
+            return aPriority - bPriority;
+        }
+        
+        // Same type - sort by timestamp
+        return new Date(a.timestamp) - new Date(b.timestamp);
+    });
     
+    console.log('📋 Sync order:', sortedItems.map(item => item.type).join(' → '));
+    
+    // ===== SYNC LOOP =====
     for (const item of sortedItems) {
-        if (item.synced) continue;
+        if (item.synced) {
+            console.log(`⏭️ Already synced: ${item.type}`);
+            continue;
+        }
+        
+        console.log('');
+        console.log(`📤 Syncing ${item.type} (${item.id})...`);
         
         try {
-            // ✅ Clean data before sending
-            const cleanData = prepareDataForSync(item.data, item.type, idMappings);
+            // ✅ STEP 1: Prepare data for sync
+            let cleanData;
             
-            // ✅ Map endpoint URLs for session_complete
+            try {
+                cleanData = prepareDataForSync(item.data, item.type, idMappings);
+            } catch (prepError) {
+                // ✅ Preparation failed (e.g., unmapped IDs)
+                console.warn(`⏭️ Skipping ${item.type} - ${prepError.message}`);
+                results.skipped++;
+                continue; // Skip this item, will retry on next sync
+            }
+            
+            // ✅ STEP 2: Additional validation for specific types
+            if (item.type === 'round') {
+                if (!cleanData.respondentId || !cleanData.sessionId) {
+                    console.warn(`⏭️ Skipping round ${cleanData.roundNumber} - missing required IDs`, {
+                        hasRespondentId: !!cleanData.respondentId,
+                        hasSessionId: !!cleanData.sessionId,
+                        originalRespondentId: item.data.respondentId,
+                        originalSessionId: item.data.sessionId
+                    });
+                    results.skipped++;
+                    continue;
+                }
+            }
+            
+            if (item.type === 'knowledge' || item.type === 'perception') {
+                if (!cleanData.respondentId || !cleanData.sessionId) {
+                    console.warn(`⏭️ Skipping ${item.type} - missing required IDs`);
+                    results.skipped++;
+                    continue;
+                }
+            }
+            
+            if (item.type === 'session_complete') {
+                if (!cleanData.sessionId) {
+                    console.warn(`⏭️ Skipping session_complete - missing sessionId`);
+                    results.skipped++;
+                    continue;
+                }
+            }
+            
+            // ✅ STEP 3: Build endpoint URL
             let endpoint = item.endpoint;
+            
+            // Map endpoint URLs for session_complete
             if (item.type === 'session_complete') {
                 const offlineSessionMatch = endpoint.match(/session\/(OFFLINE_SESSION_[^/]+)/);
                 if (offlineSessionMatch && offlineSessionMatch[1]) {
@@ -744,14 +820,23 @@ async function syncOfflineData() {
                         console.log('✅ Mapped endpoint:', item.endpoint, '→', endpoint);
                     } else {
                         console.warn('⚠️ No session mapping found for:', offlineSessionId);
+                        results.skipped++;
+                        continue;
                     }
                 }
             }
             
             const fullUrl = `${API_BASE}${endpoint}`;
             
-            console.log(`📤 Syncing ${item.type} to: ${fullUrl}`);
+            console.log(`📍 URL: ${fullUrl}`);
+            console.log(`📦 Data:`, {
+                type: item.type,
+                hasRespondentId: !!cleanData.respondentId,
+                hasSessionId: !!cleanData.sessionId,
+                dataKeys: Object.keys(cleanData).slice(0, 10) // First 10 keys
+            });
             
+            // ✅ STEP 4: Make API request
             const response = await fetch(fullUrl, {
                 method: item.method,
                 headers: { 
@@ -762,96 +847,214 @@ async function syncOfflineData() {
                 body: JSON.stringify(cleanData)
             });
             
+            console.log(`📡 Response: ${response.status} ${response.statusText}`);
+            
+            // ✅ STEP 5: Handle response
             if (response.ok) {
                 const serverResponse = await response.json();
                 
-                // ✅ Store server response for rebuilding mappings later
-                item.serverResponse = serverResponse.data;
+                console.log('✅ Success:', {
+                    type: item.type,
+                    status: response.status
+                });
                 
-                // ✅ Store ID mappings for subsequent requests
+                // ✅ Store server response for rebuilding mappings
+                item.serverResponse = serverResponse.data || serverResponse;
+                
+                // ✅ CRITICAL: Store ID mappings for subsequent requests
                 if (item.type === 'respondent' && serverResponse.data) {
-                    idMappings.respondents[item.data._id] = serverResponse.data._id;
-                    console.log('✅ Mapped respondent:', item.data._id, '→', serverResponse.data._id);
+                    const offlineId = item.data._id;
+                    const serverId = serverResponse.data._id;
+                    
+                    if (offlineId && serverId) {
+                        idMappings.respondents[offlineId] = serverId;
+                        console.log('✅ Mapped respondent:', offlineId, '→', serverId);
+                    }
                 }
                 
                 if (item.type === 'session' && serverResponse.data) {
-                    idMappings.sessions[item.data.sessionId] = serverResponse.data.sessionId;
-                    console.log('✅ Mapped session:', item.data.sessionId, '→', serverResponse.data.sessionId);
+                    const offlineSessionId = item.data.sessionId;
+                    const serverSessionId = serverResponse.data.sessionId;
+                    
+                    if (offlineSessionId && serverSessionId) {
+                        idMappings.sessions[offlineSessionId] = serverSessionId;
+                        console.log('✅ Mapped session:', offlineSessionId, '→', serverSessionId);
+                    }
                 }
                 
+                // Mark as synced
                 item.synced = true;
                 item.syncedAt = new Date().toISOString();
                 results.successful++;
-                console.log('✅ Synced:', item.type, item.id);
+                
             } else {
-                const errorText = await response.text();
+                // ✅ STEP 6: Handle errors
+                let errorText;
+                try {
+                    const errorJson = await response.json();
+                    errorText = errorJson.message || errorJson.error || JSON.stringify(errorJson);
+                } catch {
+                    errorText = await response.text();
+                }
+                
                 results.failed++;
                 results.errors.push({
                     item: item.type,
-                    error: `HTTP ${response.status}: ${errorText}`
+                    id: item.id,
+                    status: response.status,
+                    error: errorText
                 });
-                console.error('❌ Sync failed:', item.type, response.status, errorText);
+                
+                console.error('❌ Sync failed:', {
+                    type: item.type,
+                    status: response.status,
+                    error: errorText
+                });
+                
+                // ✅ For 400 errors with ObjectId validation, skip permanently
+                if (response.status === 400 && errorText.includes('Cast to ObjectId failed')) {
+                    console.error('🚫 Permanently skipping due to ObjectId validation error');
+                    item.synced = true; // Mark as synced to prevent retry
+                    item.syncError = errorText;
+                }
             }
+            
         } catch (error) {
             results.failed++;
             results.errors.push({
                 item: item.type,
+                id: item.id,
                 error: error.message
             });
-            console.error('❌ Sync error:', item.type, error);
+            console.error('❌ Sync exception:', {
+                type: item.type,
+                error: error.message,
+                stack: error.stack
+            });
         }
     }
     
-    // Remove synced items and save
+    // ✅ STEP 7: Save updated sync status
+    // Remove successfully synced items
     offlineData.pending_sync = offlineData.pending_sync.filter(item => !item.synced);
     offlineData.lastSyncAttempt = new Date().toISOString();
     saveOfflineData(offlineData);
     
+    // Save sync status
     const syncStatus = {
         lastSync: new Date().toISOString(),
         results: results
     };
     localStorage.setItem(SYNC_STATUS_KEY, JSON.stringify(syncStatus));
     
-    console.log('🔄 Sync complete:', results);
-    return { success: true, results };
+    // ✅ STEP 8: Log results
+    console.log('');
+    console.log('🔄 ========================================');
+    console.log('🔄 SYNC COMPLETE');
+    console.log('🔄 ========================================');
+    console.log('📊 Results:', {
+        total: results.total,
+        successful: results.successful,
+        failed: results.failed,
+        skipped: results.skipped,
+        remaining: offlineData.pending_sync.length
+    });
+    
+    if (results.errors.length > 0) {
+        console.log('');
+        console.log('❌ Errors:');
+        results.errors.forEach((err, i) => {
+            console.log(`  ${i + 1}. ${err.item}:`, err.error);
+        });
+    }
+    
+    if (results.skipped > 0) {
+        console.log('');
+        console.log(`⏭️ ${results.skipped} items skipped - will retry on next sync`);
+    }
+    
+    console.log('🔄 ========================================');
+    console.log('');
+    
+    return { 
+        success: true, 
+        results: results,
+        remainingItems: offlineData.pending_sync.length
+    };
 }
+
+
 
 
 
 // ✅ NEW FUNCTION: Prepare data for sync
+// ✅ COMPLETE REVISED FUNCTION: Prepare data for sync
 function prepareDataForSync(data, type, idMappings) {
     const cleanData = { ...data };
     
-    // Remove offline-generated IDs (let server generate proper MongoDB ObjectIds)
-    if (cleanData._id && cleanData._id.startsWith('OFFLINE_')) {
+    console.log(`🧹 Preparing ${type} for sync...`);
+    
+    // ===== STEP 1: Remove offline-generated _id =====
+    if (cleanData._id && cleanData._id.toString().startsWith('OFFLINE_')) {
+        console.log(`  🗑️ Removing offline _id: ${cleanData._id}`);
         delete cleanData._id;
     }
     
-    // Map offline respondent IDs to server IDs
-    if (cleanData.respondentId && cleanData.respondentId.startsWith('OFFLINE_')) {
-        if (idMappings.respondents[cleanData.respondentId]) {
-            cleanData.respondentId = idMappings.respondents[cleanData.respondentId];
-        } else {
-            console.warn('⚠️ No mapping found for respondentId:', cleanData.respondentId);
+    // ===== STEP 2: Handle respondentId =====
+    if (cleanData.respondentId) {
+        const respId = cleanData.respondentId.toString();
+        
+        if (respId.startsWith('OFFLINE_')) {
+            // Check if we have a mapping
+            if (idMappings.respondents[respId]) {
+                cleanData.respondentId = idMappings.respondents[respId];
+                console.log(`  ✅ Mapped respondentId: ${respId.substring(0, 20)}... → ${cleanData.respondentId}`);
+            } else {
+                // NO MAPPING - This item can't be synced yet
+                console.log(`  ⚠️ No mapping for respondentId: ${respId.substring(0, 30)}...`);
+                
+                if (type === 'round' || type === 'knowledge' || type === 'perception') {
+                    throw new Error(`${type} requires respondent to be synced first`);
+                }
+                
+                // For other types, remove the field
+                delete cleanData.respondentId;
+            }
         }
     }
     
-    // Map offline session IDs to server IDs
-    if (cleanData.sessionId && cleanData.sessionId.startsWith('OFFLINE_')) {
-        if (idMappings.sessions[cleanData.sessionId]) {
-            cleanData.sessionId = idMappings.sessions[cleanData.sessionId];
-        } else {
-            console.warn('⚠️ No mapping found for sessionId:', cleanData.sessionId);
+    // ===== STEP 3: Handle sessionId =====
+    if (cleanData.sessionId) {
+        const sessId = cleanData.sessionId.toString();
+        
+        if (sessId.startsWith('OFFLINE_')) {
+            if (idMappings.sessions[sessId]) {
+                cleanData.sessionId = idMappings.sessions[sessId];
+                console.log(`  ✅ Mapped sessionId: ${sessId.substring(0, 30)}... → ${cleanData.sessionId}`);
+            } else {
+                console.log(`  ⚠️ No mapping for sessionId: ${sessId.substring(0, 30)}...`);
+                
+                if (type === 'round' || type === 'knowledge' || type === 'perception' || type === 'session_complete') {
+                    throw new Error(`${type} requires session to be synced first`);
+                }
+                
+                delete cleanData.sessionId;
+            }
         }
     }
     
-    // Remove offline and deviceId flags before sending to server
+    // ===== STEP 4: Remove offline metadata =====
     delete cleanData.offline;
     delete cleanData.deviceId;
+    delete cleanData.savedAt;
+    
+    console.log(`  ✅ Cleaned ${type} ready for sync`);
     
     return cleanData;
 }
+
+
+
 
 
 
