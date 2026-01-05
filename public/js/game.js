@@ -1683,6 +1683,8 @@ function loadSeason(seasonNumber) {
     const intensity = ROUND_INTENSITY[seasonNumber];
     
     console.log(`Loading Season ${seasonNumber}`);
+    console.log('Current gameState.sessionType:', gameState.sessionType);
+    console.log('Current gameState.role:', gameState.role);
     
     const gameScreen = document.getElementById('gameScreen');
     gameScreen.classList.remove('intensity-low', 'intensity-medium', 'intensity-high');
@@ -1712,15 +1714,24 @@ function loadSeason(seasonNumber) {
         budgetLabel.textContent = t('game.budget');
     }
     
-    // Session type text
-    let sessionTypeText = t('game.individualPlay');
-    if (gameState.sessionType === 'individual_husband') {
-        sessionTypeText = t('game.husbandPlaying');
-    } else if (gameState.sessionType === 'individual_wife') {
-        sessionTypeText = t('game.wifePlaying');
-    } else if (gameState.sessionType === 'couple_joint') {
+    // ✅ FIX: Determine session type text based on role and session type
+    let sessionTypeText;
+    
+    if (gameState.sessionType === 'couple_joint') {
         sessionTypeText = t('game.couplePlaying');
+    } else {
+        // For individual sessions, check role
+        if (gameState.role === 'husband') {
+            sessionTypeText = t('game.husbandPlaying');
+        } else if (gameState.role === 'wife') {
+            sessionTypeText = t('game.wifePlaying');
+        } else {
+            // Fallback
+            sessionTypeText = t('game.individualPlay');
+        }
     }
+    
+    console.log('✅ Session type text:', sessionTypeText);
     document.getElementById('roundContext').textContent = sessionTypeText;
     
     // Update allocate title
