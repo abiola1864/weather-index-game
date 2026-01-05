@@ -632,6 +632,9 @@ function rebuildIdMappings() {
 // Sync offline data to server
 // ===== SYNC OFFLINE DATA TO SERVER - COMPLETE REVISED VERSION =====
 async function syncOfflineData() {
+        // ✅ FIX: Use stable check
+    const isOnline = await isStablyOnline();
+    
     if (!isOnline()) {
         console.log('📴 Cannot sync - still offline');
         return { success: false, message: 'Still offline' };
