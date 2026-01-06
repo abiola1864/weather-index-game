@@ -20,6 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "@google-cloud/text-to-speech": "^6.4.0",
+    "archiver": "^7.0.1",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",

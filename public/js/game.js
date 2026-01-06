@@ -1470,6 +1470,7 @@ function initializeTutorial() {
 }
 
 
+// Update generateTutorialCards function
 function generateTutorialCards() {
     const cardStack = document.getElementById('tutorialCardStack');
     if (!cardStack) return;
@@ -1492,6 +1493,9 @@ function generateTutorialCards() {
         
         cardEl.innerHTML = `
             <div class="tutorial-card-icon">${card.icon}</div>
+            <button class="audio-btn" onclick="playTutorialAudio('${gameState.treatmentGroup}', '${gameState.language}', ${card.id}); event.stopPropagation();" aria-label="Play audio">
+                <i class="fas fa-volume-up"></i>
+            </button>
             <h2 class="tutorial-card-title">${card.title}</h2>
             <p class="tutorial-card-content">${card.content}</p>
             ${timerHTML}
@@ -1500,6 +1504,9 @@ function generateTutorialCards() {
         cardStack.appendChild(cardEl);
     });
 }
+
+
+
 
 function updateTutorialCardPositions() {
     const cards = document.querySelectorAll('.tutorial-card-enhanced');
@@ -1537,7 +1544,17 @@ function updateTutorialCardPositions() {
     }
 }
 
+
+
+
 function nextTutorialCard() {
+    // ✅ STOP CURRENT AUDIO BEFORE MOVING
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+    }
+    
     if (tutorialTimerInterval) {
         clearInterval(tutorialTimerInterval);
         tutorialTimerInterval = null;
@@ -1561,6 +1578,13 @@ function nextTutorialCard() {
 }
 
 function previousTutorialCard() {
+    // ✅ STOP CURRENT AUDIO BEFORE MOVING
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+    }
+    
     if (tutorialTimerInterval) {
         clearInterval(tutorialTimerInterval);
         tutorialTimerInterval = null;
@@ -1582,6 +1606,10 @@ function previousTutorialCard() {
         window.tutorialAnimating = false;
     }
 }
+
+
+
+
 
 function startTutorialTimer() {
     if (tutorialTimerInterval) {
@@ -3650,8 +3678,6 @@ function handleSwipe() {
 // ===== UPDATED updateLanguage FUNCTION - COMPLETE FIX =====
 function updateLanguage(language) {
     console.log('🌍 Changing language to:', language);
-    console.log('📋 Current gameState.language:', gameState.language);
-    console.log('📚 TRANSLATIONS available for:', Object.keys(TRANSLATIONS));
     
     gameState.language = language;
     
@@ -3660,12 +3686,6 @@ function updateLanguage(language) {
     if (currentLangEl) {
         currentLangEl.textContent = language === 'english' ? 'English' : 'Dagbani';
     }
-    
-    // ✅ ADD THIS DEBUG CODE
-    console.log('🔍 Testing translation:');
-    console.log('  welcome.title (EN):', TRANSLATIONS.english.welcome.title);
-    console.log('  welcome.title (Dagbani):', TRANSLATIONS.dagbani.welcome.title);
-    console.log('  t("welcome.title"):', t('welcome.title'));
     
     // Update all data-translate attributes globally
     const elements = document.querySelectorAll('[data-translate]');
@@ -3676,9 +3696,6 @@ function updateLanguage(language) {
         const key = el.getAttribute('data-translate');
         const translation = t(key);
         
-        console.log(`  Translating: ${key} → "${translation}"`); // ✅ ADD THIS
-        
-        // ... rest of the forEach
         if (translation && translation !== key) {
             if (el.tagName === 'BUTTON') {
                 const span = el.querySelector('span');
@@ -3695,10 +3712,9 @@ function updateLanguage(language) {
     
     console.log('✅ Updated', updatedCount, 'elements');
     
-
-    // Update specific screens with complex structures
+    // Update specific screens
     updateWelcomeScreenLang();
-    updateDemographicsScreenLang(); // ✅ Use this, NOT updateExtendedDemographicsLang
+    updateDemographicsScreenLang();
     updateRiskScreenLang();
     updateEmpowermentScreenLang();
     updateKnowledgeScreenLang();
@@ -3707,17 +3723,21 @@ function updateLanguage(language) {
     updateResultsScreenLang();
     updateProgressText();
     
+    // ✅ IMPORTANT: If on tutorial screen, reload it with new language
+    if (gameState.currentScreen === 'tutorialScreen') {
+        console.log('🔄 Reloading tutorial with new language:', language);
+        initializeTutorial();
+    }
+    
     // Refresh current screen if needed
     if (gameState.currentScreen === 'gameScreen') {
         loadSeason(gameState.currentSeason);
     }
     
-    if (gameState.currentScreen === 'tutorialScreen') {
-        initializeTutorial();
-    }
-    
     console.log('✅ Language updated to:', language);
 }
+
+
 
 
 
@@ -7782,4 +7802,81 @@ function goBackFromGameAllocation() {
     }
 }
 
+
+// Audio player with error handling
+// Add this AFTER the gameState declaration
+let currentAudio = null;
+// Audio player with error handling
+
+
+function playTutorialAudio(treatment, language, cardId) {
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+    }
+    
+    // ✅ FIX: Remove "_bundle" from treatment name for audio files
+    // Audio files are named: fertilizer_english_card1.mp3 (not fertilizer_bundle_...)
+    const audioTreatment = treatment.replace('_bundle', '');
+    const audioPath = `/tutorial-audio/${audioTreatment}_${language}_card${cardId}.mp3`;
+    
+    console.log('🔊 Attempting to load audio:');
+    console.log('   Original treatment:', treatment);
+    console.log('   Audio treatment:', audioTreatment);
+    console.log('   Language:', language);
+    console.log('   Card ID:', cardId);
+    console.log('   Audio path:', audioPath);
+    console.log('   Full URL:', window.location.origin + audioPath);
+    
+    currentAudio = new Audio(audioPath);
+    
+    const currentBtn = event?.target?.closest('.audio-btn');
+    if (currentBtn) currentBtn.classList.add('playing');
+    
+    currentAudio.play()
+        .then(() => {
+            console.log('✅ Playing audio successfully!');
+        })
+        .catch(error => {
+            console.error('❌ Audio playback error:', error);
+            if (currentBtn) currentBtn.classList.remove('playing');
+            showToast('⚠️ Could not play audio', 'warning');
+        });
+    
+    currentAudio.addEventListener('ended', () => {
+        console.log('✅ Audio playback completed');
+        if (currentBtn) currentBtn.classList.remove('playing');
+    });
+    
+    currentAudio.addEventListener('error', (e) => {
+        console.error('❌ Audio error event:', e);
+        console.error('   Error code:', currentAudio.error?.code);
+        console.error('   Attempted URL:', window.location.origin + audioPath);
+        console.error('   File should exist at: public/tutorial-audio/' + audioTreatment + '_' + language + '_card' + cardId + '.mp3');
+        if (currentBtn) currentBtn.classList.remove('playing');
+    });
+}
+
+// Auto-play option when card appears
+function autoPlayCardAudio() {
+    const currentCard = tutorialCards[currentTutorialIndex];
+    if (currentCard && gameState.treatmentGroup && gameState.language) {
+        setTimeout(() => {
+            playTutorialAudio(gameState.treatmentGroup, gameState.language, currentCard.id);
+        }, 500); // Small delay for card animation
+    }
+}
+
+
+
+
+// Auto-play option when card appears
+function autoPlayCardAudio() {
+    const currentCard = tutorialCards[currentTutorialIndex];
+    if (currentCard && gameState.treatmentGroup && gameState.language) {
+        setTimeout(() => {
+            playTutorialAudio(gameState.treatmentGroup, gameState.language, currentCard.id);
+        }, 500); // Small delay for card animation
+    }
+}
 

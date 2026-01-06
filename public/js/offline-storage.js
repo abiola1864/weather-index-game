@@ -74,8 +74,26 @@ function saveIdMapping(type, offlineId, serverId) {
 }
 
 function getIdMappings() {
-    return JSON.parse(localStorage.getItem('offline_id_mappings') || '{"respondents": {}, "sessions": {}}');
+    try {
+        const stored = localStorage.getItem('offline_id_mappings');
+        const mappings = stored ? JSON.parse(stored) : null;
+        
+        // ✅ Ensure proper structure
+        if (!mappings || typeof mappings !== 'object') {
+            return { respondents: {}, sessions: {} };
+        }
+        
+        return {
+            respondents: mappings.respondents || {},
+            sessions: mappings.sessions || {}
+        };
+    } catch (error) {
+        console.error('❌ Error loading ID mappings:', error);
+        return { respondents: {}, sessions: {} };
+    }
 }
+
+
 
 function clearIdMappings() {
     localStorage.removeItem('offline_id_mappings');
@@ -592,9 +610,18 @@ if (endpoint.includes('/session/start') && method === 'POST') {
 
 
 // ===== REBUILD ID MAPPINGS FROM SYNCED DATA =====
+// ===== REBUILD ID MAPPINGS FROM SYNCED DATA =====
 function rebuildIdMappings() {
     // Start with permanent mappings
-    const mappings = getIdMappings();
+    let mappings = getIdMappings();
+    
+    // ✅ FIX: Ensure mappings has the correct structure
+    if (!mappings || typeof mappings !== 'object') {
+        mappings = { respondents: {}, sessions: {} };
+    }
+    
+    if (!mappings.respondents) mappings.respondents = {};
+    if (!mappings.sessions) mappings.sessions = {};
     
     console.log('🗺️ Loading permanent mappings:', {
         respondents: Object.keys(mappings.respondents).length,
@@ -628,14 +655,109 @@ function rebuildIdMappings() {
 
 
 
+
 // Sync offline data to server
 // Sync offline data to server
 // ===== SYNC OFFLINE DATA TO SERVER - COMPLETE REVISED VERSION =====
+
+
+// ===== VALIDATE RESPONDENT DATA =====
+function validateRespondentData(data) {
+    const errors = [];
+    
+    // Required fields
+    const required = {
+        householdId: 'string',
+        communityName: 'string',
+        enumeratorName: 'string',
+        gender: 'string',
+        role: 'string',
+        treatmentGroup: 'string'
+    };
+    
+    for (const [field, type] of Object.entries(required)) {
+        if (!data[field]) {
+            errors.push(`Missing required field: ${field}`);
+        } else if (typeof data[field] !== type) {
+            errors.push(`Invalid type for ${field}: expected ${type}, got ${typeof data[field]}`);
+        }
+    }
+    
+    // Valid enums
+    if (data.gender && !['male', 'female'].includes(data.gender)) {
+        errors.push(`Invalid gender: ${data.gender}`);
+    }
+    
+    if (data.role && !['husband', 'wife'].includes(data.role)) {
+        errors.push(`Invalid role: ${data.role}`);
+    }
+    
+    if (data.treatmentGroup && !['control', 'fertilizer_bundle', 'seedling_bundle'].includes(data.treatmentGroup)) {
+        errors.push(`Invalid treatmentGroup: ${data.treatmentGroup}`);
+    }
+    
+    return errors;
+}
+
+// ===== VALIDATE SESSION DATA =====
+function validateSessionData(data) {
+    const errors = [];
+    
+    if (!data.respondentId) {
+        errors.push('Missing respondentId');
+    }
+    
+    if (!data.sessionType) {
+        errors.push('Missing sessionType');
+    }
+    
+    return errors;
+}
+
+// ===== AUTO-FIX DATA ISSUES =====
+function autoFixData(data, type) {
+    const fixed = { ...data };
+    
+    if (type === 'respondent') {
+        // Ensure treatmentGroup exists
+        if (!fixed.treatmentGroup) {
+            fixed.treatmentGroup = 'control';
+            console.log('⚠️ Auto-fixed: Added default treatmentGroup');
+        }
+        
+        // Ensure householdId exists
+        if (!fixed.householdId) {
+            fixed.householdId = 'HH-RECOVERED-' + Date.now();
+            console.log('⚠️ Auto-fixed: Generated householdId');
+        }
+        
+        // Ensure required strings are strings
+        ['communityName', 'enumeratorName', 'gender', 'role'].forEach(field => {
+            if (fixed[field] && typeof fixed[field] !== 'string') {
+                fixed[field] = String(fixed[field]);
+                console.log(`⚠️ Auto-fixed: Converted ${field} to string`);
+            }
+        });
+        
+        // Ensure numbers are numbers
+        ['age', 'householdSize', 'childrenUnder15'].forEach(field => {
+            if (fixed[field] && typeof fixed[field] === 'string') {
+                fixed[field] = parseInt(fixed[field]) || 0;
+                console.log(`⚠️ Auto-fixed: Converted ${field} to number`);
+            }
+        });
+    }
+    
+    return fixed;
+}
+
+
+
+
+// ===== SYNC OFFLINE DATA TO SERVER - PRODUCTION-READY VERSION =====
 async function syncOfflineData() {
-        // ✅ FIX: Use stable check
-
-
-     if (!navigator.onLine) {
+    // ✅ Check online status
+    if (!navigator.onLine) {
         console.log('📴 Cannot sync - still offline');
         return { success: false, message: 'Still offline' };
     }
@@ -646,7 +768,6 @@ async function syncOfflineData() {
         return { success: true, message: 'No data to sync' };
     }
     
-    
     console.log('🔄 Starting sync...', offlineData.pending_sync.length, 'items');
     
     const results = {
@@ -654,10 +775,11 @@ async function syncOfflineData() {
         successful: 0,
         failed: 0,
         skipped: 0,
+        permanentlySkipped: 0,
         errors: []
     };
     
-    // ✅ CRITICAL: Rebuild ID mappings from previously synced items
+    // ✅ Rebuild ID mappings from previously synced items
     const idMappings = rebuildIdMappings();
     console.log('🗺️ ID Mappings:', {
         respondents: Object.keys(idMappings.respondents).length,
@@ -666,7 +788,6 @@ async function syncOfflineData() {
     
     // ✅ Sort items by type priority and timestamp
     const sortedItems = offlineData.pending_sync.sort((a, b) => {
-        // Priority order: respondent → session → round → knowledge → perception → coupleInfo
         const typePriority = {
             'respondent': 1,
             'session': 2,
@@ -684,62 +805,88 @@ async function syncOfflineData() {
             return aPriority - bPriority;
         }
         
-        // Same type - sort by timestamp
         return new Date(a.timestamp) - new Date(b.timestamp);
     });
     
     console.log('📋 Sync order:', sortedItems.map(item => item.type).join(' → '));
     
- for (const item of sortedItems) {
-    if (item.synced) {
-        console.log(`⏭️ Already synced: ${item.type}`);
-        continue;
-    }
-    
-    console.log('');
-    console.log(`📤 Syncing ${item.type} (${item.id})...`);
-    
-    try {
-        // ✅ FIX: Check online status before each item
-        if (!navigator.onLine) {
-            console.warn('📴 Lost connection during sync - stopping');
-            results.skipped++;
-            break; // Stop syncing if we lost connection
+    // ===== SYNC LOOP =====
+    for (const item of sortedItems) {
+        // Skip already synced items
+        if (item.synced && !item.syncError) {
+            console.log(`⏭️ Already synced: ${item.type}`);
+            continue;
         }
         
-        // ✅ STEP 1: Prepare data for sync
-        let cleanData;
+        // ✅ Track sync attempts
+        if (!item.syncAttempts) item.syncAttempts = 0;
+        item.syncAttempts++;
+        
+        // ✅ Permanently skip after 3 failed attempts
+        if (item.syncAttempts > 3) {
+            console.warn(`🚫 Permanently skipping ${item.type} after 3 failed attempts`);
+            item.synced = true; // Mark as synced to stop retrying
+            item.syncError = item.syncError || 'Max attempts reached';
+            results.permanentlySkipped++;
+            continue;
+        }
+        
+        console.log('');
+        console.log(`📤 Syncing ${item.type} (${item.id})... [Attempt ${item.syncAttempts}/3]`);
         
         try {
-            cleanData = prepareDataForSync(item.data, item.type, idMappings);
-        } catch (prepError) {
-            // Check if it's a missing ID error
-            if (prepError.message.includes('requires') && prepError.message.includes('first')) {
-                console.warn(`⏭️ Skipping ${item.type} - ${prepError.message}`);
+            // ✅ Check online status before each item
+            if (!navigator.onLine) {
+                console.warn('📴 Lost connection during sync - stopping');
                 results.skipped++;
-                continue;
-            } else {
-                // Other error - mark as failed
-                console.error(`❌ Preparation error: ${prepError.message}`);
+                item.syncAttempts--; // Don't count this attempt
+                break;
+            }
+            
+            // ✅ STEP 1: Prepare and validate data
+            let cleanData;
+            
+            try {
+                cleanData = prepareDataForSync(item.data, item.type, idMappings);
+            } catch (prepError) {
+                console.error(`❌ Preparation/Validation error:`, prepError.message);
+                
+                // Check if it's a dependency error (will retry later)
+                if (prepError.message.includes('requires') && prepError.message.includes('first')) {
+                    console.warn(`⏭️ Skipping ${item.type} - ${prepError.message}`);
+                    item.syncAttempts--; // Don't count as failed attempt
+                    results.skipped++;
+                    continue;
+                }
+                
+                // Validation error - count attempt
                 results.failed++;
                 results.errors.push({
                     item: item.type,
                     id: item.id,
+                    attempt: item.syncAttempts,
                     error: prepError.message
                 });
+                
+                // ✅ Permanently skip after 3 validation failures
+                if (item.syncAttempts >= 3) {
+                    console.error(`🚫 Permanently skipping after 3 validation failures`);
+                    item.synced = true;
+                    item.syncError = prepError.message;
+                    results.permanentlySkipped++;
+                }
+                
                 continue;
             }
-        }
             
             // ✅ STEP 2: Additional validation for specific types
             if (item.type === 'round') {
                 if (!cleanData.respondentId || !cleanData.sessionId) {
                     console.warn(`⏭️ Skipping round ${cleanData.roundNumber} - missing required IDs`, {
                         hasRespondentId: !!cleanData.respondentId,
-                        hasSessionId: !!cleanData.sessionId,
-                        originalRespondentId: item.data.respondentId,
-                        originalSessionId: item.data.sessionId
+                        hasSessionId: !!cleanData.sessionId
                     });
+                    item.syncAttempts--; // Don't count as failed
                     results.skipped++;
                     continue;
                 }
@@ -748,6 +895,7 @@ async function syncOfflineData() {
             if (item.type === 'knowledge' || item.type === 'perception') {
                 if (!cleanData.respondentId || !cleanData.sessionId) {
                     console.warn(`⏭️ Skipping ${item.type} - missing required IDs`);
+                    item.syncAttempts--; // Don't count as failed
                     results.skipped++;
                     continue;
                 }
@@ -756,6 +904,7 @@ async function syncOfflineData() {
             if (item.type === 'session_complete') {
                 if (!cleanData.sessionId) {
                     console.warn(`⏭️ Skipping session_complete - missing sessionId`);
+                    item.syncAttempts--; // Don't count as failed
                     results.skipped++;
                     continue;
                 }
@@ -776,6 +925,7 @@ async function syncOfflineData() {
                         console.log('✅ Mapped endpoint:', item.endpoint, '→', endpoint);
                     } else {
                         console.warn('⚠️ No session mapping found for:', offlineSessionId);
+                        item.syncAttempts--; // Don't count as failed
                         results.skipped++;
                         continue;
                     }
@@ -789,7 +939,7 @@ async function syncOfflineData() {
                 type: item.type,
                 hasRespondentId: !!cleanData.respondentId,
                 hasSessionId: !!cleanData.sessionId,
-                dataKeys: Object.keys(cleanData).slice(0, 10) // First 10 keys
+                dataKeys: Object.keys(cleanData).slice(0, 10)
             });
             
             // ✅ STEP 4: Make API request
@@ -814,35 +964,36 @@ async function syncOfflineData() {
                     status: response.status
                 });
                 
-                // ✅ Store server response for rebuilding mappings
+                // Store server response
                 item.serverResponse = serverResponse.data || serverResponse;
                 
-                // ✅ CRITICAL: Store ID mappings for subsequent requests
-               if (item.type === 'respondent' && serverResponse.data) {
-    const offlineId = item.data._id;
-    const serverId = serverResponse.data._id;
-    
-    if (offlineId && serverId) {
-        idMappings.respondents[offlineId] = serverId;
-        saveIdMapping('respondents', offlineId, serverId); // ✅ ADD THIS LINE
-        console.log('✅ Mapped respondent:', offlineId, '→', serverId);
-    }
-}
-
-
+                // ✅ Store ID mappings for subsequent requests
+                if (item.type === 'respondent' && serverResponse.data) {
+                    const offlineId = item.data._id;
+                    const serverId = serverResponse.data._id;
+                    
+                    if (offlineId && serverId) {
+                        idMappings.respondents[offlineId] = serverId;
+                        saveIdMapping('respondents', offlineId, serverId);
+                        console.log('✅ Mapped respondent:', offlineId, '→', serverId);
+                    }
+                }
+                
                 if (item.type === 'session' && serverResponse.data) {
                     const offlineSessionId = item.data.sessionId;
                     const serverSessionId = serverResponse.data.sessionId;
                     
                     if (offlineSessionId && serverSessionId) {
                         idMappings.sessions[offlineSessionId] = serverSessionId;
+                        saveIdMapping('sessions', offlineSessionId, serverSessionId);
                         console.log('✅ Mapped session:', offlineSessionId, '→', serverSessionId);
                     }
                 }
                 
-                // Mark as synced
+                // Mark as successfully synced
                 item.synced = true;
                 item.syncedAt = new Date().toISOString();
+                delete item.syncError; // Clear any previous errors
                 results.successful++;
                 
             } else {
@@ -855,46 +1006,73 @@ async function syncOfflineData() {
                     errorText = await response.text();
                 }
                 
+                console.error('❌ Sync failed:', {
+                    type: item.type,
+                    status: response.status,
+                    error: errorText,
+                    attempt: item.syncAttempts
+                });
+                
+                // Track the error
+                item.syncError = errorText;
                 results.failed++;
                 results.errors.push({
                     item: item.type,
                     id: item.id,
+                    attempt: item.syncAttempts,
                     status: response.status,
                     error: errorText
                 });
                 
-                console.error('❌ Sync failed:', {
-                    type: item.type,
-                    status: response.status,
-                    error: errorText
-                });
+                // ✅ Permanently skip certain errors
+                const permanentErrors = [
+                    'Cast to ObjectId failed',
+                    'Validation failed',
+                    'Invalid ObjectId'
+                ];
                 
-                // ✅ For 400 errors with ObjectId validation, skip permanently
-                if (response.status === 400 && errorText.includes('Cast to ObjectId failed')) {
-                    console.error('🚫 Permanently skipping due to ObjectId validation error');
-                    item.synced = true; // Mark as synced to prevent retry
-                    item.syncError = errorText;
+                const isPermanentError = permanentErrors.some(err => 
+                    errorText.includes(err)
+                );
+                
+                // If 3rd attempt OR permanent error, skip permanently
+                if (item.syncAttempts >= 3 || (isPermanentError && item.syncAttempts >= 2)) {
+                    console.error(`🚫 Permanently skipping - ${isPermanentError ? 'permanent error' : 'max attempts'}`);
+                    item.synced = true; // Mark to stop retrying
+                    results.permanentlySkipped++;
                 }
             }
             
         } catch (error) {
+            console.error('❌ Sync exception:', {
+                type: item.type,
+                error: error.message,
+                attempt: item.syncAttempts
+            });
+            
+            item.syncError = error.message;
             results.failed++;
             results.errors.push({
                 item: item.type,
                 id: item.id,
+                attempt: item.syncAttempts,
                 error: error.message
             });
-            console.error('❌ Sync exception:', {
-                type: item.type,
-                error: error.message,
-                stack: error.stack
-            });
+            
+            // Permanently skip after 3 exceptions
+            if (item.syncAttempts >= 3) {
+                console.error('🚫 Permanently skipping after 3 exceptions');
+                item.synced = true;
+                results.permanentlySkipped++;
+            }
         }
     }
     
     // ✅ STEP 7: Save updated sync status
-    // Remove successfully synced items
-    offlineData.pending_sync = offlineData.pending_sync.filter(item => !item.synced);
+    // Remove successfully synced items (but keep permanently skipped for reporting)
+    offlineData.pending_sync = offlineData.pending_sync.filter(item => 
+        !item.synced || item.syncError
+    );
     offlineData.lastSyncAttempt = new Date().toISOString();
     saveOfflineData(offlineData);
     
@@ -915,6 +1093,7 @@ async function syncOfflineData() {
         successful: results.successful,
         failed: results.failed,
         skipped: results.skipped,
+        permanentlySkipped: results.permanentlySkipped,
         remaining: offlineData.pending_sync.length
     });
     
@@ -922,13 +1101,18 @@ async function syncOfflineData() {
         console.log('');
         console.log('❌ Errors:');
         results.errors.forEach((err, i) => {
-            console.log(`  ${i + 1}. ${err.item}:`, err.error);
+            console.log(`  ${i + 1}. ${err.item} (attempt ${err.attempt}/3):`, err.error);
         });
     }
     
     if (results.skipped > 0) {
         console.log('');
         console.log(`⏭️ ${results.skipped} items skipped - will retry on next sync`);
+    }
+    
+    if (results.permanentlySkipped > 0) {
+        console.log('');
+        console.log(`🚫 ${results.permanentlySkipped} items permanently skipped (corrupted/invalid data)`);
     }
     
     console.log('🔄 ========================================');
@@ -945,43 +1129,45 @@ async function syncOfflineData() {
 
 
 
+
 // ✅ NEW FUNCTION: Prepare data for sync
 // ✅ COMPLETE REVISED FUNCTION: Prepare data for sync
+// ✅ ENHANCED: Prepare data for sync with validation
 function prepareDataForSync(data, type, idMappings) {
-    const cleanData = { ...data };
+    let cleanData = { ...data };
     
     console.log(`🧹 Preparing ${type} for sync...`);
     
-    // ===== STEP 1: Remove offline-generated _id =====
+    // ===== STEP 1: Auto-fix common issues =====
+    cleanData = autoFixData(cleanData, type);
+    
+    // ===== STEP 2: Remove offline-generated _id =====
     if (cleanData._id && cleanData._id.toString().startsWith('OFFLINE_')) {
         console.log(`  🗑️ Removing offline _id: ${cleanData._id}`);
         delete cleanData._id;
     }
     
-    // ===== STEP 2: Handle respondentId =====
+    // ===== STEP 3: Handle respondentId =====
     if (cleanData.respondentId) {
         const respId = cleanData.respondentId.toString();
         
         if (respId.startsWith('OFFLINE_')) {
-            // Check if we have a mapping
             if (idMappings.respondents[respId]) {
                 cleanData.respondentId = idMappings.respondents[respId];
                 console.log(`  ✅ Mapped respondentId: ${respId.substring(0, 20)}... → ${cleanData.respondentId}`);
             } else {
-                // NO MAPPING - This item can't be synced yet
                 console.log(`  ⚠️ No mapping for respondentId: ${respId.substring(0, 30)}...`);
                 
                 if (type === 'round' || type === 'knowledge' || type === 'perception') {
                     throw new Error(`${type} requires respondent to be synced first`);
                 }
                 
-                // For other types, remove the field
                 delete cleanData.respondentId;
             }
         }
     }
     
-    // ===== STEP 3: Handle sessionId =====
+    // ===== STEP 4: Handle sessionId =====
     if (cleanData.sessionId) {
         const sessId = cleanData.sessionId.toString();
         
@@ -1001,15 +1187,31 @@ function prepareDataForSync(data, type, idMappings) {
         }
     }
     
-    // ===== STEP 4: Remove offline metadata =====
+    // ===== STEP 5: Remove offline metadata =====
     delete cleanData.offline;
     delete cleanData.deviceId;
     delete cleanData.savedAt;
+    
+    // ===== STEP 6: Validate before returning =====
+    let validationErrors = [];
+    
+    if (type === 'respondent') {
+        validationErrors = validateRespondentData(cleanData);
+    } else if (type === 'session') {
+        validationErrors = validateSessionData(cleanData);
+    }
+    
+    if (validationErrors.length > 0) {
+        console.error(`  ❌ Validation errors:`, validationErrors);
+        throw new Error(`Validation failed: ${validationErrors.join(', ')}`);
+    }
     
     console.log(`  ✅ Cleaned ${type} ready for sync`);
     
     return cleanData;
 }
+
+
 
 
 
@@ -1023,44 +1225,290 @@ function getSyncStatus() {
     const offlineData = getOfflineData();
     const syncStatus = localStorage.getItem(SYNC_STATUS_KEY);
     
-    console.log('🔍 === getSyncStatus DEBUG ===');
-    console.log('📦 Raw offline data:', offlineData);
-    
     if (!offlineData) {
-        console.log('❌ No offline data at all');
         return {
             isOnline: isOnline(),
             pendingItems: 0,
             lastSync: syncStatus ? JSON.parse(syncStatus) : null,
-            offlineDataSize: 0
+            offlineDataSize: 0,
+            itemsAtRisk: []
         };
     }
     
     if (!offlineData.pending_sync) {
-        console.log('⚠️ No pending_sync array (initializing)');
         offlineData.pending_sync = [];
         saveOfflineData(offlineData);
     }
     
-    // ✅ CRITICAL: Count items where synced is NOT true
+    // ✅ Count unsynced items and track retry status
     const unsyncedItems = offlineData.pending_sync.filter(item => item.synced !== true);
     
-    console.log('📊 Sync Analysis:');
-    console.log('  Total items:', offlineData.pending_sync.length);
-    console.log('  Unsynced items:', unsyncedItems.length);
-    console.log('  Item details:');
-    offlineData.pending_sync.forEach((item, i) => {
-        console.log(`    ${i + 1}. ${item.type} - synced: ${item.synced} | ${item.timestamp}`);
-    });
-    console.log('🔍 === END DEBUG ===');
+    // ✅ Categorize items by retry attempts
+    const itemsAtRisk = unsyncedItems
+        .filter(item => (item.syncAttempts || 0) >= 2) // 2 or more attempts
+        .map(item => ({
+            type: item.type,
+            attempts: item.syncAttempts || 0,
+            attemptsRemaining: 3 - (item.syncAttempts || 0),
+            lastError: item.syncError || 'Unknown error',
+            timestamp: item.timestamp
+        }));
+    
+    const itemsOnFirstAttempt = unsyncedItems.filter(item => !item.syncAttempts || item.syncAttempts === 0).length;
+    const itemsOnSecondAttempt = unsyncedItems.filter(item => item.syncAttempts === 1).length;
+    const itemsOnFinalAttempt = unsyncedItems.filter(item => item.syncAttempts === 2).length;
     
     return {
         isOnline: isOnline(),
         pendingItems: unsyncedItems.length,
         lastSync: syncStatus ? JSON.parse(syncStatus) : null,
-        offlineDataSize: offlineData ? JSON.stringify(offlineData).length : 0
+        offlineDataSize: offlineData ? JSON.stringify(offlineData).length : 0,
+        
+        // ✅ NEW: Detailed attempt tracking
+        attemptBreakdown: {
+            firstAttempt: itemsOnFirstAttempt,
+            secondAttempt: itemsOnSecondAttempt,
+            finalAttempt: itemsOnFinalAttempt
+        },
+        itemsAtRisk: itemsAtRisk, // Items on 2nd or 3rd attempt
+        hasFailingItems: itemsAtRisk.length > 0
     };
 }
+
+
+
+
+// ===== ENHANCED: Show sync status with warnings =====
+function updateConnectionStatus() {
+    const status = getSyncStatus();
+    const statusDiv = document.getElementById('connection-status');
+    
+    if (!statusDiv) return;
+    
+    let html = '';
+    
+    if (status.isOnline) {
+        html = `
+            <div class="status-online">
+                <span class="status-icon">🌐</span>
+                <span>Online</span>
+            </div>
+        `;
+        
+        if (status.pendingItems > 0) {
+            html += `
+                <div class="sync-info">
+                    <div class="pending-count">
+                        📤 ${status.pendingItems} item${status.pendingItems > 1 ? 's' : ''} waiting to sync
+                    </div>
+            `;
+            
+            // ✅ SHOW WARNINGS FOR AT-RISK ITEMS
+            if (status.hasFailingItems) {
+                html += `<div class="sync-warnings">`;
+                
+                if (status.attemptBreakdown.finalAttempt > 0) {
+                    html += `
+                        <div class="warning-critical">
+                            ⚠️ <strong>${status.attemptBreakdown.finalAttempt} item${status.attemptBreakdown.finalAttempt > 1 ? 's' : ''}</strong> 
+                            on <strong>final attempt</strong> - will be lost if sync fails again!
+                        </div>
+                    `;
+                }
+                
+                if (status.attemptBreakdown.secondAttempt > 0) {
+                    html += `
+                        <div class="warning-moderate">
+                            ⚠️ ${status.attemptBreakdown.secondAttempt} item${status.attemptBreakdown.secondAttempt > 1 ? 's' : ''} 
+                            on 2nd attempt (1 retry left)
+                        </div>
+                    `;
+                }
+                
+                // Show details of at-risk items
+                html += `
+                    <details class="at-risk-details">
+                        <summary>View at-risk items (${status.itemsAtRisk.length})</summary>
+                        <ul class="risk-list">
+                `;
+                
+                status.itemsAtRisk.forEach(item => {
+                    const emoji = item.attemptsRemaining === 1 ? '🚨' : '⚠️';
+                    html += `
+                        <li>
+                            ${emoji} <strong>${item.type}</strong> - 
+                            ${item.attemptsRemaining} attempt${item.attemptsRemaining > 1 ? 's' : ''} left
+                            ${item.lastError ? `<br><small style="color: #666;">Error: ${item.lastError.substring(0, 80)}...</small>` : ''}
+                        </li>
+                    `;
+                });
+                
+                html += `
+                        </ul>
+                    </details>
+                `;
+                
+                html += `</div>`; // close sync-warnings
+            }
+            
+            html += `
+                    <button id="sync-now-btn" class="sync-button ${status.hasFailingItems ? 'urgent' : ''}">
+                        🔄 ${status.hasFailingItems ? 'Retry Sync Now' : 'Sync Now'}
+                    </button>
+                </div>
+            `;
+        }
+    } else {
+        html = `
+            <div class="status-offline">
+                <span class="status-icon">📴</span>
+                <span>Offline Mode</span>
+            </div>
+        `;
+        
+        if (status.pendingItems > 0) {
+            html += `
+                <div class="sync-info">
+                    <div class="pending-count">
+                        💾 ${status.pendingItems} item${status.pendingItems > 1 ? 's' : ''} saved locally
+                    </div>
+                    <small>Will sync automatically when back online</small>
+                </div>
+            `;
+        }
+    }
+    
+    statusDiv.innerHTML = html;
+    
+    // ✅ Add click handler for sync button
+    const syncBtn = document.getElementById('sync-now-btn');
+    if (syncBtn) {
+        syncBtn.onclick = async () => {
+            syncBtn.disabled = true;
+            syncBtn.textContent = '🔄 Syncing...';
+            
+            try {
+                const result = await window.offlineStorage.syncOfflineData();
+                
+                if (result.success) {
+                    if (result.results.failed > 0 || result.results.permanentlySkipped > 0) {
+                        alert(`⚠️ Sync completed with issues:\n\n` +
+                              `✅ Success: ${result.results.successful}\n` +
+                              `❌ Failed: ${result.results.failed}\n` +
+                              `🚫 Skipped: ${result.results.permanentlySkipped}\n\n` +
+                              `Check console for details.`);
+                    } else {
+                        alert(`✅ Sync successful! ${result.results.successful} items synced.`);
+                    }
+                } else {
+                    alert('❌ Sync failed. Check your connection and try again.');
+                }
+            } catch (error) {
+                alert('❌ Sync error: ' + error.message);
+            }
+            
+            updateConnectionStatus(); // Refresh display
+        };
+    }
+    
+    // ✅ Add CSS for warnings
+    addSyncWarningStyles();
+}
+
+
+
+// ===== ADD STYLES FOR SYNC WARNINGS =====
+function addSyncWarningStyles() {
+    if (document.getElementById('sync-warning-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'sync-warning-styles';
+    style.textContent = `
+        .sync-warnings {
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .warning-critical {
+            color: #721c24;
+            background: #f8d7da;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 5px 0;
+            border-left: 3px solid #dc3545;
+            font-size: 14px;
+        }
+        
+        .warning-moderate {
+            color: #856404;
+            background: #fff3cd;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 5px 0;
+            border-left: 3px solid #ffc107;
+            font-size: 13px;
+        }
+        
+        .at-risk-details {
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        
+        .at-risk-details summary {
+            cursor: pointer;
+            color: #856404;
+            font-weight: 500;
+            padding: 5px;
+        }
+        
+        .at-risk-details summary:hover {
+            background: rgba(0,0,0,0.05);
+            border-radius: 3px;
+        }
+        
+        .risk-list {
+            list-style: none;
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 4px;
+        }
+        
+        .risk-list li {
+            padding: 8px;
+            margin: 5px 0;
+            border-left: 2px solid #ffc107;
+            background: #fffef7;
+        }
+        
+        .sync-button.urgent {
+            background: #dc3545;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .sync-info {
+            margin-top: 10px;
+        }
+        
+        .pending-count {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+    `;
+    
+    document.head.appendChild(style);
+}
+
+
+
 
 
 
