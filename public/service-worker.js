@@ -19,8 +19,61 @@ const urlsToCache = [
     '/manifest.json',
     '/icon-192.png',
     '/icon-512.png',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+    
+    // ✅ ADD ALL AUDIO FILES HERE
+    // Control group audio (6 cards x 2 languages = 12 files)
+    '/tutorial-audio/control_english_card1.mp3',
+    '/tutorial-audio/control_english_card2.mp3',
+    '/tutorial-audio/control_english_card3.mp3',
+    '/tutorial-audio/control_english_card4.mp3',
+    '/tutorial-audio/control_english_card5.mp3',
+    '/tutorial-audio/control_english_card6.mp3',
+    '/tutorial-audio/control_dagbani_card1.mp3',
+    '/tutorial-audio/control_dagbani_card2.mp3',
+    '/tutorial-audio/control_dagbani_card3.mp3',
+    '/tutorial-audio/control_dagbani_card4.mp3',
+    '/tutorial-audio/control_dagbani_card5.mp3',
+    '/tutorial-audio/control_dagbani_card6.mp3',
+    
+    // Fertilizer bundle audio (8 cards x 2 languages = 16 files)
+    '/tutorial-audio/fertilizer_english_card1.mp3',
+    '/tutorial-audio/fertilizer_english_card2.mp3',
+    '/tutorial-audio/fertilizer_english_card3.mp3',
+    '/tutorial-audio/fertilizer_english_card4.mp3',
+    '/tutorial-audio/fertilizer_english_card5.mp3',
+    '/tutorial-audio/fertilizer_english_card6.mp3',
+    '/tutorial-audio/fertilizer_english_card7.mp3',
+    '/tutorial-audio/fertilizer_english_card8.mp3',
+    '/tutorial-audio/fertilizer_dagbani_card1.mp3',
+    '/tutorial-audio/fertilizer_dagbani_card2.mp3',
+    '/tutorial-audio/fertilizer_dagbani_card3.mp3',
+    '/tutorial-audio/fertilizer_dagbani_card4.mp3',
+    '/tutorial-audio/fertilizer_dagbani_card5.mp3',
+    '/tutorial-audio/fertilizer_dagbani_card6.mp3',
+    '/tutorial-audio/fertilizer_dagbani_card7.mp3',
+    '/tutorial-audio/fertilizer_dagbani_card8.mp3',
+    
+    // Seedling bundle audio (8 cards x 2 languages = 16 files)
+    '/tutorial-audio/seedling_english_card1.mp3',
+    '/tutorial-audio/seedling_english_card2.mp3',
+    '/tutorial-audio/seedling_english_card3.mp3',
+    '/tutorial-audio/seedling_english_card4.mp3',
+    '/tutorial-audio/seedling_english_card5.mp3',
+    '/tutorial-audio/seedling_english_card6.mp3',
+    '/tutorial-audio/seedling_english_card7.mp3',
+    '/tutorial-audio/seedling_english_card8.mp3',
+    '/tutorial-audio/seedling_dagbani_card1.mp3',
+    '/tutorial-audio/seedling_dagbani_card2.mp3',
+    '/tutorial-audio/seedling_dagbani_card3.mp3',
+    '/tutorial-audio/seedling_dagbani_card4.mp3',
+    '/tutorial-audio/seedling_dagbani_card5.mp3',
+    '/tutorial-audio/seedling_dagbani_card6.mp3',
+    '/tutorial-audio/seedling_dagbani_card7.mp3',
+    '/tutorial-audio/seedling_dagbani_card8.mp3'
 ];
+
+
 
 
 
