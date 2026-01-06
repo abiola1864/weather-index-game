@@ -3,7 +3,7 @@
 // FIXED: Prevents self-interference during install
 // ===============================================
 
-const ONE_DAY_MS = 153 * 180;
+const ONE_DAY_MS = 153 * 50;
 const CACHE_VERSION = `v4-audio-fixed-${Date.now()}`;
 const CACHE_NAME = `weather-game-${CACHE_VERSION}`;
 
@@ -67,9 +67,10 @@ const urlsToCache = [
 let isInstalling = false;
 
 // Install event - cache files
+// In service-worker.js
 self.addEventListener('install', (event) => {
     console.log('🔧 Service Worker installing...', CACHE_NAME);
-    isInstalling = true; // ✅ Set flag during installation
+    isInstalling = true;
     
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -77,40 +78,55 @@ self.addEventListener('install', (event) => {
                 console.log('📦 Starting to cache files...');
                 console.log(`📋 Total files to cache: ${urlsToCache.length}`);
                 
-                // Cache files one by one
-                return Promise.allSettled(
-                    urlsToCache.map((url, index) => {
-                        return cache.add(url)
-                            .then(() => {
-                                const filename = url.split('/').pop();
-                                console.log(`✅ [${index + 1}/${urlsToCache.length}] Cached: ${filename}`);
+                // ✅ Split into critical and non-critical files
+                const criticalFiles = urlsToCache.filter(url => !url.includes('/tutorial-audio/'));
+                const audioFiles = urlsToCache.filter(url => url.includes('/tutorial-audio/'));
+                
+                // Cache critical files first (must succeed)
+                return cache.addAll(criticalFiles)
+                    .then(() => {
+                        console.log('✅ Critical files cached');
+                        
+                        // Cache audio files (can fail individually)
+                        return Promise.allSettled(
+                            audioFiles.map((url, index) => {
+                                return cache.add(url)
+                                    .then(() => {
+                                        const filename = url.split('/').pop();
+                                        console.log(`✅ [${index + 1}/${audioFiles.length}] Cached audio: ${filename}`);
+                                    })
+                                    .catch((error) => {
+                                        console.error(`❌ [${index + 1}/${audioFiles.length}] Failed audio: ${url}`);
+                                        console.error(`   Error: ${error.message}`);
+                                        // Don't throw - let other files cache
+                                    });
                             })
-                            .catch((error) => {
-                                console.error(`❌ [${index + 1}/${urlsToCache.length}] Failed: ${url}`);
-                                console.error(`   Error: ${error.message}`);
-                            });
-                    })
-                );
+                        );
+                    });
             })
             .then((results) => {
-                isInstalling = false; // ✅ Clear flag after installation
+                isInstalling = false;
                 
-                const successful = results.filter(r => r.status === 'fulfilled').length;
-                const failed = results.filter(r => r.status === 'rejected').length;
-                
-                console.log('📊 Cache Installation Summary:');
-                console.log(`   ✅ Success: ${successful}/${urlsToCache.length}`);
-                console.log(`   ❌ Failed: ${failed}/${urlsToCache.length}`);
+                if (results) {
+                    const successful = results.filter(r => r.status === 'fulfilled').length;
+                    const failed = results.filter(r => r.status === 'rejected').length;
+                    
+                    console.log('📊 Audio Cache Summary:');
+                    console.log(`   ✅ Success: ${successful}/${urlsToCache.filter(u => u.includes('/tutorial-audio/')).length}`);
+                    console.log(`   ❌ Failed: ${failed}`);
+                }
                 
                 return self.skipWaiting();
             })
             .catch((error) => {
-                isInstalling = false; // ✅ Clear flag on error
+                isInstalling = false;
                 console.error('❌ Installation failed:', error);
                 throw error;
             })
     );
 });
+
+
 
 // Activate event - clean old caches
 self.addEventListener('activate', (event) => {
@@ -143,22 +159,48 @@ self.addEventListener('activate', (event) => {
 // ✅ IMPROVED: Fetch event - Better audio file handling
 // ✅ IMPROVED: Fetch event - Better audio file handling
 // ✅ IMPROVED: Fetch event - Better audio file handling
+// In service-worker.js - Update the fetch event
 self.addEventListener('fetch', (event) => {
-    // Skip non-GET requests
-    if (event.request.method !== 'GET') {
+    if (event.request.method !== 'GET') return;
+    if (event.request.url.includes('/api/')) return;
+    if (isInstalling) return;
+    
+    // ✅ Special handling for audio files
+    if (event.request.url.includes('/tutorial-audio/')) {
+        event.respondWith(
+            caches.match(event.request)
+                .then((cachedResponse) => {
+                    if (cachedResponse) {
+                        console.log('🎵 Serving audio from cache:', event.request.url);
+                        return cachedResponse;
+                    }
+                    
+                    // Not in cache - fetch and cache it
+                    console.log('🎵 Fetching audio and caching:', event.request.url);
+                    return fetch(event.request)
+                        .then((response) => {
+                            if (response && response.ok) {
+                                const responseToCache = response.clone();
+                                caches.open(CACHE_NAME).then((cache) => {
+                                    cache.put(event.request, responseToCache);
+                                    console.log('💾 Audio cached:', event.request.url);
+                                });
+                            }
+                            return response;
+                        })
+                        .catch((error) => {
+                            console.error('❌ Audio fetch failed:', event.request.url, error.message);
+                            return new Response('Audio file not available', {
+                                status: 503,
+                                statusText: 'Service Unavailable'
+                            });
+                        });
+                })
+        );
         return;
     }
     
-    // Skip API calls
-    if (event.request.url.includes('/api/')) {
-        return;
-    }
-    
-    // ✅ Don't intercept during installation
-    if (isInstalling) {
-        return;
-    }
-    
+    // Regular file handling
     event.respondWith(
         caches.match(event.request)
             .then((response) => {
@@ -167,12 +209,9 @@ self.addEventListener('fetch', (event) => {
                     return response;
                 }
                 
-                // Not in cache - try to fetch from network
                 console.log('🌐 Not in cache, fetching:', event.request.url);
-                
                 return fetch(event.request)
                     .then((fetchResponse) => {
-                        // Only cache successful responses
                         if (fetchResponse && fetchResponse.ok) {
                             const responseToCache = fetchResponse.clone();
                             caches.open(CACHE_NAME).then((cache) => {
@@ -184,31 +223,6 @@ self.addEventListener('fetch', (event) => {
                     })
                     .catch((error) => {
                         console.error('❌ Fetch failed:', event.request.url, error.message);
-                        
-                        // ✅ FOR AUDIO FILES: Try cache again with different variations
-                        if (event.request.url.includes('/tutorial-audio/')) {
-                            console.log('🔊 Audio fetch failed, checking cache variations...');
-                            
-                            return caches.open(CACHE_NAME).then(cache => {
-                                // Try exact match first
-                                return cache.match(event.request)
-                                    .then(cachedResponse => {
-                                        if (cachedResponse) {
-                                            console.log('✅ Found audio in cache!');
-                                            return cachedResponse;
-                                        }
-                                        
-                                        // Try without query params
-                                        const url = new URL(event.request.url);
-                                        const cleanUrl = url.origin + url.pathname;
-                                        
-                                        console.log('🔍 Trying clean URL:', cleanUrl);
-                                        return cache.match(cleanUrl);
-                                    });
-                            });
-                        }
-                        
-                        // Return offline page or error
                         return new Response('Offline - file not in cache', {
                             status: 503,
                             statusText: 'Service Unavailable'
@@ -217,6 +231,9 @@ self.addEventListener('fetch', (event) => {
             })
     );
 });
+
+
+
 
 
 

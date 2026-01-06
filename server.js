@@ -212,6 +212,30 @@ app.get('/api/health', (req, res) => {
 
 
 
+app.get('/debug/audio-files', (req, res) => {
+    const fs = require('fs');
+    const path = require('path');
+    
+    const audioDir = path.join(__dirname, 'public', 'tutorial-audio');
+    
+    try {
+        const files = fs.readdirSync(audioDir);
+        res.json({
+            audioDirectory: audioDir,
+            filesFound: files.length,
+            files: files
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: error.message,
+            audioDirectory: audioDir
+        });
+    }
+});
+
+
+
+
 // ===== GET COMMUNITIES =====
 app.get('communities', async (req, res) => {
     try {
