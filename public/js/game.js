@@ -7827,29 +7827,53 @@ let currentAudio = null;
 // Audio player with error handling
 
 
+
+
 function playTutorialAudio(treatment, language, cardId) {
     if (currentAudio) {
         currentAudio.pause();
         currentAudio.currentTime = 0;
     }
     
-    // ✅ FIX: Remove "_bundle" from treatment name for audio files
-    // Audio files are named: fertilizer_english_card1.mp3 (not fertilizer_bundle_...)
     const audioTreatment = treatment.replace('_bundle', '');
     const audioPath = `/tutorial-audio/${audioTreatment}_${language}_card${cardId}.mp3`;
     
-    console.log('🔊 Attempting to load audio:');
-    console.log('   Original treatment:', treatment);
-    console.log('   Audio treatment:', audioTreatment);
-    console.log('   Language:', language);
-    console.log('   Card ID:', cardId);
-    console.log('   Audio path:', audioPath);
-    console.log('   Full URL:', window.location.origin + audioPath);
+    console.log('🔊 Audio Request:', {
+        treatment: treatment,
+        audioTreatment: audioTreatment,
+        language: language,
+        cardId: cardId,
+        path: audioPath,
+        fullUrl: window.location.origin + audioPath,
+        online: navigator.onLine
+    });
+    
+    // ✅ FIX: Check in ALL caches (since we don't know the exact timestamp)
+    if (!navigator.onLine) {
+        caches.keys().then(cacheNames => {
+            const weatherCache = cacheNames.find(name => name.startsWith('weather-game-'));
+            if (weatherCache) {
+                caches.open(weatherCache).then(cache => {
+                    cache.match(audioPath).then(response => {
+                        if (response) {
+                            console.log('✅ Audio file IS in cache:', weatherCache);
+                        } else {
+                            console.error('❌ Audio file NOT in cache');
+                        }
+                    });
+                });
+            }
+        });
+    }
     
     currentAudio = new Audio(audioPath);
     
     const currentBtn = event?.target?.closest('.audio-btn');
     if (currentBtn) currentBtn.classList.add('playing');
+    
+    currentAudio.addEventListener('canplay', () => {
+        console.log('✅ Audio ready to play:', audioPath);
+    });
     
     currentAudio.play()
         .then(() => {
@@ -7858,43 +7882,76 @@ function playTutorialAudio(treatment, language, cardId) {
         .catch(error => {
             console.error('❌ Audio playback error:', error);
             if (currentBtn) currentBtn.classList.remove('playing');
-            showToast('⚠️ Could not play audio', 'warning');
+            showToast('⚠️ Could not play audio. File may not be cached.', 'warning');
         });
     
     currentAudio.addEventListener('ended', () => {
         console.log('✅ Audio playback completed');
         if (currentBtn) currentBtn.classList.remove('playing');
     });
+}
+
+
+
+
+
+
+// Auto-play option when card appears
+function autoPlayCardAudio() {
+    const currentCard = tutorialCards[currentTutorialIndex];
+    if (currentCard && gameState.treatmentGroup && gameState.language) {
+        setTimeout(() => {
+            playTutorialAudio(gameState.treatmentGroup, gameState.language, currentCard.id);
+        }, 500); // Small delay for card animation
+    }
+}
+
+
+
+
+// Auto-play option when card appears
+function autoPlayCardAudio() {
+    const currentCard = tutorialCards[currentTutorialIndex];
+    if (currentCard && gameState.treatmentGroup && gameState.language) {
+        setTimeout(() => {
+            playTutorialAudio(gameState.treatmentGroup, gameState.language, currentCard.id);
+        }, 500); // Small delay for card animation
+    }
+}
+
+
+
+// ===== DEBUG: Check what's in the cache =====
+async function checkCachedAudio() {
+    console.log('🔍 ========================================');
+    console.log('🔍 CHECKING CACHED AUDIO FILES');
+    console.log('🔍 ========================================');
     
-    currentAudio.addEventListener('error', (e) => {
-        console.error('❌ Audio error event:', e);
-        console.error('   Error code:', currentAudio.error?.code);
-        console.error('   Attempted URL:', window.location.origin + audioPath);
-        console.error('   File should exist at: public/tutorial-audio/' + audioTreatment + '_' + language + '_card' + cardId + '.mp3');
-        if (currentBtn) currentBtn.classList.remove('playing');
-    });
-}
-
-// Auto-play option when card appears
-function autoPlayCardAudio() {
-    const currentCard = tutorialCards[currentTutorialIndex];
-    if (currentCard && gameState.treatmentGroup && gameState.language) {
-        setTimeout(() => {
-            playTutorialAudio(gameState.treatmentGroup, gameState.language, currentCard.id);
-        }, 500); // Small delay for card animation
+    const cacheNames = await caches.keys();
+    console.log('📦 Available caches:', cacheNames);
+    
+    for (const cacheName of cacheNames) {
+        const cache = await caches.open(cacheName);
+        const requests = await cache.keys();
+        
+        console.log(`\n📦 Cache: ${cacheName}`);
+        console.log(`   Total items: ${requests.length}`);
+        
+        const audioFiles = requests.filter(req => req.url.includes('/tutorial-audio/'));
+        console.log(`   Audio files: ${audioFiles.length}`);
+        
+        if (audioFiles.length > 0) {
+            console.log('   🎵 Cached audio files:');
+            audioFiles.forEach(req => {
+                const filename = req.url.split('/').pop();
+                console.log(`      ✅ ${filename}`);
+            });
+        }
     }
+    
+    console.log('\n🔍 ========================================');
 }
 
-
-
-
-// Auto-play option when card appears
-function autoPlayCardAudio() {
-    const currentCard = tutorialCards[currentTutorialIndex];
-    if (currentCard && gameState.treatmentGroup && gameState.language) {
-        setTimeout(() => {
-            playTutorialAudio(gameState.treatmentGroup, gameState.language, currentCard.id);
-        }, 500); // Small delay for card animation
-    }
-}
+// Make it available globally
+window.checkCachedAudio = checkCachedAudio;
 

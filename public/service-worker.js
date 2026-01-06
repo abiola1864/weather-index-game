@@ -3,7 +3,7 @@
 // FIXED: Prevents self-interference during install
 // ===============================================
 
-const ONE_DAY_MS = 153 * 1690;
+const ONE_DAY_MS = 153 * 180;
 const CACHE_VERSION = `v4-audio-fixed-${Date.now()}`;
 const CACHE_NAME = `weather-game-${CACHE_VERSION}`;
 
@@ -140,6 +140,9 @@ self.addEventListener('activate', (event) => {
 });
 
 // ✅ FIXED: Fetch event - don't interfere during installation
+// ✅ IMPROVED: Fetch event - Better audio file handling
+// ✅ IMPROVED: Fetch event - Better audio file handling
+// ✅ IMPROVED: Fetch event - Better audio file handling
 self.addEventListener('fetch', (event) => {
     // Skip non-GET requests
     if (event.request.method !== 'GET') {
@@ -151,27 +154,30 @@ self.addEventListener('fetch', (event) => {
         return;
     }
     
-    // ✅ CRITICAL FIX: Don't intercept during installation
+    // ✅ Don't intercept during installation
     if (isInstalling) {
-        return; // Let requests go through normally during install
+        return;
     }
     
     event.respondWith(
         caches.match(event.request)
             .then((response) => {
                 if (response) {
-                    // Serve from cache
+                    console.log('📦 Serving from cache:', event.request.url);
                     return response;
                 }
                 
-                // Not in cache - fetch from network
+                // Not in cache - try to fetch from network
+                console.log('🌐 Not in cache, fetching:', event.request.url);
+                
                 return fetch(event.request)
                     .then((fetchResponse) => {
-                        // Cache successful responses
+                        // Only cache successful responses
                         if (fetchResponse && fetchResponse.ok) {
                             const responseToCache = fetchResponse.clone();
                             caches.open(CACHE_NAME).then((cache) => {
                                 cache.put(event.request, responseToCache);
+                                console.log('💾 Cached:', event.request.url);
                             });
                         }
                         return fetchResponse;
@@ -179,7 +185,30 @@ self.addEventListener('fetch', (event) => {
                     .catch((error) => {
                         console.error('❌ Fetch failed:', event.request.url, error.message);
                         
-                        // Return 503 only if truly offline
+                        // ✅ FOR AUDIO FILES: Try cache again with different variations
+                        if (event.request.url.includes('/tutorial-audio/')) {
+                            console.log('🔊 Audio fetch failed, checking cache variations...');
+                            
+                            return caches.open(CACHE_NAME).then(cache => {
+                                // Try exact match first
+                                return cache.match(event.request)
+                                    .then(cachedResponse => {
+                                        if (cachedResponse) {
+                                            console.log('✅ Found audio in cache!');
+                                            return cachedResponse;
+                                        }
+                                        
+                                        // Try without query params
+                                        const url = new URL(event.request.url);
+                                        const cleanUrl = url.origin + url.pathname;
+                                        
+                                        console.log('🔍 Trying clean URL:', cleanUrl);
+                                        return cache.match(cleanUrl);
+                                    });
+                            });
+                        }
+                        
+                        // Return offline page or error
                         return new Response('Offline - file not in cache', {
                             status: 503,
                             statusText: 'Service Unavailable'
@@ -188,6 +217,11 @@ self.addEventListener('fetch', (event) => {
             })
     );
 });
+
+
+
+
+
 
 // Listen for skip waiting message
 self.addEventListener('message', (event) => {
