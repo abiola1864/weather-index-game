@@ -3,9 +3,14 @@
 // FIXED: Prevents self-interference during install
 // ===============================================
 
-const ONE_DAY_MS = 153 * 50;
-const CACHE_VERSION = `v4-audio-fixed-${Date.now()}`;
+// const ONE_DAY_MS = 3 * 50;
+// const CACHE_VERSION = `v4-audio-fixed-${Date.now()}`;
+// const CACHE_NAME = `weather-game-${CACHE_VERSION}`;
+
+
+const CACHE_VERSION = 'v6-full-audio-cache'; // ✅ Change version number
 const CACHE_NAME = `weather-game-${CACHE_VERSION}`;
+
 
 const urlsToCache = [
     '/',
