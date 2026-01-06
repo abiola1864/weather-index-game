@@ -2833,6 +2833,24 @@ async function showResults() {
         console.log('Second respondentId:', gameState.secondRespondentId);
         console.log('Session type:', gameState.sessionType);
         console.log('Role:', gameState.role);
+
+          // ✅ ADD THIS: Check for pending sync first
+        const syncStatus = window.offlineStorage.getSyncStatus();
+        if (syncStatus.pendingItems > 0 && navigator.onLine) {
+            console.log('⚠️ Found pending data - syncing before showing results...');
+            
+            try {
+                await window.offlineStorage.syncOfflineData();
+                showToast('✅ Data uploaded to server', 'success');
+                // Small delay to let server process
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            } catch (syncError) {
+                console.error('❌ Sync failed:', syncError);
+                showToast('⚠️ Could not upload data. Showing local results.', 'warning');
+            }
+        }
+
+        
         
         const session = await apiCall(`/session/${gameState.sessionId}`);
         const knowledge = await apiCall(`/knowledge/${gameState.respondentId}`);

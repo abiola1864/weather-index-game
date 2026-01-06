@@ -755,6 +755,9 @@ function autoFixData(data, type) {
 
 
 // ===== SYNC OFFLINE DATA TO SERVER - PRODUCTION-READY VERSION =====
+// ===== SYNC OFFLINE DATA TO SERVER - REVISED WITH CLEANUP =====
+// Replace the existing syncOfflineData function (around line 820)
+
 async function syncOfflineData() {
     // ✅ Check online status
     if (!navigator.onLine) {
@@ -766,6 +769,32 @@ async function syncOfflineData() {
     if (!offlineData || !offlineData.pending_sync || offlineData.pending_sync.length === 0) {
         console.log('✅ No data to sync');
         return { success: true, message: 'No data to sync' };
+    }
+    
+    // ✅ NEW: Clean up orphaned rounds before syncing
+    console.log('🧹 Checking for orphaned rounds...');
+    const cleanupResult = cleanupOrphanedRounds();
+    
+    if (cleanupResult.cleaned > 0) {
+        console.log(`✅ Cleaned up ${cleanupResult.cleaned} orphaned items before sync`);
+        
+        // Reload data after cleanup
+        const updatedData = getOfflineData();
+        if (!updatedData.pending_sync || updatedData.pending_sync.length === 0) {
+            console.log('✅ All items cleaned up - nothing left to sync');
+            return { 
+                success: true, 
+                message: 'All orphaned items cleaned up',
+                results: {
+                    total: cleanupResult.cleaned,
+                    successful: 0,
+                    failed: 0,
+                    skipped: 0,
+                    permanentlySkipped: cleanupResult.cleaned,
+                    errors: []
+                }
+            };
+        }
     }
     
     console.log('🔄 Starting sync...', offlineData.pending_sync.length, 'items');
@@ -1130,6 +1159,8 @@ async function syncOfflineData() {
 
 
 
+
+
 // ✅ NEW FUNCTION: Prepare data for sync
 // ✅ COMPLETE REVISED FUNCTION: Prepare data for sync
 // ✅ ENHANCED: Prepare data for sync with validation
@@ -1222,30 +1253,64 @@ function prepareDataForSync(data, type, idMappings) {
 // Get sync status
 // offline-storage.js - Line 328const response = await fetch(`${API_BASE}/
 function getSyncStatus() {
+    // ✅ Get FRESH data every time
     const offlineData = getOfflineData();
     const syncStatus = localStorage.getItem(SYNC_STATUS_KEY);
     
+    console.log('🔍 === getSyncStatus DEBUG ===');
+    console.log('📦 Raw offline data exists:', !!offlineData);
+    
     if (!offlineData) {
+        console.log('❌ No offline data at all');
         return {
             isOnline: isOnline(),
             pendingItems: 0,
             lastSync: syncStatus ? JSON.parse(syncStatus) : null,
             offlineDataSize: 0,
-            itemsAtRisk: []
+            attemptBreakdown: { firstAttempt: 0, secondAttempt: 0, finalAttempt: 0 },
+            itemsAtRisk: [],
+            hasFailingItems: false
         };
     }
     
+    // ✅ CRITICAL: Log the raw pending_sync array
+    console.log('📊 Raw pending_sync:', offlineData.pending_sync);
+    console.log('📊 pending_sync type:', typeof offlineData.pending_sync);
+    console.log('📊 Is array?:', Array.isArray(offlineData.pending_sync));
+    
     if (!offlineData.pending_sync) {
+        console.log('⚠️ No pending_sync array (initializing)');
         offlineData.pending_sync = [];
         saveOfflineData(offlineData);
     }
     
-    // ✅ Count unsynced items and track retry status
-    const unsyncedItems = offlineData.pending_sync.filter(item => item.synced !== true);
+    // ✅ Log EVERY item in detail
+    console.log('📋 Pending sync items:', offlineData.pending_sync.length);
+    offlineData.pending_sync.forEach((item, i) => {
+        console.log(`  ${i + 1}. Type: ${item.type}`);
+        console.log(`     Synced: ${item.synced} (type: ${typeof item.synced})`);
+        console.log(`     Timestamp: ${item.timestamp}`);
+        console.log(`     Has data: ${!!item.data}`);
+        console.log(`     Endpoint: ${item.endpoint}`);
+    });
     
-    // ✅ Categorize items by retry attempts
+    // ✅ Filter unsynced items
+    const unsyncedItems = offlineData.pending_sync.filter(item => {
+        const isUnsynced = item.synced !== true;
+        console.log(`     Item ${item.type}: synced=${item.synced}, isUnsynced=${isUnsynced}`);
+        return isUnsynced;
+    });
+    
+    console.log('✅ Final count - Unsynced items:', unsyncedItems.length);
+    console.log('🔍 === END DEBUG ===');
+    
+    // Rest of your existing return logic...
+    const itemsOnFirstAttempt = unsyncedItems.filter(item => !item.syncAttempts || item.syncAttempts === 0).length;
+    const itemsOnSecondAttempt = unsyncedItems.filter(item => item.syncAttempts === 1).length;
+    const itemsOnFinalAttempt = unsyncedItems.filter(item => item.syncAttempts === 2).length;
+    
     const itemsAtRisk = unsyncedItems
-        .filter(item => (item.syncAttempts || 0) >= 2) // 2 or more attempts
+        .filter(item => (item.syncAttempts || 0) >= 2)
         .map(item => ({
             type: item.type,
             attempts: item.syncAttempts || 0,
@@ -1254,26 +1319,22 @@ function getSyncStatus() {
             timestamp: item.timestamp
         }));
     
-    const itemsOnFirstAttempt = unsyncedItems.filter(item => !item.syncAttempts || item.syncAttempts === 0).length;
-    const itemsOnSecondAttempt = unsyncedItems.filter(item => item.syncAttempts === 1).length;
-    const itemsOnFinalAttempt = unsyncedItems.filter(item => item.syncAttempts === 2).length;
-    
     return {
         isOnline: isOnline(),
         pendingItems: unsyncedItems.length,
         lastSync: syncStatus ? JSON.parse(syncStatus) : null,
-        offlineDataSize: offlineData ? JSON.stringify(offlineData).length : 0,
-        
-        // ✅ NEW: Detailed attempt tracking
+        offlineDataSize: JSON.stringify(offlineData).length,
         attemptBreakdown: {
             firstAttempt: itemsOnFirstAttempt,
             secondAttempt: itemsOnSecondAttempt,
             finalAttempt: itemsOnFinalAttempt
         },
-        itemsAtRisk: itemsAtRisk, // Items on 2nd or 3rd attempt
+        itemsAtRisk: itemsAtRisk,
         hasFailingItems: itemsAtRisk.length > 0
     };
 }
+
+
 
 
 
@@ -1555,16 +1616,8 @@ initializeOfflineStorage();
 
 // Export functions for use in game.js
 // Export functions for use in game.js
-window.offlineStorage = {
-    isOnline,
-    handleOfflineStorage,
-    syncOfflineData,
-    getSyncStatus,
-    exportOfflineData,
-    clearOfflineData,
-    initializeOfflineStorage,
-    clearIdMappings  // ✅ ADD THIS
-};
+
+
 
 console.log('✅ Offline storage system loaded');
 
@@ -1612,3 +1665,101 @@ async function isStablyOnline() {
 }
 
 // Use this instead of navigator.onLine in critical places
+
+
+// ===== CLEAN UP ORPHANED ROUNDS =====
+// Add this function to offline-storage.js (around line 800, before syncOfflineData)
+
+function cleanupOrphanedRounds() {
+    console.log('🧹 Starting orphaned rounds cleanup...');
+    
+    const offlineData = getOfflineData();
+    if (!offlineData || !offlineData.pending_sync) {
+        console.log('❌ No offline data found');
+        return { cleaned: 0, message: 'No offline data' };
+    }
+    
+    const idMappings = getIdMappings();
+    
+    // Find all permanently failed sessions (synced=true but has syncError)
+    const failedSessions = offlineData.pending_sync
+        .filter(item => 
+            item.type === 'session' && 
+            item.synced === true && 
+            item.syncError
+        )
+        .map(item => item.data.sessionId);
+    
+    console.log('📋 Found', failedSessions.length, 'permanently failed sessions:', failedSessions);
+    
+    // Find rounds that reference failed or unmapped sessions
+    let cleanedCount = 0;
+    let skippedItems = [];
+    
+    offlineData.pending_sync.forEach((item, index) => {
+        if (item.type === 'round' && item.synced !== true) {
+            const roundSessionId = item.data.sessionId;
+            
+            // Check if this round's session failed
+            const sessionFailed = failedSessions.includes(roundSessionId);
+            
+            // Check if session ID is offline and has no mapping
+            const sessionNotMapped = roundSessionId?.startsWith('OFFLINE_') && 
+                                   !idMappings.sessions[roundSessionId];
+            
+            if (sessionFailed || sessionNotMapped) {
+                console.log(`🗑️ Marking orphaned round as skipped:`);
+                console.log(`   Round ID: ${item.id}`);
+                console.log(`   Session ID: ${roundSessionId}`);
+                console.log(`   Reason: ${sessionFailed ? 'Session failed' : 'Session not mapped'}`);
+                
+                // Mark as permanently skipped
+                item.synced = true;
+                item.syncError = sessionFailed 
+                    ? 'Parent session failed to sync' 
+                    : 'Parent session not found in mappings';
+                item.syncAttempts = 999; // High number to indicate cleanup
+                
+                skippedItems.push({
+                    roundId: item.id,
+                    sessionId: roundSessionId,
+                    reason: item.syncError
+                });
+                
+                cleanedCount++;
+            }
+        }
+    });
+    
+    // Save changes if any cleanup occurred
+    if (cleanedCount > 0) {
+        saveOfflineData(offlineData);
+        console.log(`✅ Cleaned up ${cleanedCount} orphaned rounds`);
+        console.log('📊 Skipped items:', skippedItems);
+    } else {
+        console.log('✅ No orphaned rounds found');
+    }
+    
+    return {
+        cleaned: cleanedCount,
+        skippedItems: skippedItems,
+        failedSessions: failedSessions
+    };
+}
+
+
+
+window.offlineStorage = {
+    isOnline,
+    handleOfflineStorage,
+    syncOfflineData,
+    getSyncStatus,
+    exportOfflineData,
+    clearOfflineData,
+    initializeOfflineStorage,
+    clearIdMappings,
+    cleanupOrphanedRounds  // ✅ NEW: Add cleanup function
+};
+
+console.log('✅ Offline storage system loaded with cleanup support');
+
