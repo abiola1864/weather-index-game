@@ -8,7 +8,7 @@
 // const CACHE_NAME = `weather-game-${CACHE_VERSION}`;
 
 
-const CACHE_VERSION = 'v6-full-audio-cache'; // ✅ Change version number
+const CACHE_VERSION = 'v7-full-audio-cache'; // ✅ Change version number
 const CACHE_NAME = `weather-game-${CACHE_VERSION}`;
 
 
@@ -80,47 +80,64 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                console.log('📦 Starting to cache files...');
-                console.log(`📋 Total files to cache: ${urlsToCache.length}`);
+                console.log('📦 Caching files...');
                 
-                // ✅ Split into critical and non-critical files
-                const criticalFiles = urlsToCache.filter(url => !url.includes('/tutorial-audio/'));
-                const audioFiles = urlsToCache.filter(url => url.includes('/tutorial-audio/'));
+                const criticalFiles = urlsToCache.filter(url => 
+                    !url.includes('/tutorial-audio/')
+                );
+                const audioFiles = urlsToCache.filter(url => 
+                    url.includes('/tutorial-audio/')
+                );
                 
-                // Cache critical files first (must succeed)
+                // Cache critical files first
                 return cache.addAll(criticalFiles)
                     .then(() => {
                         console.log('✅ Critical files cached');
                         
-                        // Cache audio files (can fail individually)
-                        return Promise.allSettled(
-                            audioFiles.map((url, index) => {
-                                return cache.add(url)
-                                    .then(() => {
-                                        const filename = url.split('/').pop();
-                                        console.log(`✅ [${index + 1}/${audioFiles.length}] Cached audio: ${filename}`);
-                                    })
-                                    .catch((error) => {
-                                        console.error(`❌ [${index + 1}/${audioFiles.length}] Failed audio: ${url}`);
-                                        console.error(`   Error: ${error.message}`);
-                                        // Don't throw - let other files cache
-                                    });
-                            })
-                        );
+                        // Cache audio files with retries
+                        let successCount = 0;
+                        let failCount = 0;
+                        const failedFiles = [];
+                        
+                        const cacheAudio = (url, retries = 3) => {
+                            return fetch(url)
+                                .then(response => {
+                                    if (response.ok) {
+                                        return cache.put(url, response).then(() => {
+                                            successCount++;
+                                            console.log(`✅ [${successCount}/${audioFiles.length}] ${url.split('/').pop()}`);
+                                        });
+                                    } else {
+                                        throw new Error(`HTTP ${response.status}`);
+                                    }
+                                })
+                                .catch((error) => {
+                                    if (retries > 0) {
+                                        console.log(`⚠️ Retry ${4-retries}/3: ${url.split('/').pop()}`);
+                                        return new Promise(resolve => setTimeout(resolve, 1000))
+                                            .then(() => cacheAudio(url, retries - 1));
+                                    } else {
+                                        failCount++;
+                                        failedFiles.push(url.split('/').pop());
+                                        console.error(`❌ [${successCount + failCount}/${audioFiles.length}] ${url.split('/').pop()} - ${error.message}`);
+                                    }
+                                });
+                        };
+                        
+                        return Promise.allSettled(audioFiles.map(url => cacheAudio(url)))
+                            .then(() => {
+                                console.log('📊 Audio Cache Summary:');
+                                console.log(`   ✅ Success: ${successCount}/${audioFiles.length}`);
+                                console.log(`   ❌ Failed: ${failCount}/${audioFiles.length}`);
+                                if (failedFiles.length > 0) {
+                                    console.log('   Failed files:', failedFiles);
+                                }
+                            });
                     });
             })
-            .then((results) => {
+            .then(() => {
                 isInstalling = false;
-                
-                if (results) {
-                    const successful = results.filter(r => r.status === 'fulfilled').length;
-                    const failed = results.filter(r => r.status === 'rejected').length;
-                    
-                    console.log('📊 Audio Cache Summary:');
-                    console.log(`   ✅ Success: ${successful}/${urlsToCache.filter(u => u.includes('/tutorial-audio/')).length}`);
-                    console.log(`   ❌ Failed: ${failed}`);
-                }
-                
+                console.log('✅ Service Worker installed:', CACHE_NAME);
                 return self.skipWaiting();
             })
             .catch((error) => {
@@ -130,6 +147,7 @@ self.addEventListener('install', (event) => {
             })
     );
 });
+
 
 
 
