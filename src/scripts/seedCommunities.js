@@ -2,19 +2,18 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 const { CommunityAssignment } = require('../models/Game');
 
-// ===== ACTUAL STUDY COMMUNITIES (30 communities across 3 districts) =====
+
+// ===== ACTUAL STUDY COMMUNITIES (30 communities across 2 municipals) =====
 const communities = {
-  'Tolon': [
-    'Kpalsabogu', 'Nyankpala', 'Wantugu', 'Voggu', 'Kpendua', 
-    'Gbullung', 'Zangbalun', 'Lingbunga', 'Kpalbusi', 'Wayamba', 'Yoggu'
+  'Savelugu Municipal': [
+    'Duko', 'Kanshegu', 'Nyoglo', 'Libga', 'Zaazi', 
+    'Moglaa', 'Langa', 'Yilikpani', 'Savelugu', 'Tarikpaa',
+    'Gushei', 'Naabogu', 'Pong-Tamale', 'Kpong', 'Dipali',
+    'Diare', 'Gbanga', 'Tigla', 'Dinga', 'Kadia'
   ],
-  'Kumbungu': [
-    'Tuunayili', 'Kpalguni', 'Kumbuyili', 'Gbulung', 'Kasuliyili', 
-    'Kpanvo', 'Tindan', 'Gbulahagu', 'Kpalguni II'
-  ],
-  'Gushegu': [
-    'Zantani', 'Kpanshegu', 'Nabogo', 'Tampion', 'Nanton', 
-    'Kpatinga', 'Nakpanduri', 'Zakpalsi', 'Kpachi', 'Gushegu'
+  'Nanton Municipal': [
+    'Zoggu', 'Zokuga', 'Nyolugu', 'Jegun', 'Tigu',
+    'Nyarigiyili', 'Nanton-Kurugu', 'Damdu', 'Sindigu', 'Sandu'
   ]
 };
 
@@ -37,15 +36,17 @@ async function seedCommunities() {
     await CommunityAssignment.deleteMany({});
     console.log('🗑️  Cleared existing community assignments');
     
-    // Combine all communities with their districts
+    // Combine all communities with their municipals
     const allCommunities = [];
-    for (const [district, communityList] of Object.entries(communities)) {
+    for (const [municipal, communityList] of Object.entries(communities)) {
       for (const community of communityList) {
-        allCommunities.push({ name: community, district: district });
+        allCommunities.push({ name: community, district: municipal });
       }
     }
     
     console.log(`\n📋 Total communities: ${allCommunities.length}`);
+    console.log(`   - Savelugu Municipal: 20 communities`);
+    console.log(`   - Nanton Municipal: 10 communities`);
     
     // Randomly shuffle all communities
     const shuffled = shuffleArray(allCommunities);
@@ -62,7 +63,7 @@ async function seedCommunities() {
         communityName: community.name,
         district: community.district,
         treatmentGroup: treatment,
-        targetHouseholds: 10, // ~10 households per community = 100 per treatment
+        targetHouseholds: 10, // 10 households per community
         completedHouseholds: 0
       });
     });
@@ -78,14 +79,38 @@ async function seedCommunities() {
       const totalTarget = communitiesInTreatment.reduce((sum, c) => sum + c.targetHouseholds, 0);
       
       console.log(`\n${treatment.toUpperCase()}: ${count} communities (Target: ${totalTarget} respondents)`);
-      console.log('  Communities:');
-      communitiesInTreatment.forEach(c => {
-        console.log(`    - ${c.communityName} (${c.district})`);
-      });
+      
+      // Group by municipal
+      const bySavelugu = communitiesInTreatment.filter(c => c.district === 'Savelugu Municipal');
+      const byNanton = communitiesInTreatment.filter(c => c.district === 'Nanton Municipal');
+      
+      if (bySavelugu.length > 0) {
+        console.log('  Savelugu Municipal:');
+        bySavelugu.forEach(c => console.log(`    - ${c.communityName}`));
+      }
+      
+      if (byNanton.length > 0) {
+        console.log('  Nanton Municipal:');
+        byNanton.forEach(c => console.log(`    - ${c.communityName}`));
+      }
     }
     
     console.log('\n✅ Seeding complete! Treatment assignment is RANDOM and PERMANENT.');
     console.log('⚠️  Do NOT re-run this script unless you want to re-randomize!');
+    console.log('\n📊 Study Design:');
+    console.log('   - Total: 30 communities × 10 households = 300 respondents');
+    console.log('   - Per treatment: 10 communities × 10 households = 100 respondents');
+    console.log('   - Savelugu Municipal: 20 communities');
+    console.log('   - Nanton Municipal: 10 communities');
+    
+    console.log('\n📋 Next Steps:');
+    console.log('1. Copy the assignments above');
+    console.log('2. Update getDefaultCommunities() in:');
+    console.log('   - public/js/offline-storage.js');
+    console.log('   - public/js/game.js');
+    console.log('3. Deploy your updated code');
+    console.log('4. Start data collection!');
+    
     process.exit(0);
   } catch (error) {
     console.error('❌ Error seeding communities:', error);

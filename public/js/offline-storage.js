@@ -118,44 +118,56 @@ function saveOfflineData(data) {
 
 // ===== DEFAULT COMMUNITIES =====
 function getDefaultCommunities() {
+    // ✅ These match the ACTUAL random assignments in MongoDB (from seedCommunities.js)
+    // Last seeded: [current date]
+    
     return [
-        // CONTROL GROUP
-        { communityName: 'Kpalsabogu', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
-        { communityName: 'Nyankpala', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
-        { communityName: 'Wantugu', district: 'Tolon', treatmentGroup: 'control', targetHouseholds: 10 },
-        { communityName: 'Tuunayili', district: 'Kumbungu', treatmentGroup: 'control', targetHouseholds: 10 },
-        { communityName: 'Kpalguni', district: 'Kumbungu', treatmentGroup: 'control', targetHouseholds: 10 },
-        { communityName: 'Kumbuyili', district: 'Kumbungu', treatmentGroup: 'control', targetHouseholds: 10 },
-        { communityName: 'Zantani', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
-        { communityName: 'Kpanshegu', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
-        { communityName: 'Nabogo', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
-        { communityName: 'Tampion', district: 'Gushegu', treatmentGroup: 'control', targetHouseholds: 10 },
+        // ===== CONTROL GROUP (10 communities) =====
+        // Savelugu Municipal (6)
+        { communityName: 'Yilikpani', district: 'Savelugu Municipal', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Dipali', district: 'Savelugu Municipal', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Libga', district: 'Savelugu Municipal', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Naabogu', district: 'Savelugu Municipal', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Moglaa', district: 'Savelugu Municipal', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Duko', district: 'Savelugu Municipal', treatmentGroup: 'control', targetHouseholds: 10 },
+        // Nanton Municipal (4)
+        { communityName: 'Jegun', district: 'Nanton Municipal', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Damdu', district: 'Nanton Municipal', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Nyarigiyili', district: 'Nanton Municipal', treatmentGroup: 'control', targetHouseholds: 10 },
+        { communityName: 'Sandu', district: 'Nanton Municipal', treatmentGroup: 'control', targetHouseholds: 10 },
         
-        // FERTILIZER BUNDLE GROUP
-        { communityName: 'Voggu', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-        { communityName: 'Kpendua', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-        { communityName: 'Gbullung', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-        { communityName: 'Zangbalun', district: 'Tolon', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-        { communityName: 'Gbulung', district: 'Kumbungu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-        { communityName: 'Kasuliyili', district: 'Kumbungu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-        { communityName: 'Kpanvo', district: 'Kumbungu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-        { communityName: 'Nanton', district: 'Gushegu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-        { communityName: 'Kpatinga', district: 'Gushegu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
-        { communityName: 'Nakpanduri', district: 'Gushegu', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        // ===== FERTILIZER BUNDLE GROUP (10 communities) =====
+        // Savelugu Municipal (8)
+        { communityName: 'Tigla', district: 'Savelugu Municipal', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Nyoglo', district: 'Savelugu Municipal', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Gushei', district: 'Savelugu Municipal', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Kadia', district: 'Savelugu Municipal', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Kpong', district: 'Savelugu Municipal', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Gbanga', district: 'Savelugu Municipal', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Pong-Tamale', district: 'Savelugu Municipal', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Savelugu', district: 'Savelugu Municipal', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        // Nanton Municipal (2)
+        { communityName: 'Nanton-Kurugu', district: 'Nanton Municipal', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
+        { communityName: 'Tigu', district: 'Nanton Municipal', treatmentGroup: 'fertilizer_bundle', targetHouseholds: 10 },
         
-        // SEEDLING BUNDLE GROUP
-        { communityName: 'Lingbunga', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-        { communityName: 'Kpalbusi', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-        { communityName: 'Wayamba', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-        { communityName: 'Yoggu', district: 'Tolon', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-        { communityName: 'Tindan', district: 'Kumbungu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-        { communityName: 'Gbulahagu', district: 'Kumbungu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-        { communityName: 'Kpalguni II', district: 'Kumbungu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-        { communityName: 'Zakpalsi', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-        { communityName: 'Kpachi', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
-        { communityName: 'Gushegu', district: 'Gushegu', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 }
+        // ===== SEEDLING BUNDLE GROUP (10 communities) =====
+        // Savelugu Municipal (6)
+        { communityName: 'Langa', district: 'Savelugu Municipal', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Dinga', district: 'Savelugu Municipal', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Tarikpaa', district: 'Savelugu Municipal', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Kanshegu', district: 'Savelugu Municipal', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Zaazi', district: 'Savelugu Municipal', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Diare', district: 'Savelugu Municipal', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        // Nanton Municipal (4)
+        { communityName: 'Nyolugu', district: 'Nanton Municipal', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Zoggu', district: 'Nanton Municipal', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Zokuga', district: 'Nanton Municipal', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 },
+        { communityName: 'Sindigu', district: 'Nanton Municipal', treatmentGroup: 'seedling_bundle', targetHouseholds: 10 }
     ];
 }
+
+
+
 
 
 // Add to pending sync queue
