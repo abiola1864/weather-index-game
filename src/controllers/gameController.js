@@ -247,6 +247,7 @@ const getGameSession = async (req, res) => {
 
 
 
+
 const completeGameSession = async (req, res) => {
   try {
     const session = await GameSession.findOne({ 
@@ -260,14 +261,14 @@ const completeGameSession = async (req, res) => {
       });
     }
 
-    // ✅ FIX: Use correct field names from your model
-    session.gameCompleted = true;  // Changed from session.status = 'completed'
+    // ✅ FIX: Use correct field name from schema
+    session.status = 'completed';  // ← FIXED!
     session.completedAt = new Date();
     await session.save();
     
     console.log(`✅ Session completed: ${session.sessionId}`);
     console.log(`   Session type: ${session.sessionType}`);
-    console.log(`   Game completed: ${session.gameCompleted}`);
+    console.log(`   Status: ${session.status}`);  // ← Updated log
 
     res.json({
       success: true,
@@ -283,8 +284,6 @@ const completeGameSession = async (req, res) => {
     });
   }
 };
-
-
 
 // ===== GAME ROUND MANAGEMENT =====
 

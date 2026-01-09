@@ -1741,15 +1741,23 @@ function loadSeason(seasonNumber) {
     }
     
     // Session type text
-    let sessionTypeText = t('game.individualPlay');
-    if (gameState.sessionType === 'individual_husband') {
+  // Session type text - use role if sessionType not specific enough
+let sessionTypeText;
+if (gameState.sessionType === 'couple_joint') {
+    sessionTypeText = t('game.couplePlaying');
+} else {
+    // For individual sessions, show specific role
+    if (gameState.role === 'husband') {
         sessionTypeText = t('game.husbandPlaying');
-    } else if (gameState.sessionType === 'individual_wife') {
+    } else if (gameState.role === 'wife') {
         sessionTypeText = t('game.wifePlaying');
-    } else if (gameState.sessionType === 'couple_joint') {
-        sessionTypeText = t('game.couplePlaying');
+    } else {
+        sessionTypeText = t('game.individualPlay');
     }
-    document.getElementById('roundContext').textContent = sessionTypeText;
+}
+document.getElementById('roundContext').textContent = sessionTypeText;
+
+
     
     // Update allocate title
     const allocateTitle = document.querySelector('.allocation-container h3');

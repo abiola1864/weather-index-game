@@ -541,12 +541,10 @@ const deleteAllData = async (req, res) => {
 };
 
 
-// ===== EXPORT COMPLETE COMBINED DATASET =====
-// Add this to your adminController.js
-
+// ===== EXPORT COMPLETE COMBINED DATASET WITH SEPARATE INDIVIDUAL AND COUPLE COLUMNS =====
 const exportCompleteDataset = async (req, res) => {
   try {
-    console.log('📊 Exporting complete combined dataset...');
+    console.log('📊 Exporting complete combined dataset with separate individual/couple data...');
     
     // Get all data with full population
     const respondents = await Respondent.find()
@@ -564,68 +562,169 @@ const exportCompleteDataset = async (req, res) => {
     const completeData = [];
     
     for (const respondent of respondents) {
-      // Get all related data for this respondent
-   // Get all related data for this respondent
-const sessions = await GameSession.find({ respondentId: respondent._id }).lean();
-const rounds = await GameRound.find({ respondentId: respondent._id }).lean();
-const knowledge = await KnowledgeTest.findOne({ respondentId: respondent._id }).lean();
-const perception = await Perception.findOne({ respondentId: respondent._id }).lean();
+      // ===== GET ALL RELATED DATA =====
+  // ===== GET ALL RELATED DATA =====
+// FIX: Search by both ObjectId and string respondentId
+const allSessions = await GameSession.find({ 
+  $or: [
+    { respondentId: respondent._id },
+    { respondentId: respondent.respondentId }
+  ]
+}).lean();
 
-// ✅ FIX: Check game completion properly
-const hasCompletedSession = sessions.some(s => s.gameCompleted === true);
-const hasKnowledge = knowledge !== null;
-const isGameComplete = hasCompletedSession && hasKnowledge;
+const allRounds = await GameRound.find({ 
+  $or: [
+    { respondentId: respondent._id },
+    { respondentId: respondent.respondentId }
+  ]
+}).lean();
+
+const knowledge = await KnowledgeTest.findOne({ 
+  $or: [
+    { respondentId: respondent._id },
+    { respondentId: respondent.respondentId }
+  ]
+}).lean();
+
+const perception = await Perception.findOne({ 
+  $or: [
+    { respondentId: respondent._id },
+    { respondentId: respondent.respondentId }
+  ]
+}).lean();
+
+
       
-      // Calculate aggregate statistics
-      const totalRounds = rounds.length;
-      const totalInsuranceSpent = rounds.reduce((sum, r) => sum + (r.insuranceSpend || 0), 0);
-      const totalPayoutsReceived = rounds.reduce((sum, r) => sum + (r.payoutReceived || 0), 0);
-      const totalHarvest = rounds.reduce((sum, r) => sum + (r.harvestOutcome || 0), 0);
-      const totalEarnings = totalHarvest + totalPayoutsReceived;
+      // ===== SEPARATE INDIVIDUAL VS COUPLE DATA =====
+      const individualSessions = allSessions.filter(s => 
+        s.sessionType === 'individual_husband' || s.sessionType === 'individual_wife'
+      );
       
-      const insurancePurchasedCount = rounds.filter(r => r.insuranceSpend > 0).length;
-      const bundleAcceptedCount = rounds.filter(r => r.bundleAccepted).length;
+      const coupleSessions = allSessions.filter(s => 
+        s.sessionType === 'couple_joint'
+      );
       
-      // Weather shock statistics
-      const droughtRounds = rounds.filter(r => r.weatherShock?.type === 'drought').length;
-      const floodRounds = rounds.filter(r => r.weatherShock?.type === 'flood').length;
-      const normalRounds = rounds.filter(r => r.weatherShock?.type === 'normal').length;
+      const individualRounds = allRounds.filter(r => 
+        r.decisionContext === 'individual_husband' || r.decisionContext === 'individual_wife'
+      ).sort((a, b) => a.roundNumber - b.roundNumber);
       
-      // Round-by-round details (4 seasons)
-      const roundDetails = {};
+      const coupleRounds = allRounds.filter(r => 
+        r.decisionContext === 'couple_joint'
+      ).sort((a, b) => a.roundNumber - b.roundNumber);
+      
+      // ===== INDIVIDUAL SESSION STATISTICS =====
+      const individualTotalRounds = individualRounds.length;
+      const individualTotalInsurance = individualRounds.reduce((sum, r) => sum + (r.insuranceSpend || 0), 0);
+      const individualTotalPayouts = individualRounds.reduce((sum, r) => sum + (r.payoutReceived || 0), 0);
+      const individualTotalHarvest = individualRounds.reduce((sum, r) => sum + (r.harvestOutcome || 0), 0);
+      const individualTotalEarnings = individualTotalHarvest + individualTotalPayouts;
+      const individualInsurancePurchased = individualRounds.filter(r => r.insuranceSpend > 0).length;
+      const individualBundleAccepted = individualRounds.filter(r => r.bundleAccepted).length;
+      
+      const individualDroughts = individualRounds.filter(r => r.weatherShock?.type === 'drought').length;
+      const individualFloods = individualRounds.filter(r => r.weatherShock?.type === 'flood').length;
+      const individualNormal = individualRounds.filter(r => r.weatherShock?.type === 'normal').length;
+      
+      // ===== COUPLE SESSION STATISTICS =====
+      const coupleTotalRounds = coupleRounds.length;
+      const coupleTotalInsurance = coupleRounds.reduce((sum, r) => sum + (r.insuranceSpend || 0), 0);
+      const coupleTotalPayouts = coupleRounds.reduce((sum, r) => sum + (r.payoutReceived || 0), 0);
+      const coupleTotalHarvest = coupleRounds.reduce((sum, r) => sum + (r.harvestOutcome || 0), 0);
+      const coupleTotalEarnings = coupleTotalHarvest + coupleTotalPayouts;
+      const coupleInsurancePurchased = coupleRounds.filter(r => r.insuranceSpend > 0).length;
+      const coupleBundleAccepted = coupleRounds.filter(r => r.bundleAccepted).length;
+      
+      const coupleDroughts = coupleRounds.filter(r => r.weatherShock?.type === 'drought').length;
+      const coupleFloods = coupleRounds.filter(r => r.weatherShock?.type === 'flood').length;
+      const coupleNormal = coupleRounds.filter(r => r.weatherShock?.type === 'normal').length;
+      
+      // ===== INDIVIDUAL ROUND-BY-ROUND DETAILS (4 seasons) =====
+      const individualRoundDetails = {};
       for (let i = 1; i <= 4; i++) {
-        const round = rounds.find(r => r.roundNumber === i);
+        const round = individualRounds.find(r => r.roundNumber === i);
         if (round) {
-          roundDetails[`s${i}_budget`] = round.budget || 0;
-          roundDetails[`s${i}_insurance_spend`] = round.insuranceSpend || 0;
-          roundDetails[`s${i}_input_spend`] = round.inputSpend || 0;
-          roundDetails[`s${i}_education_spend`] = round.educationSpend || 0;
-          roundDetails[`s${i}_consumption_spend`] = round.consumptionSpend || 0;
-          roundDetails[`s${i}_bundle_accepted`] = round.bundleAccepted || false;
-          roundDetails[`s${i}_bundle_product`] = round.bundleProduct || 'none';
-          roundDetails[`s${i}_weather_type`] = round.weatherShock?.type || 'normal';
-          roundDetails[`s${i}_weather_severity`] = round.weatherShock?.severity || 'none';
-          roundDetails[`s${i}_harvest_outcome`] = round.harvestOutcome || 0;
-          roundDetails[`s${i}_payout_received`] = round.payoutReceived || 0;
-          roundDetails[`s${i}_total_earnings`] = (round.harvestOutcome || 0) + (round.payoutReceived || 0);
+          individualRoundDetails[`ind_s${i}_budget`] = round.budget || 0;
+          individualRoundDetails[`ind_s${i}_insurance_spend`] = round.insuranceSpend || 0;
+          individualRoundDetails[`ind_s${i}_input_spend`] = round.inputSpend || 0;
+          individualRoundDetails[`ind_s${i}_education_spend`] = round.educationSpend || 0;
+          individualRoundDetails[`ind_s${i}_consumption_spend`] = round.consumptionSpend || 0;
+          individualRoundDetails[`ind_s${i}_bundle_accepted`] = round.bundleAccepted || false;
+          individualRoundDetails[`ind_s${i}_bundle_product`] = round.bundleProduct || 'none';
+          individualRoundDetails[`ind_s${i}_input_choice_type`] = round.inputChoiceType || 'none';
+          individualRoundDetails[`ind_s${i}_weather_type`] = round.weatherShock?.type || 'normal';
+          individualRoundDetails[`ind_s${i}_weather_severity`] = round.weatherShock?.severity || 'none';
+          individualRoundDetails[`ind_s${i}_harvest_outcome`] = round.harvestOutcome || 0;
+          individualRoundDetails[`ind_s${i}_payout_received`] = round.payoutReceived || 0;
+          individualRoundDetails[`ind_s${i}_total_earnings`] = (round.harvestOutcome || 0) + (round.payoutReceived || 0);
         } else {
-          // Fill with zeros if round doesn't exist
-          roundDetails[`s${i}_budget`] = 0;
-          roundDetails[`s${i}_insurance_spend`] = 0;
-          roundDetails[`s${i}_input_spend`] = 0;
-          roundDetails[`s${i}_education_spend`] = 0;
-          roundDetails[`s${i}_consumption_spend`] = 0;
-          roundDetails[`s${i}_bundle_accepted`] = false;
-          roundDetails[`s${i}_bundle_product`] = 'none';
-          roundDetails[`s${i}_weather_type`] = 'none';
-          roundDetails[`s${i}_weather_severity`] = 'none';
-          roundDetails[`s${i}_harvest_outcome`] = 0;
-          roundDetails[`s${i}_payout_received`] = 0;
-          roundDetails[`s${i}_total_earnings`] = 0;
+          individualRoundDetails[`ind_s${i}_budget`] = 0;
+          individualRoundDetails[`ind_s${i}_insurance_spend`] = 0;
+          individualRoundDetails[`ind_s${i}_input_spend`] = 0;
+          individualRoundDetails[`ind_s${i}_education_spend`] = 0;
+          individualRoundDetails[`ind_s${i}_consumption_spend`] = 0;
+          individualRoundDetails[`ind_s${i}_bundle_accepted`] = false;
+          individualRoundDetails[`ind_s${i}_bundle_product`] = 'none';
+          individualRoundDetails[`ind_s${i}_input_choice_type`] = 'none';
+          individualRoundDetails[`ind_s${i}_weather_type`] = 'none';
+          individualRoundDetails[`ind_s${i}_weather_severity`] = 'none';
+          individualRoundDetails[`ind_s${i}_harvest_outcome`] = 0;
+          individualRoundDetails[`ind_s${i}_payout_received`] = 0;
+          individualRoundDetails[`ind_s${i}_total_earnings`] = 0;
         }
       }
       
-      // Build complete record (100+ columns)
+      // ===== COUPLE ROUND-BY-ROUND DETAILS (4 seasons) =====
+      const coupleRoundDetails = {};
+      for (let i = 1; i <= 4; i++) {
+        const round = coupleRounds.find(r => r.roundNumber === i);
+        if (round) {
+          coupleRoundDetails[`couple_s${i}_budget`] = round.budget || 0;
+          coupleRoundDetails[`couple_s${i}_insurance_spend`] = round.insuranceSpend || 0;
+          coupleRoundDetails[`couple_s${i}_input_spend`] = round.inputSpend || 0;
+          coupleRoundDetails[`couple_s${i}_education_spend`] = round.educationSpend || 0;
+          coupleRoundDetails[`couple_s${i}_consumption_spend`] = round.consumptionSpend || 0;
+          coupleRoundDetails[`couple_s${i}_bundle_accepted`] = round.bundleAccepted || false;
+          coupleRoundDetails[`couple_s${i}_bundle_product`] = round.bundleProduct || 'none';
+          coupleRoundDetails[`couple_s${i}_input_choice_type`] = round.inputChoiceType || 'none';
+          coupleRoundDetails[`couple_s${i}_weather_type`] = round.weatherShock?.type || 'normal';
+          coupleRoundDetails[`couple_s${i}_weather_severity`] = round.weatherShock?.severity || 'none';
+          coupleRoundDetails[`couple_s${i}_harvest_outcome`] = round.harvestOutcome || 0;
+          coupleRoundDetails[`couple_s${i}_payout_received`] = round.payoutReceived || 0;
+          coupleRoundDetails[`couple_s${i}_total_earnings`] = (round.harvestOutcome || 0) + (round.payoutReceived || 0);
+        } else {
+          coupleRoundDetails[`couple_s${i}_budget`] = 0;
+          coupleRoundDetails[`couple_s${i}_insurance_spend`] = 0;
+          coupleRoundDetails[`couple_s${i}_input_spend`] = 0;
+          coupleRoundDetails[`couple_s${i}_education_spend`] = 0;
+          coupleRoundDetails[`couple_s${i}_consumption_spend`] = 0;
+          coupleRoundDetails[`couple_s${i}_bundle_accepted`] = false;
+          coupleRoundDetails[`couple_s${i}_bundle_product`] = 'none';
+          coupleRoundDetails[`couple_s${i}_input_choice_type`] = 'none';
+          coupleRoundDetails[`couple_s${i}_weather_type`] = 'none';
+          coupleRoundDetails[`couple_s${i}_weather_severity`] = 'none';
+          coupleRoundDetails[`couple_s${i}_harvest_outcome`] = 0;
+          coupleRoundDetails[`couple_s${i}_payout_received`] = 0;
+          coupleRoundDetails[`couple_s${i}_total_earnings`] = 0;
+        }
+      }
+      
+      // ✅ FIX: Check game completion using correct field name
+// ✅ FIX: Check game completion - accept both 'completed' status OR has completedAt date
+const hasIndividualCompleted = individualSessions.some(s => 
+  s.status === 'completed' || (s.completedAt != null)
+);
+
+const hasCoupleCompleted = coupleSessions.some(s => 
+  s.status === 'completed' || (s.completedAt != null)
+);
+
+const hasKnowledge = knowledge !== null;
+const isIndividualComplete = hasIndividualCompleted && hasKnowledge;
+const isCoupleComplete = hasCoupleCompleted;
+
+
+      
+      // Build complete record (150+ columns now with separate individual and couple data)
       const record = {
         // ===== IDENTIFIERS =====
         respondent_id: respondent.respondentId || respondent._id.toString(),
@@ -721,25 +820,43 @@ const isGameComplete = hasCompletedSession && hasKnowledge;
         empowerment_opinion_considered: respondent.empowermentScores?.opinionConsidered,
         empowerment_confidence_expressing: respondent.empowermentScores?.confidenceExpressing,
         
-        // ===== GAME AGGREGATES =====
-        total_rounds_completed: totalRounds,
-        total_insurance_spent: totalInsuranceSpent,
-        total_payouts_received: totalPayoutsReceived,
-        total_harvest: totalHarvest,
-        total_earnings: totalEarnings,
-        insurance_purchased_count: insurancePurchasedCount,
-        bundle_accepted_count: bundleAcceptedCount,
-        insurance_adoption_rate: totalRounds > 0 ? (insurancePurchasedCount / totalRounds * 100).toFixed(1) : 0,
-        bundle_adoption_rate: totalRounds > 0 ? (bundleAcceptedCount / totalRounds * 100).toFixed(1) : 0,
+        // ===== INDIVIDUAL SESSION AGGREGATES =====
+        individual_completed: isIndividualComplete ? 'Yes' : 'No',
+        individual_rounds_completed: individualTotalRounds,
+        individual_total_insurance_spent: individualTotalInsurance,
+        individual_total_payouts_received: individualTotalPayouts,
+        individual_total_harvest: individualTotalHarvest,
+        individual_total_earnings: individualTotalEarnings,
+        individual_insurance_purchased_count: individualInsurancePurchased,
+        individual_bundle_accepted_count: individualBundleAccepted,
+        individual_insurance_adoption_rate: individualTotalRounds > 0 ? (individualInsurancePurchased / individualTotalRounds * 100).toFixed(1) : 0,
+        individual_bundle_adoption_rate: individualTotalRounds > 0 ? (individualBundleAccepted / individualTotalRounds * 100).toFixed(1) : 0,
+        individual_drought_rounds: individualDroughts,
+        individual_flood_rounds: individualFloods,
+        individual_normal_rounds: individualNormal,
+        individual_weather_shock_rate: individualTotalRounds > 0 ? ((individualDroughts + individualFloods) / individualTotalRounds * 100).toFixed(1) : 0,
         
-        // ===== WEATHER EXPOSURE =====
-        drought_rounds: droughtRounds,
-        flood_rounds: floodRounds,
-        normal_rounds: normalRounds,
-        weather_shock_rate: totalRounds > 0 ? ((droughtRounds + floodRounds) / totalRounds * 100).toFixed(1) : 0,
+        // ===== INDIVIDUAL ROUND-BY-ROUND DETAILS (52 columns: 13 per season × 4 seasons) =====
+        ...individualRoundDetails,
         
-        // ===== ROUND-BY-ROUND DETAILS (48 columns: 12 per season × 4 seasons) =====
-        ...roundDetails,
+        // ===== COUPLE SESSION AGGREGATES =====
+        couple_completed: isCoupleComplete ? 'Yes' : 'No',
+        couple_rounds_completed: coupleTotalRounds,
+        couple_total_insurance_spent: coupleTotalInsurance,
+        couple_total_payouts_received: coupleTotalPayouts,
+        couple_total_harvest: coupleTotalHarvest,
+        couple_total_earnings: coupleTotalEarnings,
+        couple_insurance_purchased_count: coupleInsurancePurchased,
+        couple_bundle_accepted_count: coupleBundleAccepted,
+        couple_insurance_adoption_rate: coupleTotalRounds > 0 ? (coupleInsurancePurchased / coupleTotalRounds * 100).toFixed(1) : 0,
+        couple_bundle_adoption_rate: coupleTotalRounds > 0 ? (coupleBundleAccepted / coupleTotalRounds * 100).toFixed(1) : 0,
+        couple_drought_rounds: coupleDroughts,
+        couple_flood_rounds: coupleFloods,
+        couple_normal_rounds: coupleNormal,
+        couple_weather_shock_rate: coupleTotalRounds > 0 ? ((coupleDroughts + coupleFloods) / coupleTotalRounds * 100).toFixed(1) : 0,
+        
+        // ===== COUPLE ROUND-BY-ROUND DETAILS (52 columns: 13 per season × 4 seasons) =====
+        ...coupleRoundDetails,
         
         // ===== KNOWLEDGE TEST (5 questions + score) =====
         knowledge_q1_index_based: knowledge?.q1_indexBased,
@@ -761,12 +878,12 @@ const isGameComplete = hasCompletedSession && hasKnowledge;
         perception_future_use_likelihood: perception?.futureUseLikelihood,
         
         // ===== SESSION INFO =====
-    game_completed: isGameComplete ? 'Yes' : 'No',  // Changed to text instead of boolean
-session_types: sessions.length > 0 ? sessions.map(s => s.sessionType).join(';') : 'None',
-session_count: sessions.length,
-completed_sessions_count: sessions.filter(s => s.gameCompleted === true).length,
-created_at: respondent.createdAt,
-last_updated: respondent.updatedAt
+        all_sessions_types: allSessions.length > 0 ? allSessions.map(s => s.sessionType).join(';') : 'None',
+        total_sessions_count: allSessions.length,
+        individual_session_count: individualSessions.length,
+        couple_session_count: coupleSessions.length,
+        created_at: respondent.createdAt,
+        last_updated: respondent.updatedAt
       };
       
       completeData.push(record);
@@ -798,6 +915,8 @@ last_updated: respondent.updatedAt
     });
     
     console.log(`✅ Complete dataset generated: ${completeData.length} records, ${headers.length} columns`);
+    console.log(`   Individual session columns: 52 (13 fields × 4 seasons)`);
+    console.log(`   Couple session columns: 52 (13 fields × 4 seasons)`);
     
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=complete-dataset-${Date.now()}.csv`);
@@ -812,16 +931,8 @@ last_updated: respondent.updatedAt
   }
 };
 
-// Export the function
-module.exports = {
-  // ... your existing exports
-  exportCompleteDataset
-};
-
-
 
 module.exports = {
-
   getDashboardStats,
   getCommunityAssignments,
   exportCommunityAssignments,
@@ -831,5 +942,5 @@ module.exports = {
   exportKnowledgeTests,
   exportPerceptions,
   deleteAllData,
-  exportCompleteDataset  // ✅ ADD THIS LINE
+  exportCompleteDataset
 };

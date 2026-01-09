@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 // ===== GAME ROUND SCHEMA - FIXED ENUM VALUES =====
 const gameRoundSchema = new mongoose.Schema({
   respondentId: {
-    type: mongoose.Schema.Types.ObjectId,
+  type: mongoose.Schema.Types.Mixed,
     ref: 'Respondent',
     required: true
   },
@@ -505,7 +505,7 @@ const gameSessionSchema = new mongoose.Schema({
 // ===== KNOWLEDGE TEST SCHEMA =====
 const knowledgeTestSchema = new mongoose.Schema({
   respondentId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.Mixed,
     ref: 'Respondent',
     required: true
   },
@@ -547,7 +547,7 @@ const knowledgeTestSchema = new mongoose.Schema({
 // ===== COUPLE DECISION SCHEMA =====
 const coupleDecisionSchema = new mongoose.Schema({
   respondentId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.Mixed,
     ref: 'Respondent',
     required: true
   },
@@ -582,7 +582,7 @@ const coupleDecisionSchema = new mongoose.Schema({
 // ===== PERCEPTION SCHEMA =====
 const perceptionSchema = new mongoose.Schema({
   respondentId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.Mixed,
     ref: 'Respondent',
     required: true
   },
