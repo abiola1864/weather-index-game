@@ -1,4 +1,10 @@
+
+require('dotenv').config();
+
 const { Respondent, GameSession, GameRound, KnowledgeTest, CommunityAssignment, Perception } = require('../models/Game');
+
+
+
 
 // Get dashboard statistics
 // ===== GET DASHBOARD STATS =====
@@ -488,7 +494,7 @@ const deleteAllData = async (req, res) => {
     const { password } = req.body;
     
     // Password protection
-    const CORRECT_PASSWORD = 'gme110_ghana';
+const CORRECT_PASSWORD = process.env.DELETE_PASSWORD;
     
     if (password !== CORRECT_PASSWORD) {
       return res.status(403).json({
@@ -710,6 +716,7 @@ const perception = await Perception.findOne({
       
       // ✅ FIX: Check game completion using correct field name
 // ✅ FIX: Check game completion - accept both 'completed' status OR has completedAt date
+// ✅ FIX: Check game completion - accept both 'completed' status OR has completedAt date
 const hasIndividualCompleted = individualSessions.some(s => 
   s.status === 'completed' || (s.completedAt != null)
 );
@@ -721,6 +728,12 @@ const hasCoupleCompleted = coupleSessions.some(s =>
 const hasKnowledge = knowledge !== null;
 const isIndividualComplete = hasIndividualCompleted && hasKnowledge;
 const isCoupleComplete = hasCoupleCompleted;
+
+// ✅ ADD DEBUG LOGGING:
+console.log(`  Individual: ${individualSessions.length} sessions, completed: ${isIndividualComplete}`);
+console.log(`  Couple: ${coupleSessions.length} sessions, completed: ${isCoupleComplete}`);
+
+
 
 
       
@@ -878,7 +891,7 @@ const isCoupleComplete = hasCoupleCompleted;
         perception_future_use_likelihood: perception?.futureUseLikelihood,
         
         // ===== SESSION INFO =====
-        all_sessions_types: allSessions.length > 0 ? allSessions.map(s => s.sessionType).join(';') : 'None',
+ all_sessions_types: allSessions.length > 0 ? allSessions.map(s => s.sessionType || 'unknown').filter(Boolean).join(';') : 'None',
         total_sessions_count: allSessions.length,
         individual_session_count: individualSessions.length,
         couple_session_count: coupleSessions.length,

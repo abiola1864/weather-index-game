@@ -93,4 +93,60 @@ router.get('/communities', async (req, res) => {
 
 
 
+router.get('/debug/respondent/:respondentId', async (req, res) => {
+  try {
+    const { respondentId } = req.params;
+    
+    // Find respondent
+    const respondent = await Respondent.findOne({ 
+      respondentId: respondentId 
+    }).lean();
+    
+    if (!respondent) {
+      return res.json({ success: false, message: 'Respondent not found' });
+    }
+    
+    // Try all possible ways to find sessions
+    const byObjectId = await GameSession.find({ 
+      respondentId: respondent._id 
+    }).lean();
+    
+    const byStringId = await GameSession.find({ 
+      respondentId: respondent._id.toString() 
+    }).lean();
+    
+    const byCustomId = await GameSession.find({ 
+      respondentId: respondent.respondentId 
+    }).lean();
+    
+    const allSessions = await GameSession.find().lean();
+    
+    res.json({
+      success: true,
+      respondent: {
+        _id: respondent._id,
+        respondentId: respondent.respondentId,
+        householdId: respondent.householdId
+      },
+      searchResults: {
+        byObjectId: byObjectId.length,
+        byStringId: byStringId.length,
+        byCustomId: byCustomId.length
+      },
+      allSessionsInDb: allSessions.length,
+      sampleSessions: allSessions.slice(0, 3).map(s => ({
+        sessionId: s.sessionId,
+        respondentId: s.respondentId,
+        respondentIdType: typeof s.respondentId,
+        sessionType: s.sessionType
+      }))
+    });
+    
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+
+
 module.exports = router;
