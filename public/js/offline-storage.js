@@ -785,7 +785,7 @@ async function syncOfflineData() {
     
     // ✅ NEW: Clean up orphaned rounds before syncing
     console.log('🧹 Checking for orphaned rounds...');
-    const cleanupResult = cleanupOrphanedRounds();
+    const cleanupResult =  cleanupOrphanedItems;
     
     if (cleanupResult.cleaned > 0) {
         console.log(`✅ Cleaned up ${cleanupResult.cleaned} orphaned items before sync`);
