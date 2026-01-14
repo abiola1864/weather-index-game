@@ -548,14 +548,13 @@ const CORRECT_PASSWORD = process.env.DELETE_PASSWORD;
 
 
 // ===== EXPORT COMPLETE COMBINED DATASET WITH SEPARATE INDIVIDUAL AND COUPLE COLUMNS =====
+// ===== REPLACE THE exportCompleteDataset FUNCTION IN adminController.js =====
+
 const exportCompleteDataset = async (req, res) => {
   try {
-    console.log('📊 Exporting complete combined dataset with separate individual/couple data...');
+    console.log('📊 Exporting complete combined dataset...');
     
-    // Get all data with full population
-    const respondents = await Respondent.find()
-      .lean()
-      .sort({ createdAt: -1 });
+    const respondents = await Respondent.find().lean().sort({ createdAt: -1 });
     
     if (respondents.length === 0) {
       return res.status(404).json({
@@ -564,44 +563,39 @@ const exportCompleteDataset = async (req, res) => {
       });
     }
     
-    // Build comprehensive dataset
+    console.log(`✅ Found ${respondents.length} respondents`);
+    
     const completeData = [];
+    let emptyGameDataCount = 0;
     
     for (const respondent of respondents) {
-      // ===== GET ALL RELATED DATA =====
-  // ===== GET ALL RELATED DATA =====
-// FIX: Search by both ObjectId and string respondentId
-const allSessions = await GameSession.find({ 
-  $or: [
-    { respondentId: respondent._id },
-    { respondentId: respondent.respondentId }
-  ]
-}).lean();
-
-const allRounds = await GameRound.find({ 
-  $or: [
-    { respondentId: respondent._id },
-    { respondentId: respondent.respondentId }
-  ]
-}).lean();
-
-const knowledge = await KnowledgeTest.findOne({ 
-  $or: [
-    { respondentId: respondent._id },
-    { respondentId: respondent.respondentId }
-  ]
-}).lean();
-
-const perception = await Perception.findOne({ 
-  $or: [
-    { respondentId: respondent._id },
-    { respondentId: respondent.respondentId }
-  ]
-}).lean();
-
-
+      console.log(`\n📊 Processing: ${respondent.householdId} (${respondent._id})`);
       
-      // ===== SEPARATE INDIVIDUAL VS COUPLE DATA =====
+      // ✅ KEY FIX: Query using respondent._id directly (it's already an ObjectId in memory)
+      const allSessions = await GameSession.find({ 
+        respondentId: respondent._id  // ✅ No conversion needed - use the ObjectId directly
+      }).lean();
+      
+      const allRounds = await GameRound.find({ 
+        respondentId: respondent._id  // ✅ Same here
+      }).lean();
+      
+      const knowledge = await KnowledgeTest.findOne({ 
+        respondentId: respondent._id  // ✅ Same here
+      }).lean();
+      
+      const perception = await Perception.findOne({ 
+        respondentId: respondent._id  // ✅ Same here
+      }).lean();
+      
+      console.log(`   Sessions: ${allSessions.length}, Rounds: ${allRounds.length}`);
+      
+      if (allSessions.length === 0 && allRounds.length === 0) {
+        emptyGameDataCount++;
+        console.warn(`   ⚠️ No game data!`);
+      }
+      
+      // Separate individual vs couple data
       const individualSessions = allSessions.filter(s => 
         s.sessionType === 'individual_husband' || s.sessionType === 'individual_wife'
       );
@@ -618,7 +612,7 @@ const perception = await Perception.findOne({
         r.decisionContext === 'couple_joint'
       ).sort((a, b) => a.roundNumber - b.roundNumber);
       
-      // ===== INDIVIDUAL SESSION STATISTICS =====
+      // Calculate statistics for individual sessions
       const individualTotalRounds = individualRounds.length;
       const individualTotalInsurance = individualRounds.reduce((sum, r) => sum + (r.insuranceSpend || 0), 0);
       const individualTotalPayouts = individualRounds.reduce((sum, r) => sum + (r.payoutReceived || 0), 0);
@@ -631,7 +625,7 @@ const perception = await Perception.findOne({
       const individualFloods = individualRounds.filter(r => r.weatherShock?.type === 'flood').length;
       const individualNormal = individualRounds.filter(r => r.weatherShock?.type === 'normal').length;
       
-      // ===== COUPLE SESSION STATISTICS =====
+      // Calculate statistics for couple sessions
       const coupleTotalRounds = coupleRounds.length;
       const coupleTotalInsurance = coupleRounds.reduce((sum, r) => sum + (r.insuranceSpend || 0), 0);
       const coupleTotalPayouts = coupleRounds.reduce((sum, r) => sum + (r.payoutReceived || 0), 0);
@@ -644,7 +638,7 @@ const perception = await Perception.findOne({
       const coupleFloods = coupleRounds.filter(r => r.weatherShock?.type === 'flood').length;
       const coupleNormal = coupleRounds.filter(r => r.weatherShock?.type === 'normal').length;
       
-      // ===== INDIVIDUAL ROUND-BY-ROUND DETAILS (4 seasons) =====
+      // Build round-by-round details for individual
       const individualRoundDetails = {};
       for (let i = 1; i <= 4; i++) {
         const round = individualRounds.find(r => r.roundNumber === i);
@@ -679,7 +673,7 @@ const perception = await Perception.findOne({
         }
       }
       
-      // ===== COUPLE ROUND-BY-ROUND DETAILS (4 seasons) =====
+      // Build round-by-round details for couple
       const coupleRoundDetails = {};
       for (let i = 1; i <= 4; i++) {
         const round = coupleRounds.find(r => r.roundNumber === i);
@@ -714,126 +708,33 @@ const perception = await Perception.findOne({
         }
       }
       
-      // ✅ FIX: Check game completion using correct field name
-// ✅ FIX: Check game completion - accept both 'completed' status OR has completedAt date
-// ✅ FIX: Check game completion - accept both 'completed' status OR has completedAt date
-const hasIndividualCompleted = individualSessions.some(s => 
-  s.status === 'completed' || (s.completedAt != null)
-);
-
-const hasCoupleCompleted = coupleSessions.some(s => 
-  s.status === 'completed' || (s.completedAt != null)
-);
-
-const hasKnowledge = knowledge !== null;
-const isIndividualComplete = hasIndividualCompleted && hasKnowledge;
-const isCoupleComplete = hasCoupleCompleted;
-
-// ✅ ADD DEBUG LOGGING:
-console.log(`  Individual: ${individualSessions.length} sessions, completed: ${isIndividualComplete}`);
-console.log(`  Couple: ${coupleSessions.length} sessions, completed: ${isCoupleComplete}`);
-
-
-
-
+      // Check completion status
+      const hasIndividualCompleted = individualSessions.some(s => 
+        s.status === 'completed' || (s.completedAt != null)
+      );
+      const hasCoupleCompleted = coupleSessions.some(s => 
+        s.status === 'completed' || (s.completedAt != null)
+      );
+      const hasKnowledge = knowledge !== null;
+      const isIndividualComplete = hasIndividualCompleted && hasKnowledge;
+      const isCoupleComplete = hasCoupleCompleted;
       
-      // Build complete record (150+ columns now with separate individual and couple data)
+      // Build complete record
       const record = {
-        // ===== IDENTIFIERS =====
         respondent_id: respondent.respondentId || respondent._id.toString(),
         household_id: respondent.householdId,
         community_name: respondent.communityName,
         enumerator_name: respondent.enumeratorName,
         treatment_group: respondent.treatmentGroup,
-        
-        // ===== BASIC DEMOGRAPHICS =====
         gender: respondent.gender,
         role: respondent.role,
         age: respondent.age,
         education_level: respondent.education,
         language: respondent.language || 'english',
-        
-        // ===== HOUSEHOLD CHARACTERISTICS =====
         household_size: respondent.householdSize,
         children_under_15: respondent.childrenUnder15,
         
-        // ===== ASSETS (8 items) =====
-        asset_radio: respondent.assets?.radio || false,
-        asset_tv: respondent.assets?.tv || false,
-        asset_refrigerator: respondent.assets?.refrigerator || false,
-        asset_bicycle: respondent.assets?.bicycle || false,
-        asset_motorbike: respondent.assets?.motorbike || false,
-        asset_mobile_phone: respondent.assets?.mobilePhone || false,
-        asset_generator: respondent.assets?.generator || false,
-        asset_plough: respondent.assets?.plough || false,
-        
-        // ===== LIVESTOCK (4 items) =====
-        livestock_cattle: respondent.livestock?.cattle || 0,
-        livestock_goats: respondent.livestock?.goats || 0,
-        livestock_sheep: respondent.livestock?.sheep || 0,
-        livestock_poultry: respondent.livestock?.poultry || 0,
-        
-        // ===== FARMING EXPERIENCE =====
-        years_of_farming: respondent.yearsOfFarming,
-        land_cultivated_acres: respondent.landCultivated,
-        land_access_method: respondent.landAccessMethod,
-        land_access_other: respondent.landAccessOther || '',
-        main_crops: Array.isArray(respondent.mainCrops) ? respondent.mainCrops.join(';') : '',
-        number_of_crops_planted: respondent.numberOfCropsPlanted,
-        last_season_income: respondent.lastSeasonIncome,
-        farming_input_expenditure: respondent.farmingInputExpenditure,
-        
-        // ===== IMPROVED INPUTS (4 items) =====
-        uses_certified_seed: respondent.improvedInputs?.certifiedSeed || false,
-        uses_fertilizer: respondent.improvedInputs?.fertilizer || false,
-        uses_pesticides: respondent.improvedInputs?.pesticides || false,
-        uses_irrigation: respondent.improvedInputs?.irrigation || false,
-        has_irrigation_access: respondent.hasIrrigationAccess || false,
-        
-        // ===== SHOCKS (4 items) =====
-        experienced_drought: respondent.shocks?.drought || false,
-        experienced_flood: respondent.shocks?.flood || false,
-        experienced_pests_disease: respondent.shocks?.pestsDisease || false,
-        experienced_crop_price_fall: respondent.shocks?.cropPriceFall || false,
-        estimated_loss_last_year: respondent.estimatedLossLastYear,
-        harvest_loss_percentage: respondent.harvestLossPercentage,
-        
-        // ===== SAVINGS & CREDIT =====
-        has_savings: respondent.hasSavings || false,
-        savings_amount: respondent.savingsAmount || 0,
-        borrowed_money: respondent.borrowedMoney || false,
-        borrow_sources: Array.isArray(respondent.borrowSources) ? respondent.borrowSources.join(';') : '',
-        has_off_farm_income: respondent.hasOffFarmIncome || false,
-        off_farm_income_amount: respondent.offFarmIncomeAmount || 0,
-        
-        // ===== INSURANCE & TRUST =====
-        prior_insurance_knowledge: respondent.priorInsuranceKnowledge || false,
-        purchased_insurance_before: respondent.purchasedInsuranceBefore || false,
-        insurance_type: respondent.insuranceType || '',
-        trust_farmer_group: respondent.trustFarmerGroup,
-        trust_ngo: respondent.trustNGO,
-        trust_insurance_provider: respondent.trustInsuranceProvider,
-        rainfall_change_perception: respondent.rainfallChangePerception,
-        insurer_payout_trust: respondent.insurerPayoutTrust,
-        
-        // ===== SOCIAL CAPITAL =====
-        member_of_farmer_group: respondent.memberOfFarmerGroup || false,
-        farmer_group_name: respondent.farmerGroupName || '',
-        distance_to_market_minutes: respondent.distanceToMarket,
-        distance_to_insurer_km: respondent.distanceToInsurer,
-        uses_mobile_money: respondent.usesMobileMoney || false,
-        
-        // ===== RISK & EMPOWERMENT =====
-        risk_preference: respondent.riskPreference,
-        risk_comfort_level: respondent.riskComfort,
-        decision_maker: respondent.decisionMaker,
-        empowerment_crop_decisions: respondent.empowermentScores?.cropDecisions,
-        empowerment_money_decisions: respondent.empowermentScores?.moneyDecisions,
-        empowerment_input_decisions: respondent.empowermentScores?.inputDecisions,
-        empowerment_opinion_considered: respondent.empowermentScores?.opinionConsidered,
-        empowerment_confidence_expressing: respondent.empowermentScores?.confidenceExpressing,
-        
-        // ===== INDIVIDUAL SESSION AGGREGATES =====
+        // Individual session data
         individual_completed: isIndividualComplete ? 'Yes' : 'No',
         individual_rounds_completed: individualTotalRounds,
         individual_total_insurance_spent: individualTotalInsurance,
@@ -847,12 +748,9 @@ console.log(`  Couple: ${coupleSessions.length} sessions, completed: ${isCoupleC
         individual_drought_rounds: individualDroughts,
         individual_flood_rounds: individualFloods,
         individual_normal_rounds: individualNormal,
-        individual_weather_shock_rate: individualTotalRounds > 0 ? ((individualDroughts + individualFloods) / individualTotalRounds * 100).toFixed(1) : 0,
-        
-        // ===== INDIVIDUAL ROUND-BY-ROUND DETAILS (52 columns: 13 per season × 4 seasons) =====
         ...individualRoundDetails,
         
-        // ===== COUPLE SESSION AGGREGATES =====
+        // Couple session data
         couple_completed: isCoupleComplete ? 'Yes' : 'No',
         couple_rounds_completed: coupleTotalRounds,
         couple_total_insurance_spent: coupleTotalInsurance,
@@ -866,21 +764,16 @@ console.log(`  Couple: ${coupleSessions.length} sessions, completed: ${isCoupleC
         couple_drought_rounds: coupleDroughts,
         couple_flood_rounds: coupleFloods,
         couple_normal_rounds: coupleNormal,
-        couple_weather_shock_rate: coupleTotalRounds > 0 ? ((coupleDroughts + coupleFloods) / coupleTotalRounds * 100).toFixed(1) : 0,
-        
-        // ===== COUPLE ROUND-BY-ROUND DETAILS (52 columns: 13 per season × 4 seasons) =====
         ...coupleRoundDetails,
         
-        // ===== KNOWLEDGE TEST (5 questions + score) =====
+        // Knowledge and perception
         knowledge_q1_index_based: knowledge?.q1_indexBased,
         knowledge_q2_area_wide: knowledge?.q2_areaWide,
         knowledge_q3_profit_guarantee: knowledge?.q3_profitGuarantee,
         knowledge_q4_upfront_cost: knowledge?.q4_upfrontCost,
         knowledge_q5_basis_risk: knowledge?.q5_basisRisk,
         knowledge_score: knowledge?.knowledgeScore,
-        knowledge_completed_at: knowledge?.completedAt,
         
-        // ===== PERCEPTION (8 questions) =====
         perception_bundle_influence: perception?.bundleInfluence,
         perception_insurance_understanding: perception?.insuranceUnderstanding,
         perception_willingness_to_pay: perception?.willingnessToPay,
@@ -890,11 +783,6 @@ console.log(`  Couple: ${coupleSessions.length} sessions, completed: ${isCoupleC
         perception_bundle_value: perception?.bundleValuePerception,
         perception_future_use_likelihood: perception?.futureUseLikelihood,
         
-        // ===== SESSION INFO =====
- all_sessions_types: allSessions.length > 0 ? allSessions.map(s => s.sessionType || 'unknown').filter(Boolean).join(';') : 'None',
-        total_sessions_count: allSessions.length,
-        individual_session_count: individualSessions.length,
-        couple_session_count: coupleSessions.length,
         created_at: respondent.createdAt,
         last_updated: respondent.updatedAt
       };
@@ -910,7 +798,6 @@ console.log(`  Couple: ${coupleSessions.length} sessions, completed: ${isCoupleC
       const row = headers.map(header => {
         let value = record[header];
         
-        // Handle different data types
         if (value === null || value === undefined) {
           return '';
         } else if (typeof value === 'boolean') {
@@ -927,16 +814,17 @@ console.log(`  Couple: ${coupleSessions.length} sessions, completed: ${isCoupleC
       csv += row.join(',') + '\n';
     });
     
-    console.log(`✅ Complete dataset generated: ${completeData.length} records, ${headers.length} columns`);
-    console.log(`   Individual session columns: 52 (13 fields × 4 seasons)`);
-    console.log(`   Couple session columns: 52 (13 fields × 4 seasons)`);
+    console.log(`\n✅ Export complete: ${completeData.length} records`);
+    if (emptyGameDataCount > 0) {
+      console.warn(`⚠️ ${emptyGameDataCount} respondents have no game data`);
+    }
     
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=complete-dataset-${Date.now()}.csv`);
     res.send(csv);
     
   } catch (error) {
-    console.error('❌ Error exporting complete dataset:', error);
+    console.error('❌ Export error:', error);
     res.status(500).json({
       success: false,
       message: error.message
@@ -945,6 +833,85 @@ console.log(`  Couple: ${coupleSessions.length} sessions, completed: ${isCoupleC
 };
 
 
+
+
+
+
+// ===== ADD THIS FUNCTION TO YOUR adminController.js =====
+// Place it BEFORE the module.exports line
+
+const checkDataRelationships = async (req, res) => {
+  try {
+    console.log('🔍 Checking data relationships...');
+    
+    // Get sample data
+    const respondents = await Respondent.find().limit(5).lean();
+    const sessions = await GameSession.find().limit(5).lean();
+    const rounds = await GameRound.find().limit(5).lean();
+    
+    const report = {
+      summary: {
+        totalRespondents: await Respondent.countDocuments(),
+        totalSessions: await GameSession.countDocuments(),
+        totalRounds: await GameRound.countDocuments(),
+        totalKnowledge: await KnowledgeTest.countDocuments(),
+        totalPerception: await Perception.countDocuments()
+      },
+      sampleRespondents: respondents.map(r => ({
+        _id: r._id.toString(),
+        respondentId: r.respondentId,
+        householdId: r.householdId,
+        role: r.role,
+        createdAt: r.createdAt
+      })),
+      sampleSessions: sessions.map(s => ({
+        _id: s._id.toString(),
+        sessionId: s.sessionId,
+        respondentId: s.respondentId ? s.respondentId.toString() : null,
+        respondentIdType: typeof s.respondentId,
+        sessionType: s.sessionType,
+        status: s.status
+      })),
+      sampleRounds: rounds.map(r => ({
+        _id: r._id.toString(),
+        sessionId: r.sessionId,
+        respondentId: r.respondentId ? r.respondentId.toString() : null,
+        respondentIdType: typeof r.respondentId,
+        roundNumber: r.roundNumber
+      })),
+      matchingCheck: []
+    };
+    
+    // Check if respondent IDs match
+    for (const resp of respondents.slice(0, 3)) {
+      const matchingSessions = await GameSession.countDocuments({ respondentId: resp._id });
+      const matchingRounds = await GameRound.countDocuments({ respondentId: resp._id });
+      
+      report.matchingCheck.push({
+        respondent_id: resp._id.toString(),
+        respondentId_string: resp.respondentId,
+        householdId: resp.householdId,
+        matchingSessions: matchingSessions,
+        matchingRounds: matchingRounds
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: report
+    });
+    
+  } catch (error) {
+    console.error('❌ Error checking relationships:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// ===== THEN UPDATE YOUR module.exports =====
+// Add checkDataRelationships to the exports list
 module.exports = {
   getDashboardStats,
   getCommunityAssignments,
@@ -955,5 +922,8 @@ module.exports = {
   exportKnowledgeTests,
   exportPerceptions,
   deleteAllData,
-  exportCompleteDataset
+  exportCompleteDataset,
+  checkDataRelationships  // ✅ ADD THIS
 };
+
+

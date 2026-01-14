@@ -12,6 +12,7 @@ const {
   getCommunityProgress,      // ✅ ADD THIS
   exportKnowledgeTests,      // ✅ ADD THIS
   exportPerceptions ,        // ✅ ADD THIS
+  checkDataRelationships,  // ✅ ADD THIS
   exportCompleteDataset
 } = require('../controllers/adminController');
 
@@ -26,6 +27,8 @@ router.get('/export/knowledge', exportKnowledgeTests);
 router.get('/export/perceptions', exportPerceptions);
 // Add this with your other export routes
 router.get('/export/complete-dataset', exportCompleteDataset);
+// Then add this route with your other routes:
+router.get('/check-relationships', checkDataRelationships);  // ✅ ADD THIS LINE
 
 
 

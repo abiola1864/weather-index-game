@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 // ===== GAME ROUND SCHEMA - FIXED ENUM VALUES =====
 const gameRoundSchema = new mongoose.Schema({
   respondentId: {
-  type: mongoose.Schema.Types.Mixed,
+  type:mongoose.Schema.Types.ObjectId, 
     ref: 'Respondent',
     required: true
   },
@@ -104,12 +104,15 @@ const respondentSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  respondentId: {
-    type: String,
-    required: false,  // ✅ CHANGED: Auto-generated, not required on creation
-    unique: true,
-    sparse: true
-  },
+ respondentId: {
+  type: String,  // ✅ String, not ObjectId
+  unique: true,
+  sparse: true,
+  default: function() {
+    return `R-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+},
+
   
   // ✅ ADD THESE FIELDS
   communityName: {
@@ -435,12 +438,12 @@ const CommunityAssignment = mongoose.model('CommunityAssignment', communityAssig
 // ===== GAME SESSION SCHEMA =====
 const gameSessionSchema = new mongoose.Schema({
   sessionId: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId, 
     required: true,
     unique: true
   },
   respondentId: {
-      type: mongoose.Schema.Types.Mixed,
+ type:mongoose.Schema.Types.ObjectId, 
     ref: 'Respondent',
     required: true
   },
@@ -505,7 +508,7 @@ const gameSessionSchema = new mongoose.Schema({
 // ===== KNOWLEDGE TEST SCHEMA =====
 const knowledgeTestSchema = new mongoose.Schema({
   respondentId: {
-    type: mongoose.Schema.Types.Mixed,
+ type:mongoose.Schema.Types.ObjectId, 
     ref: 'Respondent',
     required: true
   },
@@ -547,7 +550,7 @@ const knowledgeTestSchema = new mongoose.Schema({
 // ===== COUPLE DECISION SCHEMA =====
 const coupleDecisionSchema = new mongoose.Schema({
   respondentId: {
-    type: mongoose.Schema.Types.Mixed,
+ type:mongoose.Schema.Types.ObjectId, 
     ref: 'Respondent',
     required: true
   },
@@ -582,7 +585,7 @@ const coupleDecisionSchema = new mongoose.Schema({
 // ===== PERCEPTION SCHEMA =====
 const perceptionSchema = new mongoose.Schema({
   respondentId: {
-    type: mongoose.Schema.Types.Mixed,
+ type:mongoose.Schema.Types.ObjectId, 
     ref: 'Respondent',
     required: true
   },
