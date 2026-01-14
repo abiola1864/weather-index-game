@@ -438,7 +438,7 @@ const CommunityAssignment = mongoose.model('CommunityAssignment', communityAssig
 // ===== GAME SESSION SCHEMA =====
 const gameSessionSchema = new mongoose.Schema({
   sessionId: {
-    type: mongoose.Schema.Types.ObjectId, 
+   type: String, 
     required: true,
     unique: true
   },
