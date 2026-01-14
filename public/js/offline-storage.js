@@ -1682,82 +1682,84 @@ async function isStablyOnline() {
 // ===== CLEAN UP ORPHANED ROUNDS =====
 // Add this function to offline-storage.js (around line 800, before syncOfflineData)
 
-function cleanupOrphanedRounds() {
-    console.log('🧹 Starting orphaned rounds cleanup...');
+// ===== CLEAN UP ORPHANED ITEMS (ROUNDS, KNOWLEDGE, SESSION_COMPLETE) =====
+function cleanupOrphanedItems() {
+    console.log('🧹 Starting orphaned items cleanup...');
     
     const offlineData = getOfflineData();
     if (!offlineData || !offlineData.pending_sync) {
-        console.log('❌ No offline data found');
-        return { cleaned: 0, message: 'No offline data' };
+        console.log('⚠️ No offline data to clean');
+        return { cleaned: 0, skipped: [] };
     }
     
-    const idMappings = getIdMappings();
+    // Find all permanently failed sessions
+    const failedSessions = [];
     
-    // Find all permanently failed sessions (synced=true but has syncError)
-    const failedSessions = offlineData.pending_sync
-        .filter(item => 
-            item.type === 'session' && 
-            item.synced === true && 
-            item.syncError
-        )
-        .map(item => item.data.sessionId);
-    
-    console.log('📋 Found', failedSessions.length, 'permanently failed sessions:', failedSessions);
-    
-    // Find rounds that reference failed or unmapped sessions
-    let cleanedCount = 0;
-    let skippedItems = [];
-    
-    offlineData.pending_sync.forEach((item, index) => {
-        if (item.type === 'round' && item.synced !== true) {
-            const roundSessionId = item.data.sessionId;
+    offlineData.pending_sync.forEach(item => {
+        if (item.type === 'session') {
+            // Session is failed if it has 3+ failed attempts OR is marked synced with error
+            const isPermanentlyFailed = (item.failedAttempts >= 3) || 
+                                       (item.synced === true && item.syncError);
             
-            // Check if this round's session failed
-            const sessionFailed = failedSessions.includes(roundSessionId);
-            
-            // Check if session ID is offline and has no mapping
-            const sessionNotMapped = roundSessionId?.startsWith('OFFLINE_') && 
-                                   !idMappings.sessions[roundSessionId];
-            
-            if (sessionFailed || sessionNotMapped) {
-                console.log(`🗑️ Marking orphaned round as skipped:`);
-                console.log(`   Round ID: ${item.id}`);
-                console.log(`   Session ID: ${roundSessionId}`);
-                console.log(`   Reason: ${sessionFailed ? 'Session failed' : 'Session not mapped'}`);
-                
-                // Mark as permanently skipped
-                item.synced = true;
-                item.syncError = sessionFailed 
-                    ? 'Parent session failed to sync' 
-                    : 'Parent session not found in mappings';
-                item.syncAttempts = 999; // High number to indicate cleanup
-                
-                skippedItems.push({
-                    roundId: item.id,
-                    sessionId: roundSessionId,
-                    reason: item.syncError
-                });
-                
-                cleanedCount++;
+            if (isPermanentlyFailed) {
+                const sessionId = item.data?.sessionId;
+                if (sessionId && !failedSessions.includes(sessionId)) {
+                    failedSessions.push(sessionId);
+                }
             }
         }
     });
     
-    // Save changes if any cleanup occurred
-    if (cleanedCount > 0) {
+    console.log(`📋 Found ${failedSessions.length} permanently failed sessions:`, failedSessions);
+    
+    const skippedItems = [];
+    
+    // Find ALL items (rounds, knowledge, session_complete) that depend on failed sessions
+    offlineData.pending_sync.forEach(item => {
+        // Skip already synced or already skipped items
+        if (item.synced || item.skipped) return;
+        
+        // Only check dependent types
+        if (!['round', 'knowledge', 'session_complete'].includes(item.type)) return;
+        
+        // Get the session ID this item depends on
+        let itemSessionId;
+        
+        if (item.type === 'session_complete') {
+            // Extract from endpoint: /session/OFFLINE_SESSION_xxx/complete
+            const match = item.endpoint?.match(/session\/(OFFLINE_SESSION_[^/]+)/);
+            itemSessionId = match ? match[1] : item.data?.sessionId;
+        } else {
+            itemSessionId = item.data?.sessionId;
+        }
+        
+        // Check if this item depends on a failed session
+        if (itemSessionId && failedSessions.includes(itemSessionId)) {
+            console.log('🗑️ Marking orphaned item as skipped:');
+            console.log(`   Type: ${item.type}`);
+            console.log(`   ID: ${item.id || 'N/A'}`);
+            console.log(`   Session ID: ${itemSessionId}`);
+            console.log(`   Reason: Session failed`);
+            
+            item.skipped = true;
+            item.skipReason = 'Session failed';
+            item.synced = true; // Mark as synced so it stops retrying
+            item.syncError = 'Parent session permanently failed';
+            
+            skippedItems.push(item);
+        }
+    });
+    
+    if (skippedItems.length > 0) {
         saveOfflineData(offlineData);
-        console.log(`✅ Cleaned up ${cleanedCount} orphaned rounds`);
-        console.log('📊 Skipped items:', skippedItems);
-    } else {
-        console.log('✅ No orphaned rounds found');
     }
     
-    return {
-        cleaned: cleanedCount,
-        skippedItems: skippedItems,
-        failedSessions: failedSessions
-    };
+    console.log(`✅ Cleaned up ${skippedItems.length} orphaned items`);
+    console.log('📊 Skipped items:', skippedItems);
+    
+    return { cleaned: skippedItems.length, skipped: skippedItems };
 }
+
 
 
 
@@ -1770,7 +1772,7 @@ window.offlineStorage = {
     clearOfflineData,
     initializeOfflineStorage,
     clearIdMappings,
-    cleanupOrphanedRounds  // ✅ NEW: Add cleanup function
+    cleanupOrphanedItems 
 };
 
 console.log('✅ Offline storage system loaded with cleanup support');
