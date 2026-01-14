@@ -1683,6 +1683,9 @@ async function isStablyOnline() {
 // Add this function to offline-storage.js (around line 800, before syncOfflineData)
 
 // ===== CLEAN UP ORPHANED ITEMS (ROUNDS, KNOWLEDGE, SESSION_COMPLETE) =====
+// ===== CLEAN UP ORPHANED ITEMS (ROUNDS, KNOWLEDGE, SESSION_COMPLETE) =====
+// Replace the entire cleanupOrphanedRounds function (around line 1686) with this:
+
 function cleanupOrphanedItems() {
     console.log('🧹 Starting orphaned items cleanup...');
     
@@ -1692,19 +1695,24 @@ function cleanupOrphanedItems() {
         return { cleaned: 0, skipped: [] };
     }
     
-    // Find all permanently failed sessions
+    // Find ALL permanently failed sessions
     const failedSessions = [];
     
     offlineData.pending_sync.forEach(item => {
         if (item.type === 'session') {
-            // Session is failed if it has 3+ failed attempts OR is marked synced with error
-            const isPermanentlyFailed = (item.failedAttempts >= 3) || 
+            // Check if permanently failed by checking:
+            // 1. Has syncAttempts >= 3, OR
+            // 2. Has failedAttempts >= 3, OR  
+            // 3. Is marked synced with an error
+            const attempts = item.syncAttempts || item.failedAttempts || 0;
+            const isPermanentlyFailed = attempts >= 3 || 
                                        (item.synced === true && item.syncError);
             
             if (isPermanentlyFailed) {
                 const sessionId = item.data?.sessionId;
-                if (sessionId && !failedSessions.includes(sessionId)) {
+                if (sessionId) {
                     failedSessions.push(sessionId);
+                    console.log(`   ❌ Found failed session: ${sessionId} (attempts: ${attempts})`);
                 }
             }
         }
@@ -1712,12 +1720,20 @@ function cleanupOrphanedItems() {
     
     console.log(`📋 Found ${failedSessions.length} permanently failed sessions:`, failedSessions);
     
+    if (failedSessions.length === 0) {
+        console.log('✅ No failed sessions found - nothing to clean up');
+        return { cleaned: 0, skipped: [] };
+    }
+    
     const skippedItems = [];
     
     // Find ALL items (rounds, knowledge, session_complete) that depend on failed sessions
     offlineData.pending_sync.forEach(item => {
-        // Skip already synced or already skipped items
-        if (item.synced || item.skipped) return;
+        // Skip already synced items
+        if (item.synced === true && !item.syncError) return;
+        
+        // Skip already marked as skipped
+        if (item.skipped === true) return;
         
         // Only check dependent types
         if (!['round', 'knowledge', 'session_complete'].includes(item.type)) return;
@@ -1741,21 +1757,29 @@ function cleanupOrphanedItems() {
             console.log(`   Session ID: ${itemSessionId}`);
             console.log(`   Reason: Session failed`);
             
+            // Mark the item so it won't retry
             item.skipped = true;
-            item.skipReason = 'Session failed';
-            item.synced = true; // Mark as synced so it stops retrying
+            item.skipReason = 'Parent session permanently failed';
+            item.synced = true; // Also mark as synced to stop retry loop
             item.syncError = 'Parent session permanently failed';
+            item.syncAttempts = 999; // High number to indicate cleanup
             
-            skippedItems.push(item);
+            skippedItems.push({
+                type: item.type,
+                id: item.id,
+                sessionId: itemSessionId,
+                reason: item.skipReason
+            });
         }
     });
     
     if (skippedItems.length > 0) {
         saveOfflineData(offlineData);
+        console.log(`✅ Cleaned up ${skippedItems.length} orphaned items`);
+        console.log('📊 Skipped items:', skippedItems);
+    } else {
+        console.log('✅ No orphaned items found to clean');
     }
-    
-    console.log(`✅ Cleaned up ${skippedItems.length} orphaned items`);
-    console.log('📊 Skipped items:', skippedItems);
     
     return { cleaned: skippedItems.length, skipped: skippedItems };
 }
