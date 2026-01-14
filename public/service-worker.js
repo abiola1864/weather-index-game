@@ -8,7 +8,7 @@
 // const CACHE_NAME = `weather-game-${CACHE_VERSION}`;
 
 
-const CACHE_VERSION = 'v8-full-audio-cache'; // ✅ Change version number
+const CACHE_VERSION = 'v9-full-audio-cache'; // ✅ Change version number
 const CACHE_NAME = `weather-game-${CACHE_VERSION}`;
 
 
