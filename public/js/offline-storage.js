@@ -770,11 +770,416 @@ function autoFixData(data, type) {
 // ===== SYNC OFFLINE DATA TO SERVER - REVISED WITH CLEANUP =====
 // Replace the existing syncOfflineData function (around line 820)
 
+
+
+
+// ===== DATA RECOVERY: Fix corrupted respondentId in rounds =====
+// ===============================================
+// YOUR EXISTING CODE ENDS AROUND HERE
+// (after cleanupOrphanedItems function)
+// ===============================================
+
+
+// ===== ADD THIS SECTION HERE (BEFORE window.offlineStorage) =====
+
+// ===== DATA RECOVERY: Fix corrupted respondentId in rounds =====
+function fixCorruptedRoundData() {
+    console.log('🔧 Checking for corrupted round data...');
+    
+    const offlineData = getOfflineData();
+    if (!offlineData || !offlineData.pending_sync) {
+        console.log('⚠️ No offline data to fix');
+        return { fixed: 0 };
+    }
+    
+    const idMappings = rebuildIdMappings();
+    let fixedCount = 0;
+    
+    // Find all unsynced rounds, knowledge, perception items
+    const itemsToFix = offlineData.pending_sync.filter(item => 
+        !item.synced && 
+        (item.type === 'round' || item.type === 'knowledge' || item.type === 'perception')
+    );
+    
+    console.log(`📋 Found ${itemsToFix.length} items to check`);
+    
+    itemsToFix.forEach(item => {
+        if (!item.data) return;
+        
+        let needsSave = false;
+        const originalRespondentId = item.data.respondentId?.toString();
+        const originalSessionId = item.data.sessionId?.toString();
+        
+        // Check if respondentId needs fixing
+        if (originalRespondentId && originalRespondentId.startsWith('OFFLINE_')) {
+            // Check if it's actually a session ID (common bug)
+            if (originalRespondentId.startsWith('OFFLINE_SESSION_')) {
+                console.log(`🔧 ${item.type}: respondentId is actually a sessionId!`);
+                
+                // Find the session to get the real respondentId
+                const session = offlineData.sessions.find(s => 
+                    s.sessionId === originalRespondentId
+                );
+                
+                if (session && session.respondentId) {
+                    console.log(`  ✅ Recovered respondentId from session: ${session.respondentId}`);
+                    item.data.respondentId = session.respondentId;
+                    needsSave = true;
+                    fixedCount++;
+                } else {
+                    console.log(`  ❌ Cannot recover - session not found`);
+                }
+            }
+            // Check if mapping exists
+            else if (!idMappings.respondents[originalRespondentId]) {
+                console.log(`  ⚠️ ${item.type}: respondentId has no mapping: ${originalRespondentId.substring(0, 30)}...`);
+                
+                // Try to find it from the session
+                if (originalSessionId) {
+                    const session = offlineData.sessions.find(s => 
+                        s.sessionId === originalSessionId
+                    );
+                    
+                    if (session && session.respondentId) {
+                        console.log(`  ✅ Recovered respondentId from session: ${session.respondentId}`);
+                        item.data.respondentId = session.respondentId;
+                        needsSave = true;
+                        fixedCount++;
+                    }
+                }
+            }
+        }
+        
+        if (needsSave) {
+            // Mark for retry
+            if (item.syncAttempts) {
+                item.syncAttempts = 0; // Reset attempts after fix
+            }
+            console.log(`  ✅ Fixed ${item.type} - ready for retry`);
+        }
+    });
+    
+    if (fixedCount > 0) {
+        saveOfflineData(offlineData);
+        console.log(`✅ Fixed ${fixedCount} corrupted items`);
+    } else {
+        console.log('✅ No corrupted data found');
+    }
+    
+    return { fixed: fixedCount };
+}
+
+
+// ===== DEBUG: Show detailed sync status =====
+function debugSyncStatus() {
+    console.log('');
+    console.log('🔍 ========================================');
+    console.log('🔍 DETAILED SYNC STATUS DEBUG');
+    console.log('🔍 ========================================');
+    
+    const offlineData = getOfflineData();
+    const idMappings = rebuildIdMappings();
+    
+    console.log('📊 ID Mappings Available:');
+    console.log('  Respondents:', Object.keys(idMappings.respondents).length);
+    Object.entries(idMappings.respondents).forEach(([offline, server]) => {
+        console.log(`    ${offline.substring(0, 30)}... → ${server}`);
+    });
+    
+    console.log('  Sessions:', Object.keys(idMappings.sessions).length);
+    Object.entries(idMappings.sessions).forEach(([offline, server]) => {
+        console.log(`    ${offline.substring(0, 40)}... → ${server}`);
+    });
+    
+    console.log('');
+    console.log('📋 Pending Sync Items:');
+    
+    if (!offlineData.pending_sync || offlineData.pending_sync.length === 0) {
+        console.log('  ✅ No pending items');
+    } else {
+        offlineData.pending_sync.forEach((item, i) => {
+            console.log(`  ${i + 1}. ${item.type.toUpperCase()}`);
+            console.log(`     Synced: ${item.synced}`);
+            console.log(`     Attempts: ${item.syncAttempts || 0}/3`);
+            console.log(`     Timestamp: ${item.timestamp}`);
+            
+            if (item.data) {
+                console.log(`     RespondentId: ${item.data.respondentId?.toString().substring(0, 40)}...`);
+                console.log(`     SessionId: ${item.data.sessionId?.toString().substring(0, 40)}...`);
+                
+                // Check if IDs can be mapped
+                if (item.data.respondentId) {
+                    const respId = item.data.respondentId.toString();
+                    if (respId.startsWith('OFFLINE_')) {
+                        const canMap = !!idMappings.respondents[respId];
+                        console.log(`     RespondentId mappable: ${canMap ? '✅' : '❌'}`);
+                    }
+                }
+                
+                if (item.data.sessionId) {
+                    const sessId = item.data.sessionId.toString();
+                    if (sessId.startsWith('OFFLINE_')) {
+                        const canMap = !!idMappings.sessions[sessId];
+                        console.log(`     SessionId mappable: ${canMap ? '✅' : '❌'}`);
+                    }
+                }
+            }
+            
+            if (item.syncError) {
+                console.log(`     ❌ Error: ${item.syncError}`);
+            }
+            console.log('');
+        });
+    }
+    
+    console.log('🔍 ========================================');
+    console.log('');
+}
+
+
+// ===== AUTO-SYNC SYSTEM =====
+const AUTO_SYNC_CONFIG = {
+    enabled: true,
+    syncOnConnectionRestore: true,
+    periodicCheckInterval: 90000,
+    retryDelays: [20000, 60000, 180000],
+    minTimeBetweenSyncs: 15000
+};
+
+let autoSyncState = {
+    isRunning: false,
+    lastSyncTime: 0,
+    retryTimeoutId: null,
+    periodicIntervalId: null
+};
+
+async function autoSync(trigger = 'manual') {
+    if (autoSyncState.isRunning) {
+        console.log('⏭️ Sync already running');
+        return { success: false, message: 'Already syncing' };
+    }
+    
+    if (!navigator.onLine) {
+        console.log('📴 Offline - cannot sync');
+        return { success: false, message: 'Offline' };
+    }
+    
+    const timeSince = Date.now() - autoSyncState.lastSyncTime;
+    if (timeSince < AUTO_SYNC_CONFIG.minTimeBetweenSyncs) {
+        console.log(`⏭️ Too soon (${Math.round(timeSince/1000)}s ago)`);
+        return { success: false, message: 'Too soon' };
+    }
+    
+    const status = getSyncStatus();
+    if (status.pendingItems === 0) {
+        console.log('✅ Nothing to sync');
+        return { success: true, message: 'Nothing to sync', remainingItems: 0 };
+    }
+    
+    console.log('');
+    console.log(`🔄 ========================================`);
+    console.log(`🔄 AUTO-SYNC TRIGGERED: ${trigger}`);
+    console.log(`📊 Pending: ${status.pendingItems} items`);
+    if (status.hasFailingItems) {
+        console.log(`⚠️ At Risk: ${status.itemsAtRisk.length} items`);
+    }
+    console.log(`🔄 ========================================`);
+    
+    autoSyncState.isRunning = true;
+    autoSyncState.lastSyncTime = Date.now();
+    
+    try {
+        const result = await syncOfflineData();
+        
+        console.log('');
+        console.log(`✅ Auto-sync complete:`);
+        console.log(`   Success: ${result.results?.successful || 0}`);
+        console.log(`   Failed: ${result.results?.failed || 0}`);
+        console.log(`   Remaining: ${result.remainingItems || 0}`);
+        
+        updateConnectionStatus();
+        
+        return result;
+        
+    } catch (error) {
+        console.error('❌ Auto-sync error:', error);
+        return { success: false, message: error.message };
+    } finally {
+        autoSyncState.isRunning = false;
+    }
+}
+
+function initAutoSync() {
+    console.log('🔄 Initializing auto-sync system...');
+    
+    // Listen for online event
+    window.addEventListener('online', () => {
+        console.log('🌐 Connection restored - will auto-sync in 3s...');
+        setTimeout(() => {
+            const status = getSyncStatus();
+            if (status.pendingItems > 0) {
+                autoSync('connection_restored');
+            }
+        }, 3000);
+    });
+    
+    // Periodic check
+    setInterval(() => {
+        if (navigator.onLine && !autoSyncState.isRunning) {
+            const status = getSyncStatus();
+            if (status.pendingItems > 0) {
+                console.log(`⏰ Periodic check: ${status.pendingItems} items need sync`);
+                autoSync('periodic_check');
+            }
+        }
+    }, AUTO_SYNC_CONFIG.periodicCheckInterval);
+    
+    // Initial check on page load
+    setTimeout(() => {
+        if (navigator.onLine) {
+            const status = getSyncStatus();
+            if (status.pendingItems > 0) {
+                console.log(`📤 Initial check: ${status.pendingItems} unsynced items`);
+                autoSync('initial_load');
+            }
+        }
+    }, 5000);
+    
+    console.log('✅ Auto-sync system initialized');
+}
+
+
+// ===== NOW UPDATE YOUR EXISTING window.offlineStorage EXPORT =====
+// REPLACE your existing window.offlineStorage = { ... } with this:
+
+window.offlineStorage = {
+    isOnline,
+    handleOfflineStorage,
+    syncOfflineData,
+    getSyncStatus,
+    exportOfflineData,
+    clearOfflineData,
+    initializeOfflineStorage,
+    clearIdMappings,
+    cleanupOrphanedItems,
+    fixCorruptedRoundData,    // ✅ NEW
+    debugSyncStatus,          // ✅ NEW
+    autoSync,                 // ✅ NEW
+    initAutoSync              // ✅ NEW
+};
+
+// Initialize auto-sync on load
+initAutoSync();
+
+console.log('✅ Offline storage system loaded with AUTO-SYNC and DEBUG tools');
+
+
+
+
+// ===== AUTO-CLEANUP: Remove corrupted sessions on load =====
+function autoCleanupCorruptedSessions() {
+    console.log('🧹 Running auto-cleanup of corrupted sessions...');
+    
+    const offlineData = getOfflineData();
+    if (!offlineData || !offlineData.pending_sync) {
+        console.log('✅ No data to clean');
+        return { cleaned: 0 };
+    }
+    
+    const originalCount = offlineData.pending_sync.length;
+    
+    // Find corrupted sessions (marked synced with validation errors)
+    const corruptedSessionIds = [];
+    offlineData.pending_sync.forEach(item => {
+        if (item.type === 'session' && 
+            item.synced === true && 
+            item.syncError && 
+            (item.syncError.includes('Missing') || item.syncError.includes('Validation failed'))) {
+            
+            const sessionId = item.data?.sessionId || 
+                             item.endpoint?.match(/OFFLINE_SESSION_[^/]+/)?.[0];
+            
+            if (sessionId) {
+                corruptedSessionIds.push(sessionId);
+                console.log(`🗑️ Found corrupted session: ${sessionId}`);
+                console.log(`   Error: ${item.syncError}`);
+            }
+        }
+    });
+    
+    if (corruptedSessionIds.length === 0) {
+        console.log('✅ No corrupted sessions found');
+        return { cleaned: 0 };
+    }
+    
+    console.log(`📋 Found ${corruptedSessionIds.length} corrupted sessions`);
+    console.log(`📋 Corrupted IDs:`, corruptedSessionIds);
+    
+    // Remove corrupted sessions and their dependencies
+    offlineData.pending_sync = offlineData.pending_sync.filter(item => {
+        // Remove corrupted sessions
+        if (item.type === 'session' && item.synced === true && item.syncError) {
+            const sessionId = item.data?.sessionId || 
+                             item.endpoint?.match(/OFFLINE_SESSION_[^/]+/)?.[0];
+            if (sessionId && corruptedSessionIds.includes(sessionId)) {
+                console.log(`  🗑️ Removing corrupted session: ${sessionId}`);
+                return false;
+            }
+        }
+        
+        // Remove orphaned rounds, knowledge, session_complete
+        if (['round', 'knowledge', 'perception'].includes(item.type)) {
+            const sessionId = item.data?.sessionId;
+            if (sessionId && corruptedSessionIds.includes(sessionId)) {
+                console.log(`  🗑️ Removing orphaned ${item.type}`);
+                return false;
+            }
+        }
+        
+        // Remove orphaned session_complete
+        if (item.type === 'session_complete' && item.endpoint) {
+            const matchesCorrupted = corruptedSessionIds.some(id => 
+                item.endpoint.includes(id)
+            );
+            if (matchesCorrupted) {
+                console.log(`  🗑️ Removing orphaned session_complete`);
+                return false;
+            }
+        }
+        
+        return true;
+    });
+    
+    const cleanedCount = originalCount - offlineData.pending_sync.length;
+    
+    if (cleanedCount > 0) {
+        saveOfflineData(offlineData);
+        console.log(`✅ Cleaned ${cleanedCount} corrupted items`);
+        
+        // Force UI update
+        if (typeof updateConnectionStatus === 'function') {
+            updateConnectionStatus();
+        }
+    }
+    
+    return { cleaned: cleanedCount, corruptedSessions: corruptedSessionIds };
+}
+
+
+
+
+
 async function syncOfflineData() {
     // ✅ Check online status
     if (!navigator.onLine) {
         console.log('📴 Cannot sync - still offline');
         return { success: false, message: 'Still offline' };
+    }
+    
+    // ✅ AUTO-CLEANUP: Remove corrupted sessions before sync
+    const cleanupResult = autoCleanupCorruptedSessions();
+    if (cleanupResult.cleaned > 0) {
+        console.log(`✅ Auto-cleanup removed ${cleanupResult.cleaned} corrupted items`);
     }
     
     const offlineData = getOfflineData();
@@ -783,12 +1188,36 @@ async function syncOfflineData() {
         return { success: true, message: 'No data to sync' };
     }
     
-    // ✅ NEW: Clean up orphaned rounds before syncing
-    console.log('🧹 Checking for orphaned rounds...');
-    const cleanupResult =  cleanupOrphanedItems;
+    // ✅✅✅ NEW: Fix corrupted data BEFORE syncing
+    console.log('🔧 Running data recovery...');
+    const recoveryResult = fixCorruptedRoundData();
+    if (recoveryResult.fixed > 0) {
+        console.log(`✅ Recovered ${recoveryResult.fixed} items - reloading data...`);
+        // Reload after fixes
+        const updatedData = getOfflineData();
+        if (!updatedData.pending_sync || updatedData.pending_sync.length === 0) {
+            console.log('✅ All items fixed - nothing left to sync');
+            return { 
+                success: true, 
+                message: 'All items recovered and ready',
+                results: {
+                    total: recoveryResult.fixed,
+                    successful: 0,
+                    failed: 0,
+                    skipped: 0,
+                    permanentlySkipped: 0,
+                    errors: []
+                }
+            };
+        }
+    }
     
-    if (cleanupResult.cleaned > 0) {
-        console.log(`✅ Cleaned up ${cleanupResult.cleaned} orphaned items before sync`);
+    // ✅ Continue with existing cleanup
+    console.log('🧹 Checking for orphaned rounds...');
+    const cleanupOrphanResult = cleanupOrphanedItems();
+    
+    if (cleanupOrphanResult.cleaned > 0) {
+        console.log(`✅ Cleaned up ${cleanupOrphanResult.cleaned} orphaned items before sync`);
         
         // Reload data after cleanup
         const updatedData = getOfflineData();
@@ -798,11 +1227,11 @@ async function syncOfflineData() {
                 success: true, 
                 message: 'All orphaned items cleaned up',
                 results: {
-                    total: cleanupResult.cleaned,
+                    total: cleanupOrphanResult.cleaned,
                     successful: 0,
                     failed: 0,
                     skipped: 0,
-                    permanentlySkipped: cleanupResult.cleaned,
+                    permanentlySkipped: cleanupOrphanResult.cleaned,
                     errors: []
                 }
             };
@@ -866,7 +1295,8 @@ async function syncOfflineData() {
         // ✅ Permanently skip after 3 failed attempts
         if (item.syncAttempts > 3) {
             console.warn(`🚫 Permanently skipping ${item.type} after 3 failed attempts`);
-            item.synced = true; // Mark as synced to stop retrying
+            item.permanentlyFailed = true; // ✅ FIXED: Don't mark as synced
+            item.synced = false; // ✅ FIXED: Keep visible in UI
             item.syncError = item.syncError || 'Max attempts reached';
             results.permanentlySkipped++;
             continue;
@@ -909,10 +1339,11 @@ async function syncOfflineData() {
                     error: prepError.message
                 });
                 
-                // ✅ Permanently skip after 3 validation failures
+                // ✅ FIX: Mark as permanently failed, NOT synced
                 if (item.syncAttempts >= 3) {
                     console.error(`🚫 Permanently skipping after 3 validation failures`);
-                    item.synced = true;
+                    item.permanentlyFailed = true; // ✅ FIXED
+                    item.synced = false; // ✅ FIXED: Keep visible in UI
                     item.syncError = prepError.message;
                     results.permanentlySkipped++;
                 }
@@ -1079,7 +1510,8 @@ async function syncOfflineData() {
                 // If 3rd attempt OR permanent error, skip permanently
                 if (item.syncAttempts >= 3 || (isPermanentError && item.syncAttempts >= 2)) {
                     console.error(`🚫 Permanently skipping - ${isPermanentError ? 'permanent error' : 'max attempts'}`);
-                    item.synced = true; // Mark to stop retrying
+                    item.permanentlyFailed = true; // ✅ FIXED
+                    item.synced = false; // ✅ FIXED: Keep visible in UI
                     results.permanentlySkipped++;
                 }
             }
@@ -1103,16 +1535,17 @@ async function syncOfflineData() {
             // Permanently skip after 3 exceptions
             if (item.syncAttempts >= 3) {
                 console.error('🚫 Permanently skipping after 3 exceptions');
-                item.synced = true;
+                item.permanentlyFailed = true; // ✅ FIXED
+                item.synced = false; // ✅ FIXED: Keep visible in UI
                 results.permanentlySkipped++;
             }
         }
     }
     
     // ✅ STEP 7: Save updated sync status
-    // Remove successfully synced items (but keep permanently skipped for reporting)
+    // Remove successfully synced items (but keep permanently failed for visibility)
     offlineData.pending_sync = offlineData.pending_sync.filter(item => 
-        !item.synced || item.syncError
+        !item.synced || item.syncError || item.permanentlyFailed
     );
     offlineData.lastSyncAttempt = new Date().toISOString();
     saveOfflineData(offlineData);
@@ -1165,7 +1598,6 @@ async function syncOfflineData() {
         remainingItems: offlineData.pending_sync.length
     };
 }
-
 
 
 
@@ -1796,8 +2228,14 @@ window.offlineStorage = {
     clearOfflineData,
     initializeOfflineStorage,
     clearIdMappings,
-    cleanupOrphanedItems 
+    cleanupOrphanedItems,
+    fixCorruptedRoundData,
+    debugSyncStatus,
+    autoSync,
+    initAutoSync,
+    autoCleanupCorruptedSessions // ← ADD THIS
 };
+
 
 console.log('✅ Offline storage system loaded with cleanup support');
 
